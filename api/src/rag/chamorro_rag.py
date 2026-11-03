@@ -124,8 +124,10 @@ def extract_target_word(query: str) -> str:
     """
     import re
     from src.rag.translation_policy import (
+        classify_translation_request,
         extract_translation_payload,
         is_passage_translation,
+        translation_direction,
     )
 
     if is_passage_translation(query):
@@ -173,9 +175,11 @@ def extract_target_word(query: str) -> str:
     if match:
         return match.group(1).strip().lower()
     
-    # Pattern 6: "how do/would you say X in Chamorro" (English→Chamorro, NO quotes)
-    # Handle multi-word phrases like "thank you", "good morning"
-    if re.search(r"\bhow (?:do|would) (?:you|i) say\b", query, re.IGNORECASE):
+    # Pattern 6: "how do/would you say X", "I want to say X", "how would we
+    # write X" (English→Chamorro, NO quotes), including phrases like "thank you"
+    if translation_direction(query) == "to_chamorro" and not re.search(
+        r"\b(?:word for|translate)\b", query, re.IGNORECASE
+    ):
         target = extract_translation_payload(query)
         if target:
             return target.lower()
@@ -194,7 +198,11 @@ def extract_target_word(query: str) -> str:
     match = re.search(r"chamorro word for (.+?)[?.!]*$", query, re.IGNORECASE)
     if match:
         return match.group(1).strip().lower()
-    
+
+    # Any other recognized single-word request, such as "What's the Chamorro for tree?"
+    if classify_translation_request(query) == "single_word_lookup":
+        return extract_translation_payload(query).strip(" \t.,!?;:").lower()
+
     return ""
 
 

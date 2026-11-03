@@ -43,7 +43,7 @@ def test_chat_model_registry_and_prompts_are_current_modules() -> None:
     # opt-in photo stream uses its own reader-facing format.
     assert chatbot_source.count('if mode != "chamorro" and skill_level') == 3
     assert chatbot_source.count(
-        "if not rag_context and not is_passage_translation(effective_translation_message) and not school_announcement:"
+        "if not rag_context and not is_passage_translation(translation_message) and not school_announcement:"
     ) == 2
     assert chatbot_source.count("build_image_translation_query(") == 3
     assert chatbot_source.count("build_translation_structure_hints(") == 3

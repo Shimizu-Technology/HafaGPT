@@ -29,7 +29,10 @@ from .canonical_context import get_canonical_tutor_context
 from .tutor_intent import tutor_task_guidance
 from .source_citations import format_source_citations
 from .upload_storage import resolve_private_upload_reference
-from src.rag.conversation_retrieval import build_contextual_retrieval_query
+from src.rag.conversation_retrieval import (
+    build_contextual_retrieval_query,
+    resolve_translation_routing_query,
+)
 from src.rag.image_translation_context import (
     ImageTranslationContext,
     ImagePageContext,
@@ -1164,6 +1167,11 @@ def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
         tuple: (use_web_search: bool, search_type: str | None)
     """
     user_lower = user_input.lower().strip()
+
+    # Translation intent takes precedence: the supplied phrase can itself contain
+    # words such as "rain", "make", "today", or "latest".
+    if classify_translation_request(user_input) != "none":
+        return False, None
     
     # Real-time information (weather, time, current conditions)
     realtime_keywords = [
@@ -1187,16 +1195,11 @@ def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
         'kelaguen', 'red rice', 'empanada', 'finadene'
     ]
     if any(keyword in user_lower for keyword in recipe_keywords):
-        if 'how do you say' in user_lower or 'translate' in user_lower:
-            return False, None  # Translation, use RAG
         return True, "recipe"
     
     # Current events. A bare time word such as "today" is not enough: it is
     # common inside messages being translated and previously hijacked those
-    # requests into web search. Translation intent takes precedence even when
-    # the supplied phrase itself contains words such as "current" or "recent."
-    if classify_translation_request(user_input) != "none":
-        return False, None
+    # requests into web search.
     current_keywords = [
         'happening', 'news', 'current', 'current events', 'recent', 'recent news', 'latest'
     ]
@@ -1296,7 +1299,7 @@ def get_rag_context(
         if include_vector and rag is not None and (
             not card_context
             or contextual_card_ids
-            or is_passage_translation(user_input)
+            or is_passage_translation(retrieval_query)
         ):
             # Passage translations commonly need several independent lexical and
             # grammar clues. A wider governed window prevents one broad semantic
@@ -1594,8 +1597,13 @@ def get_chatbot_response(
         message,
         image_context,
     )
+    # Natural requests ("I want to say…"), short follow-ups ("What about
+    # tree?"), and text typed under the Translate task share one routing query.
+    translation_message = resolve_translation_routing_query(
+        effective_translation_message, past_messages, intent,
+    )
     retrieval_message = build_contextual_retrieval_query(
-        effective_translation_message,
+        translation_message,
         past_messages,
     )
     conversation_length = len(past_messages) // 2
@@ -1674,11 +1682,11 @@ def get_chatbot_response(
     system_prompt += build_translation_structure_hints(effective_translation_message)
     
     system_prompt += translation_prompt_guidance(
-        effective_translation_message,
+        translation_message,
         has_references=bool(rag_context),
     )
 
-    if not rag_context and not is_passage_translation(effective_translation_message) and not school_announcement:
+    if not rag_context and not is_passage_translation(translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
     # Initialize token manager for this request
@@ -1990,8 +1998,13 @@ def get_chatbot_response_stream(
         message,
         image_context,
     )
+    # Natural requests ("I want to say…"), short follow-ups ("What about
+    # tree?"), and text typed under the Translate task share one routing query.
+    translation_message = resolve_translation_routing_query(
+        effective_translation_message, past_messages, intent,
+    )
     retrieval_message = build_contextual_retrieval_query(
-        effective_translation_message,
+        translation_message,
         past_messages,
     )
     conversation_length = len(past_messages) // 2
@@ -2071,11 +2084,11 @@ def get_chatbot_response_stream(
     system_prompt += build_translation_structure_hints(effective_translation_message)
     
     system_prompt += translation_prompt_guidance(
-        effective_translation_message,
+        translation_message,
         has_references=bool(rag_context),
     )
 
-    if not rag_context and not is_passage_translation(effective_translation_message) and not school_announcement:
+    if not rag_context and not is_passage_translation(translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
     system_prompt, web_results_used = assemble_system_prompt(

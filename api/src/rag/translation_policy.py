@@ -48,10 +48,32 @@ at the specific word or clause where it occurs.
 """
 
 _WORD_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ'’\-]+")
+_WHAT_IS = r"what(?:['’]s|\s+is)"
+_CHAMORRO_FOR = (
+    rf"(?:{_WHAT_IS}\s+(?:the\s+)?chamor(?:ro|u)\s+(?:word\s+|term\s+|phrase\s+)?for|"
+    r"(?:the\s+)?chamor(?:ro|u)\s+(?:word|term|phrase)\s+for)"
+)
 _EXPLICIT_TO_CHAMORRO_LOOKUP_PATTERN = re.compile(
-    r"\b(?:what is\s+.+?\s+in\s+chamor(?:ro|u)|"
-    r"(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for)\b",
+    rf"\b(?:{_WHAT_IS}\s+.+?\s+in\s+chamor(?:ro|u)|{_CHAMORRO_FOR})\b",
     re.IGNORECASE | re.DOTALL,
+)
+# Natural English-to-Chamorro requests. "day"/"sau"/"sya" tolerate common phone
+# typos for "say"; none of them form an ordinary English question after "how
+# would we". "write" and "put" are narrowed in ``_has_to_chamorro_cue``.
+_HOW_SAY_PATTERN = re.compile(
+    r"\bhow\s+(?:do|would|should|can|could|might)\s+(?:you|i|we|one)\s+"
+    r"(?P<verb>say|day|sau|sya|write|put)\b",
+    re.IGNORECASE,
+)
+_WANT_TO_SAY_PATTERN = re.compile(
+    r"\b(?:i|we)(?:\s+(?:just|really|also|kind\s+of|kinda))?"
+    r"(?:\s+(?:want(?:ed)?\s+to|wanna|need\s+to|would\s+like\s+to)|['’]d\s+like\s+to)"
+    r"\s+say\b(?:\s+(?:something|anything)\s+like\b)?",
+    re.IGNORECASE,
+)
+_DEICTIC_TRANSLATION_CUE_PATTERN = re.compile(
+    r"(?i)\b(?:what\s+does\s+(?:(?:all|any)\s+of\s+)?this\s+(?:mean|say)|"
+    r"what\s+is\s+(?:(?:all|any)\s+of\s+)?this\s+saying)\b"
 )
 _CONTEXT_PARAGRAPH_PATTERN = re.compile(
     r"(?ix)"
@@ -180,9 +202,9 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
         for part in re.split(r"(?:\r?\n)[ \t]*(?:\r?\n)+", normalized)
         if part.strip()
     ]
-    if len(paragraphs) > 1 and re.search(
-        r"(?i)\b(?:what does this mean|what does this say|translate this|what is this saying)\b",
-        paragraphs[0],
+    if len(paragraphs) > 1 and (
+        _DEICTIC_TRANSLATION_CUE_PATTERN.search(paragraphs[0])
+        or re.search(r"(?i)\btranslate\s+(?:all\s+of\s+)?this\b", paragraphs[0])
     ):
         selected = _select_wrapper_payload(paragraphs, normalized)
         if require_unambiguous:
@@ -198,7 +220,8 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
         return _strip_wrapping_quotes(selected)
 
     wrapper_match = re.search(
-        r"(?is)\b(?:what does this mean|what does this say|what is this saying)\s*\?\s*(.+)$",
+        r"(?is)\b(?:what\s+does\s+(?:(?:all|any)\s+of\s+)?this\s+(?:mean|say)|"
+        r"what\s+is\s+(?:(?:all|any)\s+of\s+)?this\s+saying)\s*\?\s*(.+)$",
         normalized,
     )
     if wrapper_match:
@@ -221,28 +244,34 @@ def _extract_translation_payload(query: str, *, require_unambiguous: bool) -> st
     if quoted_candidates:
         return max(quoted_candidates, key=lambda value: len(_words(value)))
 
-    say_match = re.search(
-        r"(?is)\bhow (?:do|would) (?:you|i) say\s*[-:–—]?\s*(.+?)(?:\?|$)",
-        normalized,
+    say_match = _HOW_SAY_PATTERN.search(normalized)
+    payload_match = (
+        re.match(r"(?s)\s*[-:–—]?\s*(.+?)(?:\?|$)", normalized[say_match.end():])
+        if say_match
+        else None
     )
-    if say_match:
+    want_match = _WANT_TO_SAY_PATTERN.search(normalized)
+    if not payload_match and want_match:
+        payload_match = re.match(
+            r"(?s)\s*[-:–—]?\s*(.+?)\s*$", normalized[want_match.end():]
+        )
+    if payload_match:
         payload = re.sub(
-            r"(?is)\s*[-–—]?\s+in\s+chamor(?:ro|u)\s*$",
+            r"(?is)\s*[-–—]?\s+(?:in|into)\s+chamor(?:ro|u)[?.!]*\s*$",
             "",
-            say_match.group(1),
+            payload_match.group(1),
         )
         return _strip_wrapping_quotes(payload)
 
     word_for_match = re.search(
-        r"(?is)\b(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for\s+"
-        r"(.+?)[?.!]*$",
+        rf"(?is)\b{_CHAMORRO_FOR}\s+(.+?)[?.!]*$",
         normalized,
     )
     if word_for_match:
         return _strip_wrapping_quotes(word_for_match.group(1))
 
     what_is_match = re.search(
-        r"(?is)\bwhat is\s+(.+?)\s+in\s+chamor(?:ro|u)[?.!]*$",
+        rf"(?is)\b{_WHAT_IS}\s+(.+?)\s+in\s+chamor(?:ro|u)[?.!]*$",
         normalized,
     )
     if what_is_match:
@@ -291,6 +320,34 @@ def extract_translation_retrieval_payload(query: str) -> str:
     return _extract_translation_payload(query, require_unambiguous=True)
 
 
+def _has_to_chamorro_cue(query: str) -> bool:
+    """Recognize natural "how would we say/write" and "I want to say" requests."""
+
+    want_match = _WANT_TO_SAY_PATTERN.search(query)
+    if want_match:
+        # "I want to say something to my grandma" asks for help composing, not
+        # for a translation of the words "something to my grandma".
+        tail = query[want_match.end():].lstrip(" \t-:–—")
+        if tail and not re.match(r"(?i)(?:something|anything)\b", tail):
+            return True
+
+    say_match = _HOW_SAY_PATTERN.search(query)
+    if not say_match:
+        return False
+    if say_match.group("verb").casefold() not in {"write", "put"}:
+        return True
+    if re.search(r"(?i)\b(?:in|into)\s+chamor(?:ro|u)\b", query):
+        return True
+    if say_match.group("verb").casefold() == "put":
+        return False
+    # Without a named language, "How do I write an essay?" is a writing question.
+    tail = query[say_match.end():].lstrip(" \t-:–—\"“'‘")
+    return bool(tail) and not re.match(
+        r"(?i)(?:a|an|about|my|your|this|that|it|the\s+(?:essay|letter|report|paragraph|story))\b",
+        tail,
+    )
+
+
 def classify_translation_request(query: str) -> TranslationIntent:
     """Distinguish word lookup from multi-word translation in either direction."""
 
@@ -298,20 +355,22 @@ def classify_translation_request(query: str) -> TranslationIntent:
     explicit_to_chamorro_lookup = bool(
         _EXPLICIT_TO_CHAMORRO_LOOKUP_PATTERN.search(query)
     )
-    has_translation_cue = explicit_to_chamorro_lookup or bool(
-        re.search(
-            r"\b(?:translate|how (?:do|would) (?:you|i) say|"
-            r"what does .+ mean|what does this say|what is this saying)\b",
-            query_lower,
-            re.DOTALL,
+    to_chamorro_cue = _has_to_chamorro_cue(query)
+    has_translation_cue = (
+        explicit_to_chamorro_lookup
+        or to_chamorro_cue
+        or bool(_DEICTIC_TRANSLATION_CUE_PATTERN.search(query))
+        or bool(
+            re.search(r"\b(?:translate|what does .+ mean)\b", query_lower, re.DOTALL)
         )
     )
     if not has_translation_cue:
         return "none"
 
-    if not explicit_to_chamorro_lookup and not re.search(
-        r"\b(?:translate|how (?:do|would) (?:you|i) say)\b",
-        query_lower,
+    if (
+        not explicit_to_chamorro_lookup
+        and not to_chamorro_cue
+        and not re.search(r"\btranslate\b", query_lower)
     ):
         contextual_non_translation = (
             "culture",
@@ -328,10 +387,7 @@ def classify_translation_request(query: str) -> TranslationIntent:
     payload_words = _words(payload)
     if not payload_words:
         return "none"
-    if re.search(
-        r"\b(?:what is\s+)?(?:the\s+)?chamor(?:ro|u)\s+word\s+for\b",
-        query_lower,
-    ) and len(payload_words) <= 4:
+    if re.search(rf"\b{_CHAMORRO_FOR}\b", query_lower) and len(payload_words) <= 4:
         return "single_word_lookup"
     if len(payload_words) <= 1:
         return "single_word_lookup"
@@ -341,11 +397,60 @@ def classify_translation_request(query: str) -> TranslationIntent:
         return "passage_to_english"
     if explicit_destination in {"chamorro", "chamoru"}:
         return "passage_to_chamorro"
-    if re.search(r"\b(?:to|in)\s+chamor(?:ro|u)\b", query_lower) or re.search(
-        r"\bhow (?:do|would) (?:you|i) say\b", query_lower
-    ):
+    if re.search(r"\b(?:to|in)\s+chamor(?:ro|u)\b", query_lower) or to_chamorro_cue:
         return "passage_to_chamorro"
     return "passage_to_english"
+
+
+def looks_like_chamorro(text: str) -> bool:
+    """Cheap orthographic hint for undirected text; never used as evidence."""
+
+    normalized_words = {word.casefold() for word in _words(text)}
+    return bool(
+        normalized_words & _CHAMORRO_PASSAGE_MARKERS
+        or re.search(r"[åÅñÑ]|\w[’']\w*[’']|\w[’']$", text)
+    )
+
+
+def translation_direction(query: str) -> Literal["to_chamorro", "to_english", ""]:
+    """Return the translation direction of a classified request, if any."""
+
+    intent = classify_translation_request(query)
+    if intent == "none":
+        return ""
+    if intent == "passage_to_english":
+        return "to_english"
+    if intent == "passage_to_chamorro":
+        return "to_chamorro"
+    if _explicit_translation_destination(query) == "english" or re.search(
+        r"(?is)\bwhat does\b.+\bmean\b", query
+    ):
+        return "to_english"
+    if _explicit_translation_destination(query) or _has_to_chamorro_cue(query):
+        return "to_chamorro"
+    if re.search(r"(?i)\b(?:to|in)\s+chamor(?:ro|u)\b|\bchamor(?:ro|u)\s+(?:word|term|phrase)?\s*for\b", query):
+        return "to_chamorro"
+    return "to_english" if looks_like_chamorro(extract_translation_payload(query)) else "to_chamorro"
+
+
+def selected_task_translation_query(message: str) -> str:
+    """Restate a message typed under the Translate task as an explicit request.
+
+    The learner already chose "Translate", so text such as "hahaha thank you"
+    is the payload rather than chat. The restatement only steers routing and
+    retrieval; the model still receives the learner's original message.
+    """
+
+    text = message.strip()
+    if not text or classify_translation_request(text) != "none":
+        return message
+    if looks_like_chamorro(text):
+        if "\n" not in text and '"' not in text and len(_words(text)) <= 4:
+            return f'What does "{text}" mean in English?'
+        return f"Translate this to English:\n\n{text}"
+    if "\n" not in text and '"' not in text and len(text) <= 200:
+        return f'How do you say "{text}" in Chamorro?'
+    return f"Translate this to Chamorro:\n\n{text}"
 
 
 def is_passage_translation(query: str) -> bool:

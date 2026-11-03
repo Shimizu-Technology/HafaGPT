@@ -5,7 +5,12 @@ from __future__ import annotations
 import re
 from typing import Any
 
-from src.rag.translation_policy import extract_translation_payload
+from src.rag.translation_policy import (
+    classify_translation_request,
+    extract_translation_payload,
+    selected_task_translation_query,
+    translation_direction,
+)
 
 
 _AMBIGUOUS_FOLLOW_UPS = (
@@ -38,6 +43,7 @@ _SAME_TARGET_FOLLOW_UP_PATTERN = re.compile(
     r")\b",
     re.IGNORECASE,
 )
+_MAX_REPLACEMENT_TARGET_WORDS = 4
 _TOPIC_MARKERS = (
     (re.compile(r"\b(?:guam|guåhan|guahan)\b", re.IGNORECASE), "Guam"),
     (re.compile(r"\b(?:cnmi|northern mariana islands)\b", re.IGNORECASE), "CNMI"),
@@ -92,6 +98,14 @@ def _explicit_translation_request(value: str) -> tuple[str, str] | None:
         target = _clean_target(match.group(1))
         if target and target.casefold() not in {"this", "that", "it"}:
             return target, direction
+
+    # Natural phrasing ("I want to say…", "how would we write…") recognized by
+    # the shared classifier.
+    direction = translation_direction(value)
+    if direction:
+        target = _clean_target(extract_translation_payload(value))
+        if target and target.casefold() not in {"this", "that", "it"}:
+            return target, direction
     return None
 
 
@@ -101,6 +115,10 @@ def _replacement_target(value: str) -> str:
         return ""
     target = _clean_target(match.group(1))
     if target.casefold() in {"this", "that", "it", "the language", "that language"}:
+        return ""
+    # "What about tree?" swaps the lookup target; a longer "what about…" is a
+    # new question rather than a replacement word or short phrase.
+    if len(target.split()) > _MAX_REPLACEMENT_TARGET_WORDS:
         return ""
     return target
 
@@ -155,6 +173,58 @@ def _canonical_translation_query(target: str, direction: str) -> str:
     return f'How do you say "{target}" in Chamorro?'
 
 
+def _translation_follow_up_query(
+    current: str,
+    past_messages: list[dict[str, Any]],
+) -> str:
+    """Restate a short follow-up inside a translation thread, or return ""."""
+
+    replacement_target = _replacement_target(current)
+    same_target_follow_up = bool(_SAME_TARGET_FOLLOW_UP_PATTERN.search(current))
+    candidate_correction = _candidate_correction(current)
+    if not (replacement_target or same_target_follow_up or candidate_correction):
+        return ""
+    thread_state = _translation_thread_state(past_messages)
+    if not thread_state:
+        return ""
+    previous_target, direction = thread_state
+    target = replacement_target or previous_target
+    if not target:
+        return ""
+    canonical_query = _canonical_translation_query(target, direction)
+    if candidate_correction:
+        return (
+            f'{canonical_query} Candidate spelling to verify: '
+            f'"{candidate_correction}".'
+        )
+    return canonical_query
+
+
+def resolve_translation_routing_query(
+    current_message: str,
+    past_messages: list[dict[str, Any]],
+    tutor_intent: str | None = None,
+) -> str:
+    """Return the request text that decides translation policy and retrieval.
+
+    A recognized request is returned unchanged. A short follow-up such as
+    "What about tree?" inherits the direction of the user's preceding lookup,
+    and any message typed under the selected Translate task is treated as the
+    text to translate. Only user-authored history is consulted. The model still
+    receives the original message; this string only steers routing.
+    """
+
+    current = current_message.strip()
+    if not current or classify_translation_request(current) != "none":
+        return current_message
+    follow_up = _translation_follow_up_query(current, past_messages)
+    if follow_up:
+        return follow_up
+    if tutor_intent == "translate":
+        return selected_task_translation_query(current)
+    return current_message
+
+
 def build_contextual_retrieval_query(
     current_message: str,
     past_messages: list[dict[str, Any]],
@@ -177,22 +247,9 @@ def build_contextual_retrieval_query(
     if _explicit_translation_request(current):
         return current_message
 
-    replacement_target = _replacement_target(current)
-    same_target_follow_up = bool(_SAME_TARGET_FOLLOW_UP_PATTERN.search(current))
-    candidate_correction = _candidate_correction(current)
-    if replacement_target or same_target_follow_up or candidate_correction:
-        thread_state = _translation_thread_state(past_messages)
-        if thread_state:
-            previous_target, direction = thread_state
-            target = replacement_target or previous_target
-            if target:
-                canonical_query = _canonical_translation_query(target, direction)
-                if candidate_correction:
-                    return (
-                        f'{canonical_query} Candidate spelling to verify: '
-                        f'"{candidate_correction}".'
-                    )
-                return canonical_query
+    follow_up = _translation_follow_up_query(current, past_messages)
+    if follow_up:
+        return follow_up
 
     if not any(pattern.search(current) for pattern in _AMBIGUOUS_FOLLOW_UPS):
         return current_message
