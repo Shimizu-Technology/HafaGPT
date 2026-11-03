@@ -175,7 +175,8 @@ def _bound_form_kind(headword: str, definition: object) -> str:
 
 
 # "c--letter of the alphabet": names the letter, and is no translation of a word.
-_LETTER_NAME = re.compile(r"(?i)^\s*[a-zåñ]\s*-+\s*letter\b")
+# Chamoru.info also abbreviates it ("C--let of the alphabet").
+_LETTER_NAME = re.compile(r"(?i)^\s*[a-zåñ]\s*-+\s*(?:letter\b|let\s+of\s+the\s+alphabet\b)")
 
 
 def _not_a_standalone_translation(headword: str, definition: object) -> str:

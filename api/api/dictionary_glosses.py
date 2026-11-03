@@ -18,6 +18,42 @@ _USAGE_NOTE = re.compile(
 )
 # "rope-like in appearance": a description of the head noun.
 _DESCRIPTION = re.compile(r"(?i)\w-like\b|\bin (?:appearance|shape|colou?r|form|size|texture)\b")
+# "v. Hold; seize": a part-of-speech marker opening the definition or a sense.
+_POS_WORD = r"(?:noun|verb|adjective|adverb|n|v|vt|vi|adj|adv)"
+_SERIES_END = re.compile(r"(?i)^(?:and|or)\s+\w")
+# "in which anything occurs": a defining relative clause. "which?" or "which
+# (demonstrative)" glosses the pronoun itself and is not one.
+_RELATIVE_CLAUSE = re.compile(
+    r"(?i)^(?:(?:in|on|at|by|from|of|to|with|for|under|through|during)\s+)?(?:which|whom|whose|where)\s+\w"
+)
+_OTHER_MEMBERS = re.compile(r"(?i)^(?:and|or)\s+(?:other|similar)\b")
+_INFINITIVE_HEAD = re.compile(r"(?i)\w\s+to\s+\w+$")
+
+
+def _complement_members(parts: list[str]) -> set[int]:
+    """Members of a coordinated series that complete another member's head.
+
+    "hard to do, make, or carry out" lists what is hard to do, and "suck
+    noodles, soup, or other liquid" lists what is sucked: "make" and "soup"
+    are complements of the opening member, never synonyms of the headword.
+    In "time, place, or circumstances, in which anything occurs" a relative
+    clause describes the whole series, so no member stands alone. Returns the
+    indexes to drop; a plain synonym series ("hit, strike, or beat") has none.
+    """
+
+    end = next((index for index, part in enumerate(parts) if index >= 2 and _SERIES_END.match(part)), None)
+    if end is None:
+        return set()
+    if end + 1 < len(parts) and _RELATIVE_CLAUSE.match(parts[end + 1]):
+        return set(range(len(parts)))
+    multi_word = [index for index in range(end) if len(re.findall(r"\w+", parts[index])) > 1]
+    if _OTHER_MEMBERS.match(parts[end]):
+        head = multi_word[-1] if multi_word else -1
+        return set(range(head + 1, end + 1))
+    head = next((index for index in range(end) if _INFINITIVE_HEAD.search(parts[index])), None)
+    if head is not None and all(len(re.findall(r"\w+", parts[index])) <= 1 for index in range(head + 1, end)):
+        return set(range(head + 1, end + 1))
+    return set()
 
 
 def format_definition(definition: object) -> str:
@@ -43,7 +79,7 @@ def definition_gloss_segments(definition: object) -> tuple[tuple[str, int], ...]
     segments: list[tuple[str, int]] = []
 
     def add(raw: str, rank: int) -> None:
-        raw = re.sub(r"(?i)^\s*(?:noun|verb|adjective|adverb|n|v|adj|adv)\.\s*", "", raw)
+        raw = re.sub(rf"(?i)^\s*{_POS_WORD}\.\s*", "", raw)
         raw = raw.strip(" .:–—-")
         normalized = normalize_chamorro_match_text(raw)
         if normalized:
@@ -65,6 +101,11 @@ def definition_gloss_segments(definition: object) -> tuple[tuple[str, int], ...]
     # unless the source marks it "(general)" as in "Bamboo (general)".
     species_entry = bool(clauses) and bool(re.match(r"(?i)\s*type of [\w ]+?\s*(?:--|-)", clauses[0]))
     for clause_index, clause in enumerate(clauses):
+        # The sentence split reads the "v" of "v. Hold" as a sentence of its
+        # own; a part-of-speech marker is never a gloss.
+        if re.fullmatch(rf"(?i)\s*{_POS_WORD}\s*", clause):
+            continue
+        clause = re.sub(rf"(?i)^\s*{_POS_WORD}\.\s+", "", clause)
         if species_entry and clause_index and not re.search(r"(?i)\(general\)", clause):
             add(clause, 3)
             continue
@@ -102,6 +143,12 @@ def definition_gloss_segments(definition: object) -> tuple[tuple[str, int], ...]
         if re.search(r"(?i)\betc\b", clause) or re.search(
             r"(?i)\b(?:of|for|from|with)\s+\w+|^\w+ as an?\b", parts[0]
         ):
+            continue
+        complements = _complement_members(parts)
+        if complements:
+            parts = [part for index, part in enumerate(parts) if index not in complements]
+            for part in parts:
+                add(part, 1)
             continue
         qualifiers = ("also ", "but ", "especially ", "from ", "longer ", "shorter ",
                       "similar ", "that ", "usually ", "used ", "when ", "which ", "with ")

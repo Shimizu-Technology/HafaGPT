@@ -400,3 +400,48 @@ def test_words_in_a_quoted_chamorro_phrase_stay_chamorro(query):
     assert "[Canonical greetings.thank_you]" in canonical
     assert "si" in _strong_headwords(lexical)
     assert "spelled like" not in lexical
+
+
+@pytest.mark.parametrize(
+    ("definition", "excluded", "kept"),
+    [
+        ("Difficult; hard; not easy; hard to do, make, or carry out.", {"make", "or carry out"},
+         {"difficult", "hard", "hard to do"}),
+        ("Sock in (as in smoking); suck--as through a straw; suck noodles, soup, or other liquid.",
+         {"soup", "or other liquid"}, set()),
+        ("Scene; time, place, or circumstances, in which anything occurs.", {"time", "place"}, {"scene"}),
+        ("obedient, amenable, submissive to restraint, control, or command", {"control", "or command"},
+         {"obedient", "amenable"}),
+        ("v. Hold; seize; grasp; receive and keep in the hand.", {"v"}, {"hold", "seize", "grasp"}),
+    ],
+)
+def test_complements_and_part_of_speech_markers_are_not_glosses(definition, excluded, kept):
+    glosses = {gloss for gloss, rank in definition_gloss_segments(definition) if rank == 1}
+    assert not excluded & glosses
+    assert kept <= glosses
+
+
+@pytest.mark.parametrize(
+    ("definition", "gloss"),
+    [
+        ("hit, strike, or beat", ("strike", 1)),
+        ("where?, which? (interrogative pronoun)", ("which", 2)),
+        ("that, those, which (demonstrative)", ("that", 3)),
+        ("joint, where two bones are joined, chink, fissure", ("joint", 1)),
+        ("cause to sag, lose firmness, resiliency, or vigor", ("lose firmness", 1)),
+        ("noun. Type of fish--family sphyraenidae; Barracuda.", ("barracuda", 1)),
+    ],
+)
+def test_plain_series_pronouns_and_head_nouns_stay_glosses(definition, gloss):
+    assert gloss in definition_gloss_segments(definition)
+
+
+@pytest.mark.parametrize(
+    ("query", "word", "excluded"),
+    [("What is make in Chamorro?", "make", "mappot"), ("What is soup in Chamorro?", "soup", "soppla"),
+     ("What is time in Chamorro?", "time", "eskina"), ("What is v in Chamorro?", "v", "mantieni")],
+)
+def test_complement_and_marker_definitions_are_not_direct_evidence(query, word, excluded):
+    canonical, lexical = _combined(query)
+    assert excluded not in _direct_headwords(lexical, word)
+    assert f"Chamorro headword: {excluded}" not in canonical

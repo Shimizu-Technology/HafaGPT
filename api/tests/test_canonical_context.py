@@ -325,8 +325,15 @@ def test_letter_names_are_not_labeled_direct_translations(term, headword):
     assert "direct dictionary evidence" not in block
 
 
-@pytest.mark.parametrize(("term", "headword"), [("people", "taotao"), ("home", "guma'")])
+@pytest.mark.parametrize(("term", "headword"), [("people", "taotao"), ("home", "guma'"), ("first", "primet")])
 def test_ordinary_words_stay_direct(term, headword):
     blocks = _context_for(term).split("\n\n")
     block = next(b for b in blocks if f"Chamorro headword: {headword}" in b)
     assert "direct dictionary evidence" in block
+
+
+def test_abbreviated_letter_notation_is_a_letter_name():
+    blocks = _context_for("c").split("\n\n")
+    letter_blocks = [b for b in blocks if "Chamorro headword: se" in b]
+    assert letter_blocks and all("name of a letter" in b for b in letter_blocks)
+    assert not any("direct dictionary evidence" in b for b in letter_blocks)
