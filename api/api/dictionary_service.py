@@ -432,22 +432,46 @@ class DictionaryService:
             if metadata.match(field):
                 fields = fields[:index]
                 break
-        # A short binomial-like heading before an odd block can shift every
-        # following field (e.g. chacha's taxonomy). Do not label that layout.
-        if len(fields) % 2 and fields and re.fullmatch(r"[A-Z][a-z]+ [a-z]+", fields[0]):
-            return [], [item for item in fields if item]
         examples, unpaired = [], []
-        boundary = next((index for index, field in enumerate(fields) if not field), len(fields))
-        paired_end = boundary - boundary % 2
-        unpaired.extend(item for item in fields[paired_end:] if item)
-        fields = fields[:paired_end]
-        for chamorro, english in zip(fields[::2], fields[1::2]):
+        for index in range(0, len(fields), 2):
+            pair = fields[index:index + 2]
+            # Plain multiword Latin headings can occupy an example field and
+            # shift the rest of the block. Case and extraction whitespace do
+            # not establish a sentence boundary. Withhold even plausible short
+            # sentences matching this shape rather than guess their language.
+            normalized = " ".join(pair[0].split())
+            heading = re.fullmatch(
+                r"[a-z]{3,}(?:[-/][a-z]+)*(?: [a-z]{2,}(?:[-/][a-z]+)*\.?)+"
+                r"(?:\s*\([^)]*\)|[,;].*)?",
+                normalized, re.I,
+            ) or re.fullmatch(r"[a-z]{3,} \([^)]*\)", normalized, re.I)
+            # Abbreviation fragments (e.g. a detached 'Mr') and fields without
+            # even a common English function word do not establish a partner.
+            # This is an exclusion guard, not language or translation review.
+            english_supported = len(pair) == 2 and len(pair[1].split()) >= 2 and re.search(
+                r"\b(?:the|a|an|is|are|was|were|be|am|will|would|can|could|should|"
+                r"have|has|had|do|does|did|there|this|these|those|they|their|she|her|"
+                r"he|his|we|our|you|your|my|me|us|not|to|of|for|with|from|at|on|in|"
+                r"and|but|when|where|why|how|what|who|which|please|let's|goodbye|"
+                r"made|make|both|all|never|always|often|sometimes)\b",
+                pair[1], re.I,
+            )
+            if len(pair) == 2:
+                english = pair[1]
+                if (english.count('(') != english.count(')')
+                        or english.count('"') % 2
+                        or re.search(r"\b(?:a|an|the|is|are|was|were|to|of|for|with|from|and|or|Mr|Mrs|Dr)$", english, re.I)):
+                    english_supported = False
             # Three or more spaces mark collapsed fields in this extraction
             # (e.g. chinikulåti na kulót); do not split or relabel their text.
-            if any(re.search(r"\S\s{3,}\S|\n|\b(?:Syn|Variant|See|From):|^\d+\)|Information\s+forthcoming|Please check later|^Family\b", field, re.I)
-                   for field in (chamorro, english)):
-                unpaired.extend((chamorro, english))
-                continue
+            if (len(pair) < 2 or not all(pair) or heading or not english_supported
+                    or any(re.search(r"\S\s{3,}\S|\n|\b(?:Syn|Variant|See|From):|^\d+\)|Information\s+forthcoming|Please\s+check\s+later|^Family\b", field, re.I)
+                           for field in pair)):
+                # Never resume after uncertainty: a collapsed/missing field
+                # may have changed the parity of every remaining field.
+                unpaired.extend(item for item in fields[index:] if item)
+                break
+            chamorro, english = pair
             examples.append({"chamorro": chamorro, "english": english})
         return examples[:3], unpaired
 
