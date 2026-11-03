@@ -171,9 +171,38 @@ def test_pairing_counts_and_review_sample_match_the_current_snapshot():
     report, sample = audit.audit(SNAPSHOT)
     assert report == json.loads((root / 'documentation/phase4-data/example_pairing_counts.json').read_text())
     judgments = json.loads((root / 'documentation/phase4-data/example_pairing_sample_round3.json').read_text())
-    assert len(sample) == judgments['size'] == 60
-    for selected, judged in zip(sample, judgments['sample'], strict=True):
-        assert (selected['headword'], selected['pair_index'], selected['pair']['english']) == (
-            judged['headword'], judged['pair_index'], judged['english'])
-        prefix = selected['raw'][:2 * selected['pair_index'] + 3]
+    assert judgments['size'] == 60
+    # Later rounds only withhold more pairs. Every pair judged in round 3 must
+    # still be shown at the same position with the same source prefix.
+    for judged in judgments['sample']:
+        raw = SNAPSHOT[judged['headword']]['Other']
+        pairs, _ = DictionaryService._parse_examples(raw, judged['headword'])
+        assert pairs[judged['pair_index']]['english'] == judged['english']
+        prefix = raw[:2 * judged['pair_index'] + 3]
         assert hashlib.sha256(json.dumps(prefix, ensure_ascii=False).encode()).hexdigest() == judged['source_prefix_sha256']
+
+
+@pytest.mark.parametrize('headword', [
+    "båtbas ma'is", 'chátpachut', 'Damenggun Råmus', 'isåo orihinåt',
+    'iskatlatina', 'masåmai', 'moderasión', 'udai',
+])
+def test_round4_cut_off_english_partners_are_never_shown(headword):
+    """English fields ending mid-phrase ("The corn plant has", "Japan has many
+    different") stop the block; an earlier complete pair may remain."""
+    cut_off = {
+        "båtbas ma'is": 'The corn plant has', 'chátpachut': 'The child was spanked for being',
+        'Damenggun Råmus': 'The palm leaves are blessed during',
+        'isåo orihinåt': 'Some people believe that all the people have',
+        'iskatlatina': 'Be aware because the child has', 'masåmai': 'We say that you are most',
+        'moderasión': 'It is good to have', 'udai': 'Japan has many different',
+    }[headword]
+    pairs, _ = DictionaryService._parse_examples(SNAPSHOT[headword]['Other'], headword)
+    assert all(' '.join(pair['english'].split()) != cut_off for pair in pairs)
+    if headword != 'udai':
+        assert pairs == []
+
+
+@pytest.mark.parametrize(('headword', 'count'), [("aga'", 2), ('rektót', 3), ('adiós', 3), ('håyu', 3)])
+def test_complete_endings_like_and_more_or_many_nouns_stay_shown(headword, count):
+    pairs, _ = DictionaryService._parse_examples(SNAPSHOT[headword]['Other'], headword)
+    assert len(pairs) == count

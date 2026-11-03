@@ -34,8 +34,16 @@ INCOMPLETE_ENDINGS = frozenset(
      'is are was were be been am will would shall should can could may might must '
      'to of for with from at in on into onto through and or but because if than '
      'when where why how what who which while although unless '
-     'mr mrs dr non not so too very quite rather').split()
+     'mr mrs dr non not so too very quite rather '
+     # Verbs and prepositions that need a following word: "The corn plant has",
+     # "blessed during", "spanked for being", "We say that you are most".
+     'has have had having being during about against among around between by over under '
+     'without within toward towards upon few several various both').split()
 )
+# A quantifier followed by an adjective that still needs its noun is a phrase cut
+# short ("Japan has many different"); "many responsibilities" is complete.
+QUANTIFIERS = frozenset('many few several some various'.split())
+NOUN_NEEDING_ADJECTIVES = frozenset('different other similar separate such'.split())
 AUXILIARY_CONTRACTIONS = frozenset(
     ("i'm you're he's she's it's we're they're that's there's who's what's "
      "i've you've we've they've i'll you'll he'll she'll it'll we'll they'll "
@@ -83,6 +91,11 @@ def _complete_field(text: str, tokens: list[str], *, english: bool) -> bool:
         if (not start or not start[0].isalpha()
                 or tokens[-1] in INCOMPLETE_ENDINGS | AUXILIARY_CONTRACTIONS
                 or re.search(r'\s+[,;:!?]', text)):
+            return False
+        if len(tokens) > 1 and tokens[-2] in QUANTIFIERS and tokens[-1] in NOUN_NEEDING_ADJECTIVES:
+            return False
+        # "We say that you are most" is cut short; "the most" can end a sentence.
+        if tokens[-1] == 'most' and (len(tokens) < 2 or tokens[-2] != 'the'):
             return False
         if len(tokens) > 1 and tokens[-2] in {'a', 'an', 'the'}:
             original_last = WORD.findall(text)[-1]
