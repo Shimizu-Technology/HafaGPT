@@ -13,14 +13,20 @@ const guestDraftMaxChars = 20_000;
 export interface GuestRecord { text: string; at: number; owner?: string }
 
 // Set when a draft had to be discarded but storage refused. Until a delete or a fresh
-// guest write succeeds, the stored record is treated as gone, so a temporary storage
-// failure can never hand a previous account's draft to the next one.
+// guest write succeeds, the stored record is treated as gone for the rest of this page,
+// so a temporary storage failure cannot hand a previous account's draft to the next one.
+// If deleting fails but writing works, an empty tombstone replaces the record, which
+// also covers a reload; failing both and then reloading is the only residual case, and
+// browsers have no ordinary path that rejects removeItem while allowing reads.
 let staleRecordPending = false;
 export function removeGuestRecord(): void {
   try {
     window.sessionStorage.removeItem(guestDraftKey);
     staleRecordPending = false;
-  } catch { staleRecordPending = true; }
+  } catch {
+    staleRecordPending = true;
+    try { window.sessionStorage.setItem(guestDraftKey, 'null'); } catch { /* Fail closed in memory. */ }
+  }
 }
 export function readGuestRecord(): GuestRecord | null {
   if (staleRecordPending) {

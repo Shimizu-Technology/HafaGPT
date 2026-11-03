@@ -189,11 +189,20 @@ describe('a temporary storage failure fails closed', () => {
     const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
     reconcileDraftAccount('account-a');
     reconcileDraftAccount(null);
-    setItem.mockRestore();
-    removeItem.mockRestore();
+    setItem.mockRestore(); // writes recover; deletes still fail
     expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
     keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Fresh guest question', files: [] });
+    removeItem.mockRestore();
     expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('Fresh guest question');
     expect(adoptGuestDraft('account-c')).toBe(true);
+  });
+
+  it('replaces an undeletable record with a tombstone so a reload cannot revive it', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Private guest question', files: [] });
+    const removeItem = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('unavailable'); });
+    reconcileDraftAccount('account-a');
+    reconcileDraftAccount(null);
+    removeItem.mockRestore();
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBe('null');
   });
 });
