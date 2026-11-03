@@ -35,6 +35,7 @@ from src.rag.translation_policy import (
 from src.utils.token_manager import count_tokens
 
 from .canonical_context import (
+    _bound_form_kind,
     SENSE_SCOPE_RULE,
     _edit_distance_at_most_one,
     _exact_dictionary_data,
@@ -292,26 +293,7 @@ def _is_affix(headword: str) -> bool:
     return stripped[:1] in "-‑‐–" or stripped[-1:] in "-‑‐–"
 
 
-# An unhyphenated headword whose own definition says it is bound: "(Prefix)",
-# "(possessive singular suffix)", "Suffix attached to ...". A definition that
-# only uses one ("Usually used with possessive suffix") does not count.
-_BOUND_DEFINITION = re.compile(
-    r"(?i)^\s*(?:an? )?(?:\w+ )?(?P<lead>prefix|suffix|infix)\b(?=.)|"
-    r"\((?:possessive [\w ]*)?(?P<paren>prefix|suffix|infix)\)|--\s*possess?ive (?P<dash>suffix)"
-)
 _AFFIX_REQUEST = re.compile(r"(?i)\b(?:prefix|suffix|infix|affix|ending)(?:es|s)?\b")
-
-
-def _bound_form_kind(headword: str, definition: object) -> str:
-    """Return "prefix", "suffix", or "infix" for a bound entry, else ""."""
-
-    stripped = headword.strip()
-    if stripped[:1] in "-‑‐–":
-        return "suffix"
-    if stripped[-1:] in "-‑‐–":
-        return "prefix"
-    match = _BOUND_DEFINITION.search(" ".join(_format_dictionary_definition(definition).split()))
-    return next((kind.casefold() for kind in match.groups() if kind), "") if match else ""
 
 
 @lru_cache(maxsize=1)

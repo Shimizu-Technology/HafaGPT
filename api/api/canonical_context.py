@@ -150,6 +150,40 @@ def _exact_english_gloss_index(
     }
 
 
+# An unhyphenated headword whose own definition says it is bound: "(Prefix)",
+# "(possessive singular suffix)", "Suffix attached to ...". A definition that
+# only uses one ("Usually used with possessive suffix") does not count.
+_BOUND_DEFINITION = re.compile(
+    r"(?i)^\s*(?:an? )?(?:\w+ )?(?P<lead>prefix|suffix|infix)\b(?=.)|"
+    r"\((?:possessive [\w ]*)?(?P<paren>prefix|suffix|infix)\)|--\s*possess?ive (?P<dash>suffix)"
+)
+def _bound_form_kind(headword: str, definition: object) -> str:
+    """Return "prefix", "suffix", or "infix" for a bound entry, else ""."""
+
+    stripped = headword.strip()
+    if stripped[:1] in "-‑‐–":
+        return "suffix"
+    if stripped[-1:] in "-‑‐–":
+        return "prefix"
+    match = _BOUND_DEFINITION.search(" ".join(_format_dictionary_definition(definition).split()))
+    return next((kind.casefold() for kind in match.groups() if kind), "") if match else ""
+
+
+# "c--letter of the alphabet": names the letter, and is no translation of a word.
+_LETTER_NAME = re.compile(r"(?i)^\s*[a-zåñ]\s*-+\s*letter\b")
+
+
+def _not_a_standalone_translation(headword: str, definition: object) -> str:
+    """Return why an exact gloss match cannot stand alone as the translation, if so."""
+
+    kind = _bound_form_kind(headword, definition)
+    if kind:
+        return f"a {kind} attached to another word"
+    if _LETTER_NAME.match(_format_dictionary_definition(definition)):
+        return "the name of a letter of the alphabet"
+    return ""
+
+
 def _lookup_exact_english_glosses(
     english_gloss: str,
 ) -> list[tuple[str, str, object]]:
@@ -456,13 +490,18 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
         )
 
     for display_name, entry_headword, definition in english_gloss_matches:
+        limitation = _not_a_standalone_translation(entry_headword, definition)
         lines.extend(
             [
-                f"[Exact English dictionary gloss: {requested_english_gloss}]",
+                f"[Related dictionary entry for: {requested_english_gloss}]"
+                if limitation
+                else f"[Exact English dictionary gloss: {requested_english_gloss}]",
                 f"Chamorro headword: {entry_headword}",
                 f"Source: {display_name}",
                 f"Definition: {_format_dictionary_definition(definition)}",
-                "This is direct dictionary evidence for the requested English gloss.",
+                f"This is {limitation}, not a standalone translation."
+                if limitation
+                else "This is direct dictionary evidence for the requested English gloss.",
                 "",
             ]
         )

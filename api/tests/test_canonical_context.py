@@ -299,3 +299,34 @@ def test_needs_review_phrases_are_not_recommended_teaching_terms(entry_id):
         context, _ = get_canonical_tutor_context(query)
         assert f"[Canonical {entry_id}]" not in context
         assert f"Recommended teaching term: {entry['recommended_teaching_term']}" not in context
+
+
+def _context_for(term):
+    from api.canonical_context import get_canonical_tutor_context
+    return get_canonical_tutor_context(f"What is {term} in Chamorro?")[0]
+
+
+@pytest.mark.parametrize(("term", "headword"), [
+    ("your", "-mu"), ("not", "des-"), ("many", "mi-"), ("said", "ilek-"),
+])
+def test_bound_forms_are_not_labeled_direct_translations(term, headword):
+    blocks = _context_for(term).split("\n\n")
+    block = next(b for b in blocks if f"Chamorro headword: {headword}" in b)
+    assert "not a standalone translation" in block
+    assert "Exact English dictionary gloss" not in block
+    assert "direct dictionary evidence" not in block
+
+
+@pytest.mark.parametrize(("term", "headword"), [("c", "che"), ("b", "be")])
+def test_letter_names_are_not_labeled_direct_translations(term, headword):
+    blocks = _context_for(term).split("\n\n")
+    block = next(b for b in blocks if f"Chamorro headword: {headword}" in b)
+    assert "name of a letter" in block
+    assert "direct dictionary evidence" not in block
+
+
+@pytest.mark.parametrize(("term", "headword"), [("people", "taotao"), ("home", "guma'")])
+def test_ordinary_words_stay_direct(term, headword):
+    blocks = _context_for(term).split("\n\n")
+    block = next(b for b in blocks if f"Chamorro headword: {headword}" in b)
+    assert "direct dictionary evidence" in block
