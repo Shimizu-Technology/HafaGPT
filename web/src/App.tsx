@@ -5,7 +5,6 @@ import {
   Suspense,
   useEffect,
   useState,
-  type ComponentType,
   type ErrorInfo,
   type ReactNode,
 } from 'react';
@@ -19,26 +18,7 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/admin/AdminRoute';
 import { BottomNav } from './components/BottomNav';
 import { ScrollToTop } from './components/ScrollToTop';
-
-async function loadRoute<TModule>(loader: () => Promise<TModule>): Promise<TModule> {
-  try {
-    return await loader();
-  } catch (error) {
-    // Only a required route import warrants recovery. A global preload-error
-    // listener also catches optional analytics/PWA failures on mobile networks.
-    void window.__hafagptRecoverStaleBuild?.();
-    throw error;
-  }
-}
-
-function lazyNamed<TModule>(
-  loader: () => Promise<TModule>,
-  exportName: keyof TModule,
-) {
-  return lazy(async () => ({
-    default: (await loadRoute(loader))[exportName] as ComponentType,
-  }));
-}
+import { lazyNamed, loadRoute } from './lib/lazyNamed';
 
 // Each page is loaded only when its route is visited. This keeps games,
 // administration, charts, and the AI chat out of the initial home-page bundle.

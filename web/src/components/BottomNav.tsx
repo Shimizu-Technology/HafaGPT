@@ -1,4 +1,3 @@
-import { lazy, Suspense } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { Home, MessageSquare, Map, Library, Moon, Settings, Sun } from 'lucide-react';
 import { useUser } from '@clerk/clerk-react';
@@ -7,10 +6,8 @@ import { usePromoStatus } from '../hooks/useSubscription';
 import { useMediaQuery } from '../hooks/useMediaQuery';
 import { useTheme } from '../hooks/useTheme';
 import { routeHasAppBar } from '../lib/routes';
+import { AccountSlot } from './AccountSlot';
 import { BrandMark } from './BrandMark';
-
-// Clerk's account menu and theme stay out of the initial bundle; phones never load them here.
-const AuthButton = lazy(() => import('./AuthButton').then(module => ({ default: module.AuthButton })));
 
 const destinations = [
   { to: '/', label: 'Today', icon: Home, paths: ['/'] },
@@ -54,15 +51,19 @@ export function BottomNav() {
           })}
         </nav>
         <div className="hidden flex-none items-center gap-1 sm:flex">
-          {user && (
-            <Link to="/settings" aria-label="Learning settings" className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-300 dark:hover:bg-slate-800">
-              <Settings className="h-5 w-5" aria-hidden="true" />
-            </Link>
-          )}
+          {/* Fixed-width slots: Settings and the account control occupy their space
+              while Clerk or the menu chunk loads, and for guests, so nothing moves. */}
+          <div data-slot="settings" className="h-11 w-11 flex-none">
+            {user && (
+              <Link to="/settings" aria-label="Learning settings" className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-300 dark:hover:bg-slate-800">
+                <Settings className="h-5 w-5" aria-hidden="true" />
+              </Link>
+            )}
+          </div>
           <button type="button" onClick={toggleTheme} aria-label="Toggle theme" className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-300 dark:hover:bg-slate-800">
             {theme === 'light' ? <Moon className="h-5 w-5" aria-hidden="true" /> : <Sun className="h-5 w-5" aria-hidden="true" />}
           </button>
-          {wide && <Suspense fallback={<span aria-hidden="true" className="block h-11 w-[5.25rem]" />}><AuthButton /></Suspense>}
+          {wide ? <AccountSlot /> : <div data-slot="account" className="h-11 w-[5.5rem] flex-none" />}
         </div>
       </div>
     </div>

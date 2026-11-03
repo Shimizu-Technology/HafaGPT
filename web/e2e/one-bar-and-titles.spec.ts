@@ -39,7 +39,44 @@ test('wide Home has one bar: theme and sign in live in the app bar, not a second
   expect(top).toBeLessThan(180);
 });
 
-test('wide tutor keeps one contextual row under the app bar, with every control reachable', async ({ page }) => {
+test('the app bar does not shift while the account control loads in', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  // Hold the lazy account chunk so the bar can be measured before and after it arrives.
+  let release!: () => void;
+  const held = new Promise<void>(resolve => { release = resolve; });
+  await page.route('**/assets/AuthButton-*.js', async route => {
+    await held;
+    await route.continue();
+  });
+  await page.goto('/');
+  const bar = page.locator('[data-app-bar]');
+  const measure = () => bar.evaluate(el => {
+    const box = (node: Element | null) => {
+      const r = node?.getBoundingClientRect();
+      return r ? [r.x, r.y, r.width, r.height].map(Math.round) : null;
+    };
+    return {
+      links: [...el.querySelectorAll('nav[aria-label="Primary"] a')].map(box),
+      theme: box(el.querySelector('button[aria-label="Toggle theme"]')),
+      settingsSlot: box(el.querySelector('[data-slot="settings"]')),
+      accountSlot: box(el.querySelector('[data-slot="account"]')),
+    };
+  });
+  await expect(bar.getByRole('button', { name: 'Toggle theme' })).toBeVisible();
+  await expect(bar.getByRole('button', { name: 'Sign In', exact: true })).toHaveCount(0);
+  const loading = await measure();
+  release();
+  await expect(bar.getByRole('button', { name: 'Sign In', exact: true })).toBeVisible();
+  expect(await measure()).toEqual(loading);
+  const sign = await bar.getByRole('button', { name: 'Sign In', exact: true }).boundingBox();
+  const slot = loading.accountSlot!;
+  expect(sign!.x).toBeGreaterThanOrEqual(slot[0]);
+  expect(sign!.x + sign!.width).toBeLessThanOrEqual(slot[0] + slot[2] + 1);
+});
+
+// Covers the chrome only (app bar plus one contextual row) and control reachability.
+// Starter position and the tutor heading hierarchy belong to PR C (WelcomeMessage).
+test('wide tutor chrome is the app bar plus one contextual row, with every control reachable', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 });
   await page.goto('/chat');
   await expect(page.getByText('Learn Chamorro for Free!')).toHaveCount(0);
