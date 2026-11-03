@@ -25,9 +25,9 @@ const resourceLinkClass = 'flex min-h-14 items-center justify-between gap-3 roun
 
 export default function SupportPage() {
   return (
-    <PublicPage title="Support" subtitle="Answers, account help, and a direct way to reach us" icon={HelpCircle}>
+    <PublicPage title="Support" titleAs="p" subtitle="Answers, account help, and a direct way to reach us" icon={HelpCircle}>
       <section className="rounded-3xl border border-coral-200 bg-coral-50 p-6 dark:border-teal-900 dark:bg-teal-950/20 sm:p-8">
-        <h2 className="text-3xl font-bold tracking-tight text-brown-950 dark:text-white">How can we help?</h2>
+        <h1 className="text-3xl font-bold tracking-tight text-brown-950 dark:text-white">How can we help?</h1>
         <p className="mt-3 max-w-2xl leading-relaxed text-brown-600 dark:text-gray-300">
           A real person reads every message. Ask about a school message, report something that did not work, suggest a feature, or request help with your account.
         </p>

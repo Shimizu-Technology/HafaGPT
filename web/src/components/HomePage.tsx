@@ -35,14 +35,12 @@ function HomeHeader({ signedIn }: { signedIn: boolean }) {
   const { isChristmasTheme, isNewYearTheme } = useSubscription();
 
   return (
-    <header className="sticky top-0 z-30 border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95 sm:static sm:border-b-0 sm:bg-transparent sm:backdrop-blur-none sm:dark:bg-transparent">
+    <header className="sticky top-0 z-30 border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95 sm:hidden">
+      {/* From the sm breakpoint up, the shared app bar carries the brand, theme, settings and account. */}
       <div className="safe-area-top mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
-        <Link to="/" className="flex min-h-11 items-center gap-3 rounded-xl sm:hidden focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500">
+        <Link to="/" className="flex min-h-11 items-center gap-3 rounded-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500">
           <BrandMark className="h-10 w-10" seasonal={isChristmasTheme ? 'christmas' : isNewYearTheme ? 'newyear' : null} />
-          <span>
-            <span className="block text-lg font-bold leading-tight text-brown-950 dark:text-white">HåfaGPT</span>
-            <span className="hidden text-xs text-brown-500 dark:text-gray-400 sm:block">Learn Chamorro with confidence</span>
-          </span>
+          <span className="block text-lg font-bold leading-tight text-brown-950 dark:text-white">HåfaGPT</span>
         </Link>
         <div className="ml-auto flex items-center gap-1">
           {signedIn && (

@@ -2,6 +2,7 @@ import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { AboutPage } from './AboutPage';
+import { NotFoundPage } from './NotFoundPage';
 import PricingPage from './PricingPage';
 import PrivacyPolicy from './PrivacyPolicy';
 import { SharedConversation } from './SharedConversation';
@@ -77,6 +78,26 @@ describe('public information pages', () => {
     rerender(<MemoryRouter><PricingPage /></MemoryRouter>);
     expect(screen.getByRole('heading', { name: /unlock unlimited learning/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign up & upgrade/i })).toBeInTheDocument();
+  });
+
+  it('gives every public page exactly one h1, supplied by the page and not the shell label', () => {
+    const { rerender } = render(<MemoryRouter><AboutPage /></MemoryRouter>);
+    const only = (name: RegExp) => {
+      expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+      expect(screen.getByRole('heading', { level: 1, name })).toBeInTheDocument();
+    };
+    only(/why i built håfagpt/i);
+    expect(screen.queryByRole('heading', { name: 'Our story' })).not.toBeInTheDocument();
+
+    rerender(<MemoryRouter><SupportPage /></MemoryRouter>);
+    only(/how can we help/i);
+    rerender(<MemoryRouter><PrivacyPolicy /></MemoryRouter>);
+    only(/privacy policy/i);
+    rerender(<MemoryRouter><PricingPage /></MemoryRouter>);
+    only(/unlock unlimited learning/i);
+    expect(screen.queryByRole('heading', { name: 'Plans' })).not.toBeInTheDocument();
+    rerender(<MemoryRouter><NotFoundPage /></MemoryRouter>);
+    only(/couldn't find that page/i);
   });
 
   it('takes Back home to the home route instead of the previous history entry', () => {

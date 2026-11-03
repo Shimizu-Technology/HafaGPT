@@ -4,11 +4,11 @@ import { PublicPage } from './PublicPage';
 
 export function NotFoundPage() {
   return (
-    <PublicPage title="Page not found" subtitle="This link doesn't lead anywhere yet" icon={Compass} maxWidthClassName="max-w-2xl">
+    <PublicPage title="Page not found" titleAs="p" subtitle="This link doesn't lead anywhere yet" icon={Compass} maxWidthClassName="max-w-2xl">
       <section aria-labelledby="not-found-heading" className="space-y-4">
-        <h2 id="not-found-heading" className="text-2xl font-bold text-brown-950 dark:text-white">
+        <h1 id="not-found-heading" className="text-2xl font-bold text-brown-950 dark:text-white">
           We couldn't find that page.
-        </h2>
+        </h1>
         <p className="text-base text-brown-700 dark:text-gray-300">
           The link may be mistyped or out of date. Your progress and saved work are safe.
         </p>

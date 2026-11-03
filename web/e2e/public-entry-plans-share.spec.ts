@@ -79,10 +79,11 @@ test('Home discloses the account step and links Translate, Support and Plans', a
   await expect(page).toHaveURL(/\/chat\?intent=translate$/);
   await expect(page.getByPlaceholder('Sign in to chat...')).toBeVisible();
   await expect(page.getByRole('button', { name: /send message/i })).toBeDisabled();
-  for (const name of ['Support', 'Plans']) {
+  // Each public page's own h1 is its title; the shell label is plain context.
+  for (const [name, title] of [['Support', 'How can we help?'], ['Plans', 'Unlock Unlimited Learning']]) {
     await page.goto('/');
     await page.getByRole('link', { name, exact: true }).click();
-    await expect(page.getByRole('heading', { name, exact: true })).toBeVisible();
+    await expect(page.getByRole('heading', { level: 1, name: title, exact: true })).toBeVisible();
   }
 });
 test('tall share image keeps Close in landscape bounds and restores keyboard focus', async ({ page }) => {

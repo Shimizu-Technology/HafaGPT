@@ -31,13 +31,13 @@ import { LoadingIndicator } from './LoadingIndicator';
 import { ConversationSidebar } from './ConversationSidebar';
 import { Toast } from './Toast';
 import { ImageModal } from './ImageModal';
-import { PublicBanner } from './PublicBanner';
 import { BrandMark } from './BrandMark';
 import { UpgradePrompt } from './UpgradePrompt';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
 import { forgetConversationIntent, getChatIntentPlaceholder, normalizeChatIntent, rememberConversationIntent, rememberedConversationIntent, type ChatIntent } from '../lib/chatIntent';
 import { useChatAutoScroll } from '../hooks/useChatAutoScroll';
 import { useChatViewport } from '../hooks/useChatViewport';
+import { useMediaQuery } from '../hooks/useMediaQuery';
 import { browserStorage } from '../lib/browserStorage';
 import { useModalAccessibility } from '../hooks/useModalAccessibility';
 import { getTopic } from '../data/learningPath';
@@ -153,6 +153,8 @@ function ChatSession() {
   const [searchParams, setSearchParams] = useSearchParams();
   const activeStorageKey = user?.id ? `active_conversation_id:${user.id}` : null;
   const viewport = useChatViewport();
+  // Wide screens fold the task tabs into the header row so the tutor has one row under the app bar.
+  const singleRowHeader = useMediaQuery('(min-width: 1024px)');
   const [sidebarModalOpen, setSidebarModalOpen] = useState(false);
   const [mode, setMode] = useState<'english' | 'chamorro' | 'learn'>(() => {
     const saved = user?.unsafeMetadata?.preferred_mode;
@@ -1518,6 +1520,10 @@ End of Export
     } : {}),
   };
 
+  const headerTitle = activeConversationId ? conversationTitle : linkedTopic?.title || 'Tutor';
+  const showTaskTabs = !viewport.keyboardOpen && !routeConversationId && !activeConversationId && !resumedReply.pending;
+  const taskTabs = <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />;
+
   return (
     <main id="main-content" style={viewportStyle}
       className={`flex min-h-0 overflow-hidden bg-cream-100 dark:bg-slate-950 ${viewport.isMobile || viewport.keyboardOpen || viewport.height < 420 ? 'fixed left-0 right-0 z-40' : 'relative h-[calc(100dvh-3rem)]'}`}>
@@ -1540,38 +1546,43 @@ End of Export
 
       {/* Main chat area */}
       <div {...(sidebarModalOpen ? { inert: '' } : {})} className="flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        {!isSignedIn && <div className="shrink-0"><PublicBanner /></div>}
         {/* Header stays in the chat column's layout so messages can never slide underneath it. */}
         <header
           data-testid="chat-header"
           hidden={compactKeyboard}
           className={`${compactKeyboard ? 'hidden' : ''} relative z-40 flex-shrink-0 border-b border-cream-300 bg-cream-50/95 backdrop-blur-xl safe-area-top transition-[color,background-color,border-color,opacity,transform,scale] duration-200 dark:border-slate-800 dark:bg-slate-900/95`}
         >
-          <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:px-5">
-            {linkedTopic && <Link replace to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
-            {isSignedIn && <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} aria-expanded={sidebarOpen}
-              aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} title="View conversations"
-              className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-2 text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
-              <Menu className="h-5 w-5" aria-hidden="true" /><span className="hidden text-sm font-medium sm:inline">Chats</span>
-            </button>}
-            {!linkedTopic && <Link to="/" aria-label="HåfaGPT Today" className="flex h-11 w-9 shrink-0 items-center justify-center sm:hidden">
-              <BrandMark className="h-8 w-8" seasonal={isChristmasTheme ? 'christmas' : isNewYearTheme ? 'newyear' : null} />
-            </Link>}
-            <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-brown-900 dark:text-white" title={activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}>
-              {activeConversationId ? conversationTitle : linkedTopic?.title || 'HåfaGPT'}
-            </h1>
-            {isSignedIn && activeConversationId && <button type="button" onClick={() => void handleNewConversation()} aria-label="New chat" title="New chat"
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
-              <Plus className="h-5 w-5" aria-hidden="true" />
-            </button>}
-            <div className="shrink-0"><AuthButton /></div>
-            <button type="button" onClick={() => setShowOptions(true)} aria-label="Tutor options" aria-haspopup="dialog" aria-expanded={showOptions}
-              className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
-              <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
-            </button>
+          <div className="mx-auto flex min-h-14 w-full max-w-5xl items-center gap-2 px-3 py-1 sm:min-h-12 sm:px-5">
+            <div className="flex min-w-0 flex-1 basis-0 items-center gap-2">
+              {linkedTopic && <Link replace to={topicReturnPath} aria-label={`Back to ${linkedTopic.title}`} title={`Back to ${linkedTopic.title}`} className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800"><ArrowLeft className="h-5 w-5" aria-hidden="true" /></Link>}
+              {isSignedIn && <button type="button" onClick={() => setSidebarOpen(!sidebarOpen)} aria-expanded={sidebarOpen}
+                aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'} title="View conversations"
+                className="flex h-11 shrink-0 items-center justify-center gap-2 rounded-xl px-2 text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
+                <Menu className="h-5 w-5" aria-hidden="true" /><span className="hidden text-sm font-medium sm:inline">Chats</span>
+              </button>}
+              {!linkedTopic && <Link to="/" aria-label="HåfaGPT Today" className="flex h-11 w-9 shrink-0 items-center justify-center sm:hidden">
+                <BrandMark className="h-8 w-8" seasonal={isChristmasTheme ? 'christmas' : isNewYearTheme ? 'newyear' : null} />
+              </Link>}
+              <h1 className="min-w-0 flex-1 truncate text-base font-semibold text-brown-900 dark:text-white" title={headerTitle}>
+                {headerTitle}
+              </h1>
+            </div>
+            {/* A new chat compares all three tasks; once chatting, the composer's task menu takes over. */}
+            {singleRowHeader && showTaskTabs && <div className="w-[26rem] shrink-0 [&>div]:border-t-0 [&>div]:p-0 [&>div>div]:max-w-none">{taskTabs}</div>}
+            <div className={`flex min-w-0 items-center justify-end gap-1 ${singleRowHeader && showTaskTabs ? 'flex-1 basis-0' : 'shrink-0'}`}>
+              {isSignedIn && activeConversationId && <button type="button" onClick={() => void handleNewConversation()} aria-label="New chat" title="New chat"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
+                <Plus className="h-5 w-5" aria-hidden="true" />
+              </button>}
+              {/* From the sm breakpoint up the app bar carries the account control. */}
+              <div className="shrink-0 sm:hidden"><AuthButton /></div>
+              <button type="button" onClick={() => setShowOptions(true)} aria-label="Tutor options" aria-haspopup="dialog" aria-expanded={showOptions}
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
+                <MoreHorizontal className="h-5 w-5" aria-hidden="true" />
+              </button>
+            </div>
           </div>
-          {/* A new chat compares all three tasks; once chatting, the composer's task menu takes over. */}
-          {!viewport.keyboardOpen && !routeConversationId && !activeConversationId && !resumedReply.pending && <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />}
+          {!singleRowHeader && showTaskTabs && taskTabs}
       </header>
 
       {/* The header gutter lives outside the scroller so Safari cannot consume it. */}
@@ -1704,6 +1715,12 @@ End of Export
             </button>
             </div>
           </div>
+        )}
+        {!isSignedIn && !viewport.keyboardOpen && (
+          <p className="mx-auto flex max-w-4xl flex-wrap items-center justify-center gap-x-1 px-4 pt-1 text-center text-xs text-brown-600 dark:text-gray-300 sm:pt-2 sm:text-sm">
+            Free account needed to send — takes a minute.
+            <button type="button" onClick={handleSignInClick} className="inline-flex min-h-11 items-center rounded-lg px-2 font-semibold text-coral-700 underline underline-offset-2 hover:text-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:text-ocean-200">Sign in</button>
+          </p>
         )}
         <MessageInput
           key={composerScope}

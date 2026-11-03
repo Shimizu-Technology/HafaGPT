@@ -54,12 +54,12 @@ export function VocabularyWordPage() {
   return (
     <LearnerPageShell>
       <LearnerPageHeader
-        title={word.chamorro || 'Dictionary entry'}
+        title="Dictionary entry"
+        titleAs="p"
         subtitle="Exact dictionary record"
         icon={BookOpen}
         backTo={returnTo}
         backLabel={backLabel}
-        trailing={<PronunciationButton text={word.chamorro} />}
       />
 
       <main className="mx-auto max-w-3xl px-4 py-5 sm:py-8">
@@ -68,15 +68,16 @@ export function VocabularyWordPage() {
             <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">
               Chamorro headword
             </p>
-            <div className="mt-2 flex flex-wrap items-baseline gap-3">
-              <h2 className="font-chamorro text-4xl font-semibold tracking-tight text-brown-950 dark:text-white">
+            <div className="mt-2 flex flex-wrap items-center gap-3">
+              <h1 className="font-chamorro text-4xl font-semibold tracking-tight text-brown-950 dark:text-white">
                 {word.chamorro || 'Untitled entry'}
-              </h2>
+              </h1>
               {word.part_of_speech && (
                 <span className="text-sm italic text-brown-500 dark:text-gray-400">
                   {word.part_of_speech}
                 </span>
               )}
+              <PronunciationButton text={word.chamorro} />
             </div>
             <p className="mt-4 text-xl leading-relaxed text-brown-800 dark:text-gray-100">
               {word.definition || 'No definition is recorded for this entry.'}

@@ -59,6 +59,24 @@ describe('LearnerPageHeader', () => {
     expect(screen.getByRole('button', { name: 'Toggle theme' })).toBeInTheDocument();
   });
 
+  it('draws the title as the page heading, or as plain context when the page body owns the h1', () => {
+    const { rerender } = render(<MemoryRouter><LearnerPageHeader title="Library" icon={MessageCircle} /></MemoryRouter>);
+    expect(screen.getByRole('heading', { level: 1, name: 'Library' })).toBeInTheDocument();
+
+    rerender(<MemoryRouter><LearnerPageHeader title="Plans" titleAs="p" subtitle="Compare options" /><h1>Pick a plan</h1></MemoryRouter>);
+    expect(screen.queryByRole('heading', { name: 'Plans' })).not.toBeInTheDocument();
+    expect(screen.getByText('Plans')).toBeInTheDocument();
+    expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+  });
+
+  it('leaves the theme toggle to the shared app bar from the sm breakpoint, except where there is none', () => {
+    const { unmount } = render(<MemoryRouter initialEntries={['/library']}><LearnerPageHeader title="Library" /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: 'Toggle theme' })).toHaveClass('sm:hidden');
+    unmount();
+    render(<MemoryRouter initialEntries={['/share/abc']}><LearnerPageHeader title="Shared chat" /></MemoryRouter>);
+    expect(screen.getByRole('button', { name: 'Toggle theme' })).not.toHaveClass('sm:hidden');
+  });
+
   it('renders shared progress content accessibly', () => {
     render(
       <MemoryRouter>

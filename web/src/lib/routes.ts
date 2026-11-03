@@ -124,3 +124,8 @@ export function positivePageFromSearch(value: string | null): number {
   const page = Number(value);
   return Number.isSafeInteger(page) && page > 0 && page <= MAX_APP_PAGE ? page : 1;
 }
+
+/** Routes that draw their own chrome and so do not get the shared app bar. */
+export function routeHasAppBar(pathname: string): boolean {
+  return !pathname.startsWith('/admin') && !pathname.startsWith('/share/');
+}

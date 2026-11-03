@@ -57,10 +57,10 @@ function StorySection({
 /** Explain why HåfaGPT exists, how it works, and how content trust is labeled. */
 export function AboutPage() {
   return (
-    <PublicPage title="Our story" subtitle="Why HåfaGPT exists and who it is for" icon={Heart} maxWidthClassName="max-w-4xl">
+    <PublicPage title="Our story" titleAs="p" subtitle="Why HåfaGPT exists and who it is for" icon={Heart} maxWidthClassName="max-w-4xl">
       <section className="grid items-center gap-6 sm:grid-cols-[minmax(0,1fr)_18rem] sm:gap-9">
         <div>
-          <h2 className="text-3xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-4xl">Why I built HåfaGPT</h2>
+          <h1 className="text-3xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-4xl">Why I built HåfaGPT</h1>
           <p className="mt-4 max-w-xl text-lg leading-relaxed text-brown-600 dark:text-gray-300">
             A family project that grew into a practical place to ask, translate, listen, practice, and learn Chamorro.
           </p>

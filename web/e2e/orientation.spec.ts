@@ -8,7 +8,7 @@ test.beforeEach(async ({ page }) => {
 test('system appearance stays live until a visitor makes an explicit choice', async ({ page }) => {
   await page.emulateMedia({ colorScheme: 'dark' });
   await page.goto('/support');
-  await expect(page.getByRole('heading', { name: 'Support', exact: true })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'How can we help?', exact: true })).toBeVisible();
   await expect(page.locator('html')).toHaveClass(/dark/);
   expect(await page.evaluate(() => localStorage.getItem('theme'))).toBeNull();
   await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute('content', '#0f172a');
@@ -27,7 +27,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
   test(`forward routes reset the real scroller and browser history restores it (${colorScheme})`, async ({ page }) => {
     await page.emulateMedia({ colorScheme });
     await page.goto('/support');
-    const heading = page.getByRole('heading', { name: 'Support', exact: true });
+    const heading = page.getByRole('heading', { name: 'How can we help?', exact: true });
     await expect(heading).toBeVisible();
     const about = page.getByRole('navigation', { name: 'Information' }).getByRole('link', { name: 'About', exact: true });
     await about.scrollIntoViewIfNeeded();
@@ -36,7 +36,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await about.focus();
     await page.keyboard.press('Enter');
     await expect(page).toHaveURL(/\/about$/);
-    await expect(page.getByRole('heading', { name: 'Our story', exact: true })).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'Why I built HåfaGPT', exact: true })).toBeFocused();
     await expect.poll(() => page.locator('#root').evaluate(root => root.scrollTop)).toBe(0);
     await page.locator('#root').evaluate(root => { root.scrollTop = 200; });
     await expect.poll(() => page.locator('#root').evaluate(root => root.scrollTop)).toBe(200);
@@ -46,7 +46,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
     await expect(heading).toBeFocused();
     await expect.poll(() => page.locator('#root').evaluate(root => root.scrollTop)).toBeCloseTo(supportOffset, 0);
     await page.goForward();
-    await expect(page.getByRole('heading', { name: 'Our story', exact: true })).toBeFocused();
+    await expect(page.getByRole('heading', { name: 'Why I built HåfaGPT', exact: true })).toBeFocused();
     await expect.poll(() => page.locator('#root').evaluate(root => root.scrollTop)).toBe(200);
   });
 }
