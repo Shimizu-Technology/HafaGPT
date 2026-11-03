@@ -5,8 +5,11 @@ from pathlib import Path
 from api.dictionary_service import (
     DictionaryService,
     _canonical_trust,
+    _is_review_gated,
+    _review_gated_terms,
     _word_of_day_pools,
     dictionary_word_id,
+    normalize_chamorro,
 )
 
 
@@ -137,16 +140,16 @@ def test_dynamic_quiz_choices_are_concise_and_unique():
         assert all("," not in option and ";" not in option for option in question["options"])
 
 
-def test_word_of_the_day_broader_pool_keeps_developing_canonical_entries():
-    """Keep review-needed source entries available on broader-rotation days."""
+def test_word_of_the_day_broader_pool_keeps_low_confidence_canonical_entries():
+    """Keep low-confidence source entries available on broader-rotation days."""
 
     preferred_word = {
         "chamorro": "Buenas dias",
         "canonical_entry": {"review_status": "verified", "confidence": "high"},
     }
     developing_word = {
-        "chamorro": "Hu hånao",
-        "canonical_entry": {"review_status": "needs_review", "confidence": "low"},
+        "chamorro": "Low-confidence term",
+        "canonical_entry": {"review_status": "source_backed", "confidence": "low"},
     }
     unmatched_word = {"chamorro": "Recorded corpus term", "canonical_entry": None}
 
@@ -187,3 +190,60 @@ def test_category_search_accepts_phone_keyboard_apostrophes():
     service._categories_cache = {"greetings": [{"chamorro": "Si Yu'os Ma'åse'", "definition": "thank you"}]}
     assert service.get_category_words("greetings", query="Yu’os Ma’åse’")["total"] == 1
     assert service.get_category_words("greetings", query="Yu‘os Ma‘åse‘")["total"] == 1
+
+
+REVIEW_GATED_PHRASES = ("Hu hånao", "Hu kånno'", "Hu maigo'")
+
+
+def test_review_gate_reads_canonical_review_status():
+    for phrase in REVIEW_GATED_PHRASES:
+        assert _is_review_gated(phrase)
+    # Straight and curly apostrophes and missing diacritics are the same word.
+    assert _is_review_gated("Hu kanno’")
+    assert not _is_review_gated("Håfa Adai")
+    canonical = json.loads(
+        (Path(__file__).parents[1] / "language_content" / "canonical_vocabulary.json").read_text(encoding="utf-8")
+    )
+    for entry in canonical["entries"]:
+        if entry["review_status"] == "needs_review":
+            assert _is_review_gated(entry["recommended_teaching_term"])
+    assert not _review_gated_terms() & {"hafa adai"}
+
+
+def test_word_of_the_day_never_selects_review_gated_phrases_in_a_full_year(monkeypatch):
+    """Scan every Guam day of two years (one leap) so no rotation path can pick a gated term."""
+
+    from datetime import date, timedelta
+
+    from api import dictionary_service
+
+    service = DictionaryService.__new__(DictionaryService)
+    service._words_by_headword = {}
+    gated = {normalize_chamorro(term) for term in REVIEW_GATED_PHRASES}
+    seen_broader = set()
+    day = date(2026, 1, 1)
+    while day < date(2028, 1, 1):
+        monkeypatch.setattr(dictionary_service, "get_guam_date", lambda day=day: day)
+        result = service.get_word_of_the_day()
+        assert normalize_chamorro(result["chamorro"]) not in gated
+        assert not _is_review_gated(result["chamorro"])
+        if day.timetuple().tm_yday % 5 == 0:
+            seen_broader.add(result["chamorro"])
+        day += timedelta(days=1)
+    assert seen_broader  # the broader rotation still runs
+
+
+def test_word_of_the_day_fallback_skips_review_gated_manifest(monkeypatch, tmp_path):
+    """A manifest made only of gated terms yields the safe default, not a gated word."""
+
+    from api import dictionary_service
+
+    manifest = {"words": {phrase: {"english": "to go"} for phrase in REVIEW_GATED_PHRASES}}
+    fake_file = tmp_path / "api" / "dictionary_service.py"
+    (tmp_path / "audio_generation").mkdir()
+    (tmp_path / "audio_generation" / "manifest.json").write_text(json.dumps(manifest), encoding="utf-8")
+    monkeypatch.setattr(dictionary_service, "__file__", str(fake_file))
+    service = DictionaryService.__new__(DictionaryService)
+    service._words_by_headword = {}
+    result = service.get_word_of_the_day()
+    assert result["chamorro"] == "Håfa Adai"
