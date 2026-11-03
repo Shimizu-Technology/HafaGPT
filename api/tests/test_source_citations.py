@@ -8,7 +8,7 @@ def test_legacy_source_pairs_gain_governed_public_metadata() -> None:
     citations = format_source_citations([("Chamoru.info dictionary", None)])
 
     assert citations[0]["source_id"] == "chamoru_info_dictionary"
-    assert citations[0]["url"] == "https://www.chamoru.info/dictionary/"
+    assert citations[0]["url"] == "http://www.chamoru.info/dictionary/"
     assert citations[0]["authority_score"] == 3
 
 

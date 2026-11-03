@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "last_audited_at": "2026-08-29",
+  "last_audited_at": "2026-11-03",
   "policy": "A record documents outreach and scope; it does not enable ingestion. Production ingestion also requires an explicit allowed use and permission reference in language_source_registry.json.",
   "records": [
     {
@@ -288,10 +288,182 @@
       "owner_or_steward": "Supreme Court of Guam Compiler of Laws",
       "status": "not_pursued",
       "requested_uses": ["cite_public_law", "derive_original_legal_summary", "public_service"],
-      "evidence_reference": "https://www.guamcourts.org/compileroflaws/GCA/01gca/1gc007.PDF",
+      "evidence_reference": "https://col.guamcourts.gov/sites/default/files/01gc007.pdf",
       "expires_at": null,
       "restrictions": "Cite the controlling section and provide an original summary; do not vectorize the complete code title.",
       "next_action": "Recheck the official compiler if section 706 is amended."
+    },
+    {
+      "source_id": "diksionariu_com",
+      "owner_or_steward": "Dr. David Ruskin; upstream dictionary and audio rights holders",
+      "status": "not_requested",
+      "requested_uses": [
+        "retain_snapshot",
+        "create_embeddings",
+        "return_short_excerpts",
+        "model_evaluation",
+        "public_service"
+      ],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Public-domain claims on the site do not resolve upstream rights or its ai-train=no signal. No CSV, morphology, or audio ingestion without written scope.",
+      "next_action": "Obtain item-specific rights, version, attribution, and scope before copying or ingesting content."
+    },
+    {
+      "source_id": "kumision_historical_dictionary_shelf",
+      "owner_or_steward": "Kumisión historical dictionary shelf",
+      "status": "not_requested",
+      "requested_uses": [
+        "retain_snapshot",
+        "create_embeddings",
+        "return_short_excerpts",
+        "model_evaluation",
+        "public_service"
+      ],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Historical lane only. Confirm rights separately for each work and scan; the shelf also includes 1932 and 1995 works. No shelf-wide public-domain claim.",
+      "next_action": "Obtain item-specific rights, version, attribution, and scope before copying or ingesting content."
+    },
+    {
+      "source_id": "gdoe_chlccspi_2025",
+      "owner_or_steward": "GDOE CHLCCSPI / Medidan Suhetu (2025 filename)",
+      "status": "not_requested",
+      "requested_uses": [
+        "retain_snapshot",
+        "create_embeddings",
+        "return_short_excerpts",
+        "model_evaluation",
+        "public_service"
+      ],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Official standards candidate, not a reuse grant. The landing page says GEB Approved 2026 while the PDF filename says 2025; preserve that version discrepancy.",
+      "next_action": "Obtain item-specific rights, version, attribution, and scope before copying or ingesting content."
+    },
+    {
+      "source_id": "tatoeba_chamorro",
+      "owner_or_steward": "Tatoeba sentence contributors",
+      "status": "not_pursued",
+      "requested_uses": [],
+      "evidence_reference": "https://tatoeba.org/en/downloads",
+      "expires_at": null,
+      "restrictions": "CC BY 2.0 FR supports attributed offline snapshots. Crowd-sourced, unreviewed, orthography unknown; not a normative teaching source. No RAG ingestion in this change.",
+      "next_action": "Preserve attribution and license on redistribution. Any RAG ingestion requires a later explicit approval and registry change."
+    },
+    {
+      "source_id": "opus_tatoeba_ch_en",
+      "owner_or_steward": "OPUS and Tatoeba contributors",
+      "status": "not_pursued",
+      "requested_uses": [],
+      "evidence_reference": "https://opus.nlpl.eu/legacy/Tatoeba-v2026-07-08.php",
+      "expires_at": null,
+      "restrictions": "Derivative of Tatoeba; not independent corroboration. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "next_action": "Preserve attribution and license on redistribution. Any RAG ingestion requires a later explicit approval and registry change."
+    },
+    {
+      "source_id": "opus_bible_uedin_ch_en",
+      "owner_or_steward": "OPUS and bible-uedin contributors",
+      "status": "not_pursued",
+      "requested_uses": [],
+      "evidence_reference": "https://opus.nlpl.eu/legacy/bible-uedin-v1.php",
+      "expires_at": null,
+      "restrictions": "Bible-derived pairs are historical only; exclude from modern teaching. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "next_action": "Preserve attribution and license on redistribution. Any RAG ingestion requires a later explicit approval and registry change."
+    },
+    {
+      "source_id": "opus_translatewiki_ch_en",
+      "owner_or_steward": "OPUS and translatewiki contributors",
+      "status": "not_pursued",
+      "requested_uses": [],
+      "evidence_reference": "https://opus.nlpl.eu/legacy/translatewiki-v2026-07-01.php",
+      "expires_at": null,
+      "restrictions": "UI localization strings, not certified natural-sentence teaching examples. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "next_action": "Preserve attribution and license on redistribution. Any RAG ingestion requires a later explicit approval and registry change."
+    },
+    {
+      "source_id": "opus_wikimedia_ch_en",
+      "owner_or_steward": "OPUS and wikimedia contributors",
+      "status": "not_pursued",
+      "requested_uses": [],
+      "evidence_reference": "https://opus.nlpl.eu/legacy/wikimedia-v20260327.php",
+      "expires_at": null,
+      "restrictions": "Retain attribution and share-alike terms for this subset; machine alignment remains unreviewed. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "next_action": "Preserve attribution and license on redistribution. Any RAG ingestion requires a later explicit approval and registry change."
+    },
+    {
+      "source_id": "opus_qed_ch_en",
+      "owner_or_steward": "OPUS QED ch-en v2.0a",
+      "status": "not_requested",
+      "requested_uses": [
+        "retain_snapshot",
+        "create_embeddings",
+        "return_short_excerpts",
+        "model_evaluation",
+        "public_service"
+      ],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Skipped: the OPUS page includes a QCRI all-rights-reserved notice without a clear reuse license. No downloaded sentence snapshot.",
+      "next_action": "Obtain item-specific rights, version, attribution, and scope before copying or ingesting content."
+    },
+    {
+      "source_id": "abs_bible_1908",
+      "owner_or_steward": "American Bible Society (1908); hosted by eBible.org",
+      "status": "not_pursued",
+      "requested_uses": [],
+      "evidence_reference": "https://ebible.org/cha/copyright.htm",
+      "expires_at": null,
+      "restrictions": "The publisher identifies this edition as public domain. Historical reference only; no modern teaching, audio rights claim, or corpus ingestion here.",
+      "next_action": "Preserve attribution and license on redistribution. Any RAG ingestion requires a later explicit approval and registry change."
+    },
+    {
+      "source_id": "kumision_audio_programs",
+      "owner_or_steward": "Kumisión Word of the Day and interview/audio programs",
+      "status": "not_requested",
+      "requested_uses": [
+        "retain_snapshot",
+        "create_embeddings",
+        "return_short_excerpts",
+        "model_evaluation",
+        "public_service"
+      ],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Word of the Day, expert interviews, learner interviews, CHamoru Everyday, and read-alongs require recording-level consent, speaker attribution, and permission. No audio download, serving, or training.",
+      "next_action": "Obtain item-specific rights, version, attribution, and scope before copying or ingesting content."
+    },
+    {
+      "source_id": "kumision_seyon_inafitma",
+      "owner_or_steward": "Kumisión Seyon Inafitma",
+      "status": "not_requested",
+      "requested_uses": [
+        "retain_snapshot",
+        "create_embeddings",
+        "return_short_excerpts",
+        "model_evaluation",
+        "public_service"
+      ],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "Potential human review/certification route. Registration is not an endorsement, seal, reviewer approval, or content license.",
+      "next_action": "Obtain item-specific rights, version, attribution, and scope before copying or ingesting content."
+    },
+    {
+      "source_id": "kumision_guam_orthography_2027_candidate",
+      "owner_or_steward": "Kumisión 2027 orthography download (discovery only)",
+      "status": "not_requested",
+      "requested_uses": [
+        "retain_snapshot",
+        "create_embeddings",
+        "return_short_excerpts",
+        "model_evaluation",
+        "public_service"
+      ],
+      "evidence_reference": null,
+      "expires_at": null,
+      "restrictions": "As checked 2026-11-03, the landing page and linked Drive file say 2027. Do not relabel this as the 2024 edition or change the chosen Guam 2024 teaching default. Needs a separate edition review and permission.",
+      "next_action": "Obtain item-specific rights, version, attribution, and scope before copying or ingesting content."
     }
   ]
 }

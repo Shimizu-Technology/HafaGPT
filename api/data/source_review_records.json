@@ -110,7 +110,7 @@
       "review_status": "complete",
       "quality": {"authority_score": 3, "temporal_scope": "mixed", "regions": ["Guam"], "lineage": "derivative", "extraction_risk": "medium", "confidence": "high"},
       "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "usage", "educational"], "citation_required": true, "max_source_quote_words": 10},
-      "evidence": [{"kind": "publisher", "reference": "https://www.chamoru.info/dictionary/", "accessed_at": "2026-08-18", "supports": "Public learner dictionary derived in part from older lexicons."}],
+      "evidence": [{"kind": "publisher", "reference": "http://www.chamoru.info/dictionary/", "accessed_at": "2026-08-18", "supports": "Public learner dictionary derived in part from older lexicons."}],
       "rationale": "Useful lookup evidence, but derivative lineage must be preserved and it cannot count as an independent vote."
     },
     {
@@ -119,7 +119,7 @@
       "review_status": "provisional",
       "quality": {"authority_score": 3, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "aggregator", "extraction_risk": "medium", "confidence": "medium"},
       "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
-      "evidence": [{"kind": "publisher", "reference": "https://www.chamoru.info/language-lessons/", "accessed_at": "2026-08-18", "supports": "Publicly accessible learner explanations and examples."}],
+      "evidence": [{"kind": "publisher", "reference": "http://www.chamoru.info/language-lessons/", "accessed_at": "2026-08-18", "supports": "Publicly accessible learner explanations and examples."}],
       "rationale": "Suitable for corroborating original learner explanations, not canonical adjudication."
     },
     {
@@ -176,7 +176,7 @@
       "review_status": "complete",
       "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
       "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["lookup", "educational", "usage"], "citation_required": true, "max_source_quote_words": 10},
-      "evidence": [{"kind": "institution", "reference": "https://kumisionchamoru.guam.gov/utugrafihan-chamoru-guahan/", "accessed_at": "2026-08-18", "supports": "The official language commission presents the 2024 guide as its current Guam orthography update."}],
+      "evidence": [{"kind": "institution", "reference": "https://kumisionchamoru.guam.gov/wp-content/uploads/2024/11/Utugrafihan-CHamoru-Guahan-3rd-Ed-2024_Kumision-i-Fino-CHamoru_Digital.pdf", "accessed_at": "2026-11-03", "supports": "Official-hosted PDF, copyright 2024, ISBN 979-8-9860913-2-7. This dated edition remains the chosen teaching default; the landing page now advertises a separate 2027 download."}],
       "rationale": "Primary modern authority for Guam spelling; do not generalize its rules to CNMI without labeling."
     },
     {
@@ -299,8 +299,417 @@
       "review_status": "complete",
       "quality": {"authority_score": 5, "temporal_scope": "modern", "regions": ["Guam"], "lineage": "independent", "extraction_risk": "low", "confidence": "high"},
       "usage": {"mode": "knowledge_cards", "full_text_vectorization": false, "allowed_query_types": ["educational", "cultural"], "citation_required": true, "max_source_quote_words": 10},
-      "evidence": [{"kind": "institution", "reference": "https://www.guamcourts.org/compileroflaws/GCA/01gca/1gc007.PDF", "accessed_at": "2026-08-19", "supports": "Section 706 of Title 1 identifies English and Chamorro as Guam's official languages."}],
+      "evidence": [{"kind": "institution", "reference": "https://col.guamcourts.gov/sites/default/files/01gc007.pdf", "accessed_at": "2026-08-19", "supports": "Section 706 of Title 1 identifies English and Chamorro as Guam's official languages."}],
       "rationale": "Controlling primary legal source for the official-language claim; cite section 706 without reproducing the code as a corpus."
+    },
+    {
+      "source_id": "kumision_guam_orthography_2027_candidate",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 3,
+        "temporal_scope": "unknown",
+        "regions": [
+          "Guam"
+        ],
+        "lineage": "unknown",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "discovery_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "publisher",
+          "reference": "https://kumisionchamoru.guam.gov/utugrafihan-chamoru-guahan/",
+          "accessed_at": "2026-11-03",
+          "supports": "As checked 2026-11-03, the landing page and linked Drive file say 2027. Do not relabel this as the 2024 edition or change the chosen Guam 2024 teaching default. Needs a separate edition review and permission."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "diksionariu_com",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 3,
+        "temporal_scope": "unknown",
+        "regions": [
+          "Guam"
+        ],
+        "lineage": "unknown",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "discovery_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "publisher",
+          "reference": "https://diksionariu.com/",
+          "accessed_at": "2026-11-03",
+          "supports": "Public-domain claims on the site do not resolve upstream rights or its ai-train=no signal. No CSV, morphology, or audio ingestion without written scope."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "kumision_historical_dictionary_shelf",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 3,
+        "temporal_scope": "historical",
+        "regions": [
+          "Guam"
+        ],
+        "lineage": "unknown",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "historical_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [
+          "historical"
+        ],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "publisher",
+          "reference": "https://kumisionchamoru.guam.gov/lepblo-siha-publications/",
+          "accessed_at": "2026-11-03",
+          "supports": "Historical lane only. Confirm rights separately for each work and scan; the shelf also includes 1932 and 1995 works. No shelf-wide public-domain claim."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "gdoe_chlccspi_2025",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 3,
+        "temporal_scope": "unknown",
+        "regions": [
+          "Guam"
+        ],
+        "lineage": "unknown",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "discovery_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "publisher",
+          "reference": "https://www.gdoe.net/files/user/59/file/CHLCCSPI-(Medidan-Suhetu)-GEB-Approved-2025.pdf",
+          "accessed_at": "2026-11-03",
+          "supports": "Official standards candidate, not a reuse grant. The landing page says GEB Approved 2026 while the PDF filename says 2025; preserve that version discrepancy."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "tatoeba_chamorro",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 1,
+        "temporal_scope": "unknown",
+        "regions": [
+          "unspecified"
+        ],
+        "lineage": "unknown",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "discovery_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "terms",
+          "reference": "https://tatoeba.org/en/downloads",
+          "accessed_at": "2026-11-03",
+          "supports": "CC BY 2.0 FR supports attributed offline snapshots. Crowd-sourced, unreviewed, orthography unknown; not a normative teaching source. No RAG ingestion in this change."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "opus_tatoeba_ch_en",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 1,
+        "temporal_scope": "unknown",
+        "regions": [
+          "unspecified"
+        ],
+        "lineage": "derivative",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "discovery_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "terms",
+          "reference": "https://opus.nlpl.eu/legacy/Tatoeba-v2026-07-08.php",
+          "accessed_at": "2026-11-03",
+          "supports": "Derivative of Tatoeba; not independent corroboration. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "opus_bible_uedin_ch_en",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 1,
+        "temporal_scope": "historical",
+        "regions": [
+          "unspecified"
+        ],
+        "lineage": "derivative",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "historical_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [
+          "historical"
+        ],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "terms",
+          "reference": "https://opus.nlpl.eu/legacy/bible-uedin-v1.php",
+          "accessed_at": "2026-11-03",
+          "supports": "Bible-derived pairs are historical only; exclude from modern teaching. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "opus_translatewiki_ch_en",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 1,
+        "temporal_scope": "unknown",
+        "regions": [
+          "unspecified"
+        ],
+        "lineage": "derivative",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "discovery_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "terms",
+          "reference": "https://opus.nlpl.eu/legacy/translatewiki-v2026-07-01.php",
+          "accessed_at": "2026-11-03",
+          "supports": "UI localization strings, not certified natural-sentence teaching examples. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "opus_wikimedia_ch_en",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 1,
+        "temporal_scope": "unknown",
+        "regions": [
+          "unspecified"
+        ],
+        "lineage": "derivative",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "discovery_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "terms",
+          "reference": "https://opus.nlpl.eu/legacy/wikimedia-v20260327.php",
+          "accessed_at": "2026-11-03",
+          "supports": "Retain attribution and share-alike terms for this subset; machine alignment remains unreviewed. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "opus_qed_ch_en",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 3,
+        "temporal_scope": "unknown",
+        "regions": [
+          "unspecified"
+        ],
+        "lineage": "derivative",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "discovery_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "publisher",
+          "reference": "https://opus.nlpl.eu/legacy/QED.php",
+          "accessed_at": "2026-11-03",
+          "supports": "Skipped: the OPUS page includes a QCRI all-rights-reserved notice without a clear reuse license. No downloaded sentence snapshot."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "abs_bible_1908",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 1,
+        "temporal_scope": "historical",
+        "regions": [
+          "Guam"
+        ],
+        "lineage": "unknown",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "historical_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [
+          "historical"
+        ],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "terms",
+          "reference": "https://ebible.org/cha/copyright.htm",
+          "accessed_at": "2026-11-03",
+          "supports": "The publisher identifies this edition as public domain. Historical reference only; no modern teaching, audio rights claim, or corpus ingestion here."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "kumision_audio_programs",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 3,
+        "temporal_scope": "unknown",
+        "regions": [
+          "Guam"
+        ],
+        "lineage": "unknown",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "discovery_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "publisher",
+          "reference": "https://kumisionchamoru.guam.gov/pruyekto-siha-projects/fino-i-haani-word-of-the-day/",
+          "accessed_at": "2026-11-03",
+          "supports": "Word of the Day, expert interviews, learner interviews, CHamoru Everyday, and read-alongs require recording-level consent, speaker attribution, and permission. No audio download, serving, or training."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+    },
+    {
+      "source_id": "kumision_seyon_inafitma",
+      "reviewed_at": "2026-11-03",
+      "review_status": "provisional",
+      "quality": {
+        "authority_score": 3,
+        "temporal_scope": "unknown",
+        "regions": [
+          "Guam"
+        ],
+        "lineage": "unknown",
+        "extraction_risk": "high",
+        "confidence": "low"
+      },
+      "usage": {
+        "mode": "discovery_only",
+        "full_text_vectorization": false,
+        "allowed_query_types": [],
+        "citation_required": true,
+        "max_source_quote_words": 0
+      },
+      "evidence": [
+        {
+          "kind": "publisher",
+          "reference": "https://kumisionchamoru.guam.gov/community-services/seyon-inafitma/",
+          "accessed_at": "2026-11-03",
+          "supports": "Potential human review/certification route. Registration is not an endorsement, seal, reviewer approval, or content license."
+        }
+      ],
+      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
     }
   ]
 }

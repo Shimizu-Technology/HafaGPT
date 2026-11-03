@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "policy_version": "2026-08-29-governed-cutover",
+  "policy_version": "2026-11-03-offline-source-inventory",
   "default_policy": {
     "retrieval_allowed": false,
     "reason": "Unknown sources fail closed until provenance, rights, role, and review status are registered."
@@ -225,7 +225,7 @@
     {
       "id": "chamoru_info_dictionary",
       "name": "Chamoru.info dictionary",
-      "canonical_url": "https://www.chamoru.info/dictionary/",
+      "canonical_url": "http://www.chamoru.info/dictionary/",
       "match": {
         "source_contains": ["chamoru.info/dictionary", "chamoru_info_dictionary"]
       },
@@ -245,7 +245,7 @@
     {
       "id": "chamoru_info_lessons",
       "name": "Chamoru.info language lessons",
-      "canonical_url": "https://www.chamoru.info/language-lessons/",
+      "canonical_url": "http://www.chamoru.info/language-lessons/",
       "match": {
         "source_contains": [
           "chamoru.info/language-lessons",
@@ -357,11 +357,42 @@
       "decision": "Separated from current teaching and exposed only for explicit historical questions."
     },
     {
+      "id": "kumision_guam_orthography_2027_candidate",
+      "name": "Kumisión 2027 orthography download (discovery only)",
+      "canonical_url": "https://drive.google.com/file/d/1PoIAWljnv7snEZF43H-GP5Y_wX9aaRJJ/view?usp=sharing",
+      "landing_url": "https://kumisionchamoru.guam.gov/utugrafihan-chamoru-guahan/",
+      "match": {
+        "source_contains": [
+          "kumision_guam_orthography_2027_candidate",
+          "2027-utugrafihan",
+          "2027_utugrafihan",
+          "1poiawljnv7snezf43h-gp5y_wx9aarjj"
+        ]
+      },
+      "content_role": "normative_orthography",
+      "region": "Guam",
+      "orthography": "version_unreviewed",
+      "rights_status": "permission_required",
+      "review_status": "blocked_pending_permission",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "As checked 2026-11-03, the landing page and linked Drive file say 2027. Do not relabel this as the 2024 edition or change the chosen Guam 2024 teaching default. Needs a separate edition review and permission.",
+      "download_url": "https://drive.google.com/file/d/1PoIAWljnv7snEZF43H-GP5Y_wX9aaRJJ/view?usp=sharing"
+    },
+    {
       "id": "kumision_guam_orthography_2024",
       "name": "Utugrafihan CHamoru, Guåhan, third edition (2024)",
-      "canonical_url": "https://kumisionchamoru.guam.gov/wp-content/uploads/2025/02/Utugrafihan-CHamoru-GuA%C2%A5han-3rd-Ed-2024_KumisiA%C2%B3n-i-Fino-CHamoru_Digital.pdf",
+      "canonical_url": "https://kumisionchamoru.guam.gov/wp-content/uploads/2024/11/Utugrafihan-CHamoru-Guahan-3rd-Ed-2024_Kumision-i-Fino-CHamoru_Digital.pdf",
       "match": {
-        "source_contains": ["utugrafihan-chamoru", "utugrafihan_chamoru"]
+        "source_contains": ["utugrafihan-chamoru", "utugrafihan_chamoru", "utugrafihan-chamoru-guahan/"]
       },
       "content_role": "normative_orthography",
       "region": "Guam",
@@ -454,6 +485,364 @@
       },
       "decision": "Preferred curriculum and multimedia collaboration candidate; do not scrape."
     },
+    {
+      "id": "diksionariu_com",
+      "name": "diksionariu.com / Dr. David Ruskin",
+      "canonical_url": "https://diksionariu.com/",
+      "match": {
+        "source_contains": [
+          "diksionariu.com",
+          "diksionariu_com"
+        ]
+      },
+      "content_role": "lexical_reference",
+      "region": "Guam",
+      "orthography": "source_specific",
+      "rights_status": "permission_required",
+      "review_status": "blocked_pending_permission",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Public-domain claims on the site do not resolve upstream rights or its ai-train=no signal. No CSV, morphology, or audio ingestion without written scope."
+    },
+    {
+      "id": "kumision_historical_dictionary_shelf",
+      "name": "Kumisión historical dictionary shelf",
+      "canonical_url": "https://kumisionchamoru.guam.gov/lepblo-siha-publications/",
+      "match": {
+        "source_contains": [
+          "kumision_historical_dictionary_shelf",
+          "1865_diccionario-espanol-chamorro",
+          "1903_the-chamorro-language-of-guam",
+          "1910_chamorro-worterbuch",
+          "1918_dictionary-and-grammar",
+          "1932_diccionario-chamorro-castellano",
+          "1995_listan-palabra"
+        ]
+      },
+      "content_role": "historical",
+      "region": "Guam",
+      "orthography": "historical",
+      "rights_status": "permission_required",
+      "review_status": "blocked_pending_permission",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Historical lane only. Confirm rights separately for each work and scan; the shelf also includes 1932 and 1995 works. No shelf-wide public-domain claim."
+    },
+    {
+      "id": "gdoe_chlccspi_2025",
+      "name": "GDOE CHLCCSPI / Medidan Suhetu (2025 filename)",
+      "canonical_url": "https://www.gdoe.net/files/user/59/file/CHLCCSPI-(Medidan-Suhetu)-GEB-Approved-2025.pdf",
+      "match": {
+        "source_contains": [
+          "chlccspi",
+          "2025-chamoru-language-and-culture-standards-and-performance-indicators"
+        ]
+      },
+      "content_role": "curriculum_standard",
+      "region": "Guam",
+      "orthography": "source_specific",
+      "rights_status": "permission_required",
+      "review_status": "blocked_pending_permission",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Official standards candidate, not a reuse grant. The landing page says GEB Approved 2026 while the PDF filename says 2025; preserve that version discrepancy."
+    },
+    {
+      "id": "tatoeba_chamorro",
+      "name": "Tatoeba Chamorro-English sentences",
+      "canonical_url": "https://tatoeba.org/en/downloads",
+      "match": {
+        "source_contains": [
+          "tatoeba.org",
+          "tatoeba_chamorro"
+        ]
+      },
+      "content_role": "parallel_examples",
+      "region": "unspecified",
+      "orthography": "unknown",
+      "rights_status": "open_license_offline_snapshot_only",
+      "review_status": "unreviewed_offline_only",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "CC BY 2.0 FR supports attributed offline snapshots. Crowd-sourced, unreviewed, orthography unknown; not a normative teaching source. No RAG ingestion in this change.",
+      "license": "CC-BY-2.0-FR",
+      "license_url": "https://creativecommons.org/licenses/by/2.0/fr/"
+    },
+    {
+      "id": "opus_tatoeba_ch_en",
+      "name": "OPUS Tatoeba ch-en v2026-07-08",
+      "canonical_url": "https://opus.nlpl.eu/legacy/Tatoeba-v2026-07-08.php",
+      "match": {
+        "source_contains": [
+          "opus_tatoeba_ch_en",
+          "OPUS-Tatoeba/v2026-07-08",
+          "opus.nlpl.eu/legacy/Tatoeba-v2026-07-08",
+          "opus.nlpl.eu/datasets/Tatoeba"
+        ]
+      },
+      "content_role": "parallel_examples",
+      "region": "unspecified",
+      "orthography": "unknown",
+      "rights_status": "open_license_offline_snapshot_only",
+      "review_status": "unreviewed_offline_only",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Derivative of Tatoeba; not independent corroboration. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "license": "CC-BY-2.0-FR",
+      "license_url": "https://creativecommons.org/licenses/by/2.0/fr/",
+      "derivative_of": [
+        "tatoeba_chamorro"
+      ]
+    },
+    {
+      "id": "opus_bible_uedin_ch_en",
+      "name": "OPUS bible-uedin ch-en v1",
+      "canonical_url": "https://opus.nlpl.eu/legacy/bible-uedin-v1.php",
+      "match": {
+        "source_contains": [
+          "opus_bible_uedin_ch_en",
+          "OPUS-bible-uedin/v1",
+          "opus.nlpl.eu/legacy/bible-uedin-v1",
+          "opus.nlpl.eu/datasets/bible-uedin"
+        ]
+      },
+      "content_role": "historical",
+      "region": "unspecified",
+      "orthography": "historical",
+      "rights_status": "open_license_offline_snapshot_only",
+      "review_status": "unreviewed_offline_only",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Bible-derived pairs are historical only; exclude from modern teaching. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "license": "CC0-1.0",
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+    },
+    {
+      "id": "opus_translatewiki_ch_en",
+      "name": "OPUS translatewiki ch-en v2026-07-01",
+      "canonical_url": "https://opus.nlpl.eu/legacy/translatewiki-v2026-07-01.php",
+      "match": {
+        "source_contains": [
+          "opus_translatewiki_ch_en",
+          "OPUS-translatewiki/v2026-07-01",
+          "opus.nlpl.eu/legacy/translatewiki-v2026-07-01",
+          "opus.nlpl.eu/datasets/translatewiki"
+        ]
+      },
+      "content_role": "localization_examples",
+      "region": "unspecified",
+      "orthography": "unknown",
+      "rights_status": "open_license_offline_snapshot_only",
+      "review_status": "unreviewed_offline_only",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "UI localization strings, not certified natural-sentence teaching examples. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "license": "CC-BY-3.0",
+      "license_url": "https://creativecommons.org/licenses/by/3.0/"
+    },
+    {
+      "id": "opus_wikimedia_ch_en",
+      "name": "OPUS wikimedia ch-en v20260327",
+      "canonical_url": "https://opus.nlpl.eu/legacy/wikimedia-v20260327.php",
+      "match": {
+        "source_contains": [
+          "opus_wikimedia_ch_en",
+          "OPUS-wikimedia/v20260327",
+          "opus.nlpl.eu/legacy/wikimedia-v20260327",
+          "opus.nlpl.eu/datasets/wikimedia"
+        ]
+      },
+      "content_role": "parallel_examples",
+      "region": "unspecified",
+      "orthography": "unknown",
+      "rights_status": "open_license_offline_snapshot_only",
+      "review_status": "unreviewed_offline_only",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Retain attribution and share-alike terms for this subset; machine alignment remains unreviewed. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "license": "CC-BY-SA-4.0",
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+    },
+    {
+      "id": "opus_qed_ch_en",
+      "name": "OPUS QED ch-en v2.0a",
+      "canonical_url": "https://opus.nlpl.eu/legacy/QED.php",
+      "match": {
+        "source_contains": [
+          "opus_qed_ch_en",
+          "OPUS-QED/",
+          "opus.nlpl.eu/legacy/qed",
+          "opus.nlpl.eu/datasets/qed"
+        ]
+      },
+      "content_role": "discovery_only",
+      "region": "unspecified",
+      "orthography": "unknown",
+      "rights_status": "permission_required",
+      "review_status": "blocked_pending_permission",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Skipped: the OPUS page includes a QCRI all-rights-reserved notice without a clear reuse license. No downloaded sentence snapshot."
+    },
+    {
+      "id": "abs_bible_1908",
+      "name": "1908 ABS Chamorro Gospels, Acts, and Psalms",
+      "canonical_url": "https://ebible.org/cha/copyright.htm",
+      "match": {
+        "source_contains": [
+          "ebible.org/cha/",
+          "abs_bible_1908"
+        ]
+      },
+      "content_role": "historical",
+      "region": "Guam",
+      "orthography": "historical",
+      "rights_status": "open_license_offline_snapshot_only",
+      "review_status": "unreviewed_offline_only",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "The publisher identifies this edition as public domain. Historical reference only; no modern teaching, audio rights claim, or corpus ingestion here.",
+      "license": "Public-Domain",
+      "license_url": "https://ebible.org/cha/copyright.htm"
+    },
+    {
+      "id": "kumision_audio_programs",
+      "name": "Kumisión Word of the Day and interview/audio programs",
+      "canonical_url": "https://kumisionchamoru.guam.gov/pruyekto-siha-projects/fino-i-haani-word-of-the-day/",
+      "match": {
+        "source_contains": [
+          "fino-i-haani-word-of-the-day",
+          "linakngos-linakse-chamoru-expert",
+          "ti-atrasasao-kinalamten",
+          "chamoru-kada-haani-chamoru-everyday",
+          "kumision_audio_programs"
+        ]
+      },
+      "content_role": "authentic_usage",
+      "region": "Guam",
+      "orthography": "source_specific",
+      "rights_status": "permission_required",
+      "review_status": "blocked_pending_permission",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Word of the Day, expert interviews, learner interviews, CHamoru Everyday, and read-alongs require recording-level consent, speaker attribution, and permission. No audio download, serving, or training."
+    },
+    {
+      "id": "kumision_seyon_inafitma",
+      "name": "Kumisión Seyon Inafitma",
+      "canonical_url": "https://kumisionchamoru.guam.gov/community-services/seyon-inafitma/",
+      "match": {
+        "source_contains": [
+          "seyon-inafitma",
+          "kumision_seyon_inafitma"
+        ]
+      },
+      "content_role": "review_partner",
+      "region": "Guam",
+      "orthography": "Guam_2024",
+      "rights_status": "permission_required",
+      "review_status": "blocked_pending_permission",
+      "ingestion": {
+        "allowed": false,
+        "allowed_uses": [],
+        "permission_reference": null
+      },
+      "retrieval": {
+        "allowed": false,
+        "allowed_query_types": [],
+        "weight": 0.0
+      },
+      "decision": "Potential human review/certification route. Registration is not an endorsement, seal, reviewer approval, or content license."
+    },
+
     {
       "id": "gdoe_chamoru_program",
       "name": "GDOE CHamoru Language and Culture Program",
@@ -621,9 +1010,9 @@
     {
       "id": "guam_code_official_languages",
       "name": "Guam Code Annotated, 1 GCA § 706",
-      "canonical_url": "https://www.guamcourts.org/compileroflaws/GCA/01gca/1gc007.PDF",
+      "canonical_url": "https://col.guamcourts.gov/sites/default/files/01gc007.pdf",
       "match": {
-        "source_contains": ["guamcourts.org/compileroflaws/gca/01gca/1gc007"]
+        "source_contains": ["guamcourts.org/compileroflaws/gca/01gca/1gc007", "col.guamcourts.gov/sites/default/files/01gc007.pdf"]
       },
       "content_role": "official_language_law",
       "region": "Guam",

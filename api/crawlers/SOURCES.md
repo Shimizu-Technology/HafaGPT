@@ -1,172 +1,50 @@
-# 📚 RAG Knowledge Base Sources
+# Language source inventory
 
-This document tracks all sources that have been added to the HåfaGPT RAG knowledge base.
+Updated 2026-11-03. The enforceable policy is [the source registry](../data/language_source_registry.json), with [rights/outreach records](../data/source_permission_records.json) and [editorial dispositions](../data/source_review_records.json). Public access does not grant copying, embedding, or teaching rights.
 
-> **Audit warning (August 7, 2026):** The inventory and priority claims below were
-> written in December 2024 and do not match the current local database. The current
-> collection has 44,865 rows but 30,010 are redundant exact duplicates; 40,501 rows
-> come from Chamoru.info, and no current `natibunmarianas.org` rows are present.
-> Source rights and provenance are also incomplete. Do not use this file as evidence
-> that a source is licensed, current, independent, or approved for teaching. See
-> [LANGUAGE_RESOURCE_AUDIT_2026-08-07.md](../documentation/LANGUAGE_RESOURCE_AUDIT_2026-08-07.md)
-> before crawling, importing, or changing retrieval priorities.
->
-> The enforceable inventory and runtime decisions now live in
-> [`data/language_source_registry.json`](../data/language_source_registry.json),
-> with the complete implementation sequence in
-> [LANGUAGE_RESOURCE_PROGRAM_2026.md](../documentation/LANGUAGE_RESOURCE_PROGRAM_2026.md).
+## Current runtime and retained sources
 
----
+The code defaults to **`hafagpt_governed_openai_v3`**, OpenAI `text-embedding-3-small` at **384 dimensions**, and the main tutor's `gpt-5.6-luna` setting via OpenRouter. Environment overrides and separate feature/fallback models exist. The 2026-11-03 read-only local audit measured **14,800 distinct v3 documents**; production state was not inspected here. The legacy `chamorro_grammar` collection is retained separately. Old December 2024 counts and numeric crawler priorities do not describe current eligibility.
 
-## 📊 Current Stats
+| Source | Current scope |
+| --- | --- |
+| Local Revised snapshot / Natibu Marianas lineage | CNMI 2010 lexical reference; legacy snapshot remains available while provenance/permission work continues. No new ingestion grant. |
+| [Chamoru.info dictionary](http://www.chamoru.info/dictionary/) | Mixed source traditions; remains in use by Leon's decision while permission is pending. Derivative lineage is not independent corroboration. HTTP dictionary returned 200; HTTPS failed certificate validation. |
+| [Chamoru.info lessons](http://www.chamoru.info/language-lessons/) | Registered transitional pedagogy. Scheme corrected, but the HTTP lessons endpoint returned 500 during this check; HTTPS was also unavailable. |
+| Topping, Ogo, and Dungca (1975) | Legacy orthography, scoped historical/lexical evidence; permission still unresolved. |
+| Sandra Chung, Chamorro Grammar (2020) | Grammar reference; full-text reuse permission remains unresolved. |
+| Guampedia / copied Lengguahi-ta stories | Blocked pending written permission; old crawler priority numbers do not override policy. |
+| Rosetta / nineteenth-century dictionary snapshots | Historical lane; item-level provenance and rights remain separate concerns. |
 
-| Category | Count | Last Updated |
-|----------|-------|--------------|
-| Total Chunks | ~45,400 | December 2024 |
-| Dictionaries | 5 | December 2024 |
-| Educational PDFs | 3 | December 2024 |
-| Web Content | 10+ sites | December 2024 |
+See [HOW_RAG_WORKS.md](../documentation/HOW_RAG_WORKS.md) for the actual request flow and source controls.
 
----
+## Corrected official references
 
-## 📖 Dictionaries (Highest Priority)
+- **Chosen Guam 2024 orthography edition:** [official-hosted 2024 PDF](https://kumisionchamoru.guam.gov/wp-content/uploads/2024/11/Utugrafihan-CHamoru-Guahan-3rd-Ed-2024_Kumision-i-Fino-CHamoru_Digital.pdf). Returned 200; its copyright page says 2024 and ISBN 979-8-9860913-2-7. The former encoded February 2025 URL is broken. The [landing page](https://kumisionchamoru.guam.gov/utugrafihan-chamoru-guahan/) now advertises a **2027** download, registered separately as an unreviewed candidate; it is not silently substituted for the chosen 2024 edition.
+- **Guam official languages:** [Compiler of Laws, 1 GCA Chapter 7](https://col.guamcourts.gov/sites/default/files/01gc007.pdf), § 706. Returned 200, linked from the official compiler's current code index. Retains the old URL as a matching alias; full-title vectorization stays disabled.
 
-### IKNM/KAM Revised Dictionary (2025)
-- **Source**: [natibunmarianas.org/chamorro-dictionary](https://natibunmarianas.org/chamorro-dictionary/)
-- **Content**: 10,500+ dictionary entries with definitions, examples
-- **Priority**: 105 (High)
-- **Chunks**: 35
-- **Crawler**: `crawlers/iknm_kam_dictionary.py`
-- **Notes**: Revised version of Topping, Ogo, and Dungca (1975)
+## New candidates and licensed offline data
 
-### Chamorro-English Dictionary (TOD)
-- **Source**: Topping, Ogo, and Dungca (1975)
-- **Content**: Comprehensive Chamorro-English dictionary
-- **Priority**: 100
-- **Format**: PDF
+Every new record has **ingestion and retrieval disabled**. Rights permitting an offline snapshot do not authorize a RAG run or certify language accuracy.
 
-### Revised and Updated Chamorro Dictionary
-- **Source**: Various academic sources
-- **Content**: Updated dictionary entries
-- **Priority**: 100
-- **Format**: PDF
+| Source ID | Evidence / license | Disposition |
+| --- | --- | --- |
+| `diksionariu_com` | [Dictionary](https://diksionariu.com/); upstream rights and AI restrictions need written scope | Permission required; no CSV/morphology/audio download. Direct HTTP client returned 403; the web reader confirmed the public page. |
+| `kumision_historical_dictionary_shelf` | [Official publications](https://kumisionchamoru.guam.gov/lepblo-siha-publications/); 1865, 1903, 1910, 1918, 1932, 1995 scans appear in the official site inventory | Historical lane; confirm each work and scan. No shelf-wide public-domain assumption. |
+| `gdoe_chlccspi_2025` | [CHLCCSPI PDF](https://www.gdoe.net/files/user/59/file/CHLCCSPI-(Medidan-Suhetu)-GEB-Approved-2025.pdf), returned 200 | Permission required. Filename says 2025; landing-page approval year says 2026. |
+| `tatoeba_chamorro` | [Tatoeba downloads](https://tatoeba.org/en/downloads), CC BY 2.0 FR | 228 direct English pairs from 197 Chamorro sentences; unreviewed, orthography unknown. |
+| `opus_tatoeba_ch_en` | [OPUS Tatoeba v2026-07-08](https://opus.nlpl.eu/legacy/Tatoeba-v2026-07-08.php), CC BY 2.0 FR | 237 pairs, derivative Tatoeba snapshot; unknown orthography. |
+| `opus_translatewiki_ch_en` | [OPUS translatewiki v2026-07-01](https://opus.nlpl.eu/legacy/translatewiki-v2026-07-01.php), CC BY 3.0 | 700 UI localization pairs, not certified natural-sentence examples. |
+| `opus_wikimedia_ch_en` | [OPUS wikimedia v20260327](https://opus.nlpl.eu/legacy/wikimedia-v20260327.php), CC BY-SA 4.0 | 49 pairs; attribution and share-alike terms travel with this subset. |
+| `opus_bible_uedin_ch_en` | [OPUS bible-uedin v1](https://opus.nlpl.eu/legacy/bible-uedin.php), CC0 1.0 | 14,486 historical pairs; excluded by the default loader. |
+| `opus_qed_ch_en` | [OPUS QED](https://opus.nlpl.eu/legacy/QED.php), no clear reuse grant on inspected page | Skipped; 9 reported pairs were not downloaded. |
+| `abs_bible_1908` | [eBible rights page](https://ebible.org/cha/copyright.htm), Public Domain | Historical reference record only; no separate text/audio import. Web reader verified the rights page; direct client returned 403. |
+| `kumision_audio_programs` | [Word of the Day](https://kumisionchamoru.guam.gov/pruyekto-siha-projects/fino-i-haani-word-of-the-day/) and official interview/read-along projects | Permission and recording-level consent required; no audio downloaded. |
+| `kumision_seyon_inafitma` | [Seyon Inafitma](https://kumisionchamoru.guam.gov/community-services/seyon-inafitma/), returned 200 | Human review/certification route; registration is not an endorsement or approval. |
+| `kumision_guam_orthography_2027_candidate` | Current landing page and linked Drive title both say 2027 | Discovery only; separate edition/permission review. Guam 2024 remains the chosen default. |
 
-### Chamoru.info Dictionary
-- **Source**: [chamoru.info](http://www.chamoru.info)
-- **Content**: Online searchable dictionary
-- **Priority**: 100
-- **Format**: Web crawl
+[Offline snapshot notes](../documentation/phase4-data/OPEN_SENTENCES.md) include exact artifact checksums, identifiers, attribution, and rebuild instructions. No source text in those files has been authored, translated, or spelling-corrected by an agent.
 
----
+## Crawler safety
 
-## 📄 PDFs (Educational)
-
-### Two Chamorro Orthographies (Dr. Sandra Chung)
-- **Source**: [UCSC - Dr. Sandra Chung](https://people.ucsc.edu/~schung/)
-- **Content**: Explains differences between Guam and CNMI spelling systems
-- **Pages**: 40
-- **Priority**: 100 (Modern educational)
-- **Chunks**: 10
-- **Path**: `knowledge_base/pdfs/two_chamorro_orthographies_sandra_chung.pdf`
-- **Added**: December 2024
-
-### English-Chamorro Finder List (2024)
-- **Source**: [IKNM/KAM](https://natibunmarianas.org)
-- **Content**: English → Chamorro word lookups (142 pages)
-- **Compiled by**: Dr. Sandra Chung
-- **Priority**: 100 (Modern educational)
-- **Chunks**: 173
-- **Path**: `knowledge_base/pdfs/english_chamorro_finder_list_2024.pdf`
-- **Added**: December 2024
-
-### Chamorro Grammar (Dr. Sandra Chung)
-- **Source**: Published 1998
-- **Content**: Comprehensive Chamorro grammar reference
-- **Priority**: 50 (Contemporary)
-- **Format**: PDF
-
----
-
-## 🌐 Web Content
-
-### Guampedia
-- **Source**: [guampedia.com](https://www.guampedia.com)
-- **Content**: Encyclopedia articles about Guam culture, history, language
-- **Priority**: 100 (Modern educational)
-
-### Lengguahi-ta
-- **Source**: [lengguahita.com](https://lengguahita.com)
-- **Content**: Chamorro lessons and stories by Siñora Schyuler Lujan
-- **Priority**: 110-115 (Highest - native speaker educational content)
-
-### Pacific Daily News (Chamorro Columns)
-- **Source**: [guampdn.com](https://www.guampdn.com)
-- **Content**: Bilingual opinion columns
-- **Priority**: 110 (Highest)
-- **Crawler**: `crawlers/pacific_daily_news.py`
-
-### Chamoru.info Language Lessons
-- **Source**: [chamoru.info/language-lessons](http://www.chamoru.info/language-lessons/)
-- **Content**: Grammar lessons and tutorials
-- **Priority**: 100 (Modern)
-
-### Visit Guam
-- **Source**: [visitguam.com](https://www.visitguam.com)
-- **Content**: Tourism-focused Chamorro phrases
-- **Priority**: 100 (Modern conversational)
-
----
-
-## 🏛️ Historical/Archival Sources
-
-### Dictionary and Grammar of the Chamorro Language (1865)
-- **Source**: Historical archive
-- **Content**: Early documentation of Chamorro
-- **Priority**: 5 (Archival - may contain outdated usage)
-- **Notes**: Useful for historical context, not modern conversation
-
-### Rosetta Project Materials
-- **Source**: rosettaproject.org
-- **Content**: Language preservation materials
-- **Priority**: 5 (Archival)
-
----
-
-## 🎯 Priority System
-
-| Priority Range | Category | Boost in RAG |
-|----------------|----------|--------------|
-| 110-115 | Native speaker content (Lengguahi-ta, PDN columns) | 3x multiplier |
-| 100-109 | Modern educational (dictionaries, grammar, IKNM) | 2x multiplier |
-| 50-99 | Contemporary (1990s-2010s) | Normal |
-| 20-49 | Historical (pre-1990s) | Normal |
-| 1-19 | Archival (pre-1900s) | Penalized |
-
----
-
-## ✅ Recently Added (December 2024)
-
-1. **IKNM/KAM Revised Dictionary** - 35 chunks, priority 105
-2. **Two Chamorro Orthographies PDF** - 10 chunks, priority 100
-3. **English-Chamorro Finder List PDF** - 173 chunks, priority 100
-
----
-
-## 🔜 Planned Additions
-
-- [ ] More PDN bilingual columns
-- [ ] Additional Lengguahi-ta lessons
-- [ ] Cultural content from Guampedia
-
----
-
-## 📝 Notes
-
-- **Total unique sources**: 15+
-- **Primary focus**: Modern conversational Chamorro (2000+)
-- **Quality standard**: Native speaker or academic-verified content only
-- **No machine translation**: All content is human-created
-
----
-
-*Last updated: December 2024*
+Use the implementation under `src/crawlers/`. The legacy `scripts/crawlers/crawl_website.py` delegates to that implementation. Its writes pass through `RAGDatabaseManager.add_governed_documents` and the registry gate. A crawler's existence, a successful preview, or a permissive source license does not authorize running ingestion.
