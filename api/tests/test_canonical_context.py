@@ -263,3 +263,39 @@ def test_image_batch_can_request_evidence_beyond_the_default_short_passage_limit
     expanded, _ = module.get_canonical_tutor_context(query, passage_match_limit=64)
     assert "dictionary evidence: short" not in default
     assert "dictionary evidence: short" in expanded
+
+
+@pytest.mark.parametrize('gloss,false_headword', [('chicken', 'gutos'), ('food', "ha'ilas")])
+def test_wrapped_definition_mentions_are_not_direct_glosses(gloss, false_headword):
+    from api.canonical_context import _lookup_exact_english_glosses
+    matches = _lookup_exact_english_glosses(gloss)
+    assert matches
+    assert false_headword not in {match[1] for match in matches}
+
+
+@pytest.mark.parametrize('gloss,expected', [
+    ('tree', 'tronkon håyu'), ('banana', "aga'"), ('blue', 'asut'), ('happy', 'magof'),
+    ('chicken', 'mannok'), ('food', "nenkanno'"),
+])
+def test_real_glosses_still_supply_direct_evidence(gloss, expected):
+    from api.canonical_context import _lookup_exact_english_glosses
+    assert expected in {match[1] for match in _lookup_exact_english_glosses(gloss)}
+
+
+def test_gloss_punctuation_does_not_split_parentheses_or_pdf_wraps():
+    from api.canonical_context import _definition_gloss_segments
+    assert ('chicken', 1) not in _definition_gloss_segments('snap off--neck of\n chicken, root')
+    assert ('food', 1) not in _definition_gloss_segments('general scarcity of\n food')
+    assert ('azure', 1) in _definition_gloss_segments('blue, azure')
+    assert ('ripe', 1) not in _definition_gloss_segments('banana (fruit, ripe)')
+
+
+@pytest.mark.parametrize('entry_id', ['verbs.go_i_current', 'verbs.eat_i_current', 'verbs.sleep_i_current'])
+def test_needs_review_phrases_are_not_recommended_teaching_terms(entry_id):
+    from api.canonical_context import _canonical_entries
+    entry = next(item for item in _canonical_entries() if item['id'] == entry_id)
+    assert entry['review_status'] == 'needs_review'
+    for query in (entry['english'], entry['canonical_chamorro']):
+        context, _ = get_canonical_tutor_context(query)
+        assert f"[Canonical {entry_id}]" not in context
+        assert f"Recommended teaching term: {entry['recommended_teaching_term']}" not in context

@@ -429,3 +429,53 @@ describe('lesson concept evidence', () => {
   });
 
 });
+
+
+describe('retired embedded quiz history', () => {
+  beforeEach(() => { localStorage.clear(); vi.clearAllMocks(); mocks.userId = 'user_123'; mocks.saveQuizResult.mockResolvedValue({}); });
+  it('retries a fully answered pre-retirement attempt with the original IDs after reload', async () => {
+    const { HISTORICAL_QUIZ_QUESTIONS } = await import('../data/historicalQuizQuestions');
+    const { getQuizCategory } = await import('../data/quizData');
+    const questions = [...HISTORICAL_QUIZ_QUESTIONS, ...getQuizCategory('verbs')!.questions.slice(0, 2)];
+    const answers = Object.fromEntries(questions.map(q => [q.id, { userAnswer: q.correctAnswer, isCorrect: true }]));
+    localStorage.setItem('hafagpt_quiz_user_123_verbs', JSON.stringify({ topicId: 'verbs', attemptId: 'original-attempt', startedAt: Date.now(),
+      questionIds: questions.map(q => q.id), currentIndex: 4, correctCount: 5, answeredQuestions: answers, timestamp: Date.now() }));
+    const view = render(<LessonQuiz topic={getTopic('verbs')!} onComplete={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue Where I Left Off' }));
+    mocks.saveQuizResult.mockRejectedValueOnce(new Error('offline'));
+    fireEvent.click(screen.getByRole('button', { name: /See Results/ }));
+    await waitFor(() => expect(mocks.saveQuizResult).toHaveBeenCalledTimes(1));
+    view.unmount();
+    render(<LessonQuiz topic={getTopic('verbs')!} onComplete={vi.fn()} />);
+    fireEvent.click(screen.getByRole('button', { name: 'Continue Where I Left Off' }));
+    fireEvent.click(screen.getByRole('button', { name: /See Results/ }));
+    await waitFor(() => expect(mocks.saveQuizResult).toHaveBeenCalledTimes(2));
+    for (const [payload] of mocks.saveQuizResult.mock.calls) {
+      expect(payload.client_attempt_id).toBe('original-attempt');
+      expect(payload.score).toBe(5);
+      expect(payload.answers.map((answer: { question_id: string }) => answer.question_id)).toEqual(questions.map(q => q.id));
+      expect(payload.answers[0].concept_id).toBeDefined();
+    }
+  });
+});
+
+
+it('drops unanswered retired embedded items without transferring answers, and starts fresh from active questions', async () => {
+  localStorage.clear(); vi.clearAllMocks(); mocks.userId = 'user_123';
+  const state = { topicId: 'verbs', attemptId: 'partial-original', questionIds: ['verb-1', 'verb-2', 'verb-3', 'verb-4', 'verb-5'],
+    currentIndex: 1, correctCount: 1, answeredQuestions: { 'verb-1': { userAnswer: 'stored answer', isCorrect: true } }, timestamp: Date.now() };
+  localStorage.setItem('hafagpt_quiz_user_123_verbs', JSON.stringify(state));
+  const first = render(<LessonQuiz topic={getTopic('verbs')!} onComplete={vi.fn()} />);
+  await waitFor(() => expect(JSON.parse(localStorage.getItem('hafagpt_quiz_user_123_verbs')!).questionIds).toEqual(['verb-1', 'verb-4', 'verb-5']));
+  expect(JSON.parse(localStorage.getItem('hafagpt_quiz_user_123_verbs')!).answeredQuestions).toEqual(state.answeredQuestions);
+  first.unmount();
+  render(<LessonQuiz topic={getTopic('verbs')!} onComplete={vi.fn()} />);
+  fireEvent.click(screen.getByRole('button', { name: 'Start Fresh' }));
+  await waitFor(() => {
+    const fresh = JSON.parse(localStorage.getItem('hafagpt_quiz_user_123_verbs')!);
+    expect(fresh.questionIds).toHaveLength(5);
+    expect(fresh.questionIds.every((id: string) => !['verb-1', 'verb-2', 'verb-3'].includes(id))).toBe(true);
+    expect(fresh.answeredQuestions).toEqual({});
+    expect(fresh.attemptId).not.toBe('partial-original');
+  });
+});

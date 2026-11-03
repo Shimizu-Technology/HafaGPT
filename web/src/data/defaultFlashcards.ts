@@ -621,29 +621,14 @@ export const DEFAULT_FLASHCARD_DECKS: Record<string, DefaultFlashcardDeck> = {
         pronunciation: 'hoo HOON-gohk'
       },
       {
-        front: 'Hu hånao',
-        back: 'I go / I went',
-        pronunciation: 'hoo HAH-now'
-      },
-      {
         front: 'Hu cho\'gue',
         back: 'I do / I make',
         pronunciation: 'hoo CHOH-gweh'
       },
       {
-        front: 'Hu kånno\'',
-        back: 'I eat',
-        pronunciation: 'hoo KAHN-noh'
-      },
-      {
         front: 'Hu gimen',
         back: 'I drink',
         pronunciation: 'hoo GEE-men'
-      },
-      {
-        front: 'Hu maigo\'',
-        back: 'I sleep',
-        pronunciation: 'hoo my-GOH'
       },
       {
         front: 'Hu sångan',

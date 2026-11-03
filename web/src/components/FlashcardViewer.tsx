@@ -4,6 +4,7 @@ import { BookOpen, Loader2, ChevronLeft, ChevronRight, AlertCircle, Save, Refres
 import { Flashcard } from './Flashcard';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DEFAULT_FLASHCARD_DECKS } from '../data/defaultFlashcards';
+import { getCuratedCardSourceId } from '../data/conceptEvidence';
 import { useAuth, useUser } from '@clerk/clerk-react';
 import { useSaveDeck, useDictionaryFlashcards, type SaveDeckRequest } from '../hooks/useFlashcardsQuery';
 import { useRecordReview, type QualityRating } from '../hooks/useSpacedRepetition';
@@ -198,7 +199,7 @@ function FlashcardSession() {
     if (deck) {
       const formattedCards: FlashcardData[] = deck.cards.map((card, index) => ({
         contentSource: 'curated',
-        sourceId: `curated:${topic}:${index}`,
+        sourceId: getCuratedCardSourceId(topic, index),
         front: card.front,
         back: card.back,
         pronunciation: card.pronunciation,

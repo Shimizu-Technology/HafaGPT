@@ -3,6 +3,7 @@ import { CheckCircle, XCircle, ArrowRight, HelpCircle, Check, Lightbulb } from '
 import { useUser } from '@clerk/clerk-react';
 import { LearningTopic } from '../data/learningPath';
 import { QUIZ_CATEGORIES, QuizQuestion } from '../data/quizData';
+import { HISTORICAL_QUIZ_QUESTIONS, isRetiredQuizQuestion, getHistoricalQuestionConceptId } from '../data/historicalQuizQuestions';
 import { getQuestionConceptId } from '../data/conceptEvidence';
 import { checkFuzzyAnswer } from '../utils/fuzzyMatch';
 import { browserStorage } from '../lib/browserStorage';
@@ -139,10 +140,12 @@ function clearQuizState(topicId: string, ownerId: string) {
 
 export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
   const { isSignedIn, user } = useUser();
+  const [generation, setGeneration] = useState(0);
   const ownerId = user?.id ?? 'anonymous';
   return (
     <LessonQuizSession
-      key={`${ownerId}:${topic.id}`}
+      key={`${ownerId}:${topic.id}:${generation}`}
+      onStartFresh={() => setGeneration(value => value + 1)}
       topic={topic}
       onComplete={onComplete}
       isSignedIn={Boolean(isSignedIn)}
@@ -152,6 +155,7 @@ export function LessonQuiz({ topic, onComplete }: LessonQuizProps) {
 }
 
 interface LessonQuizSessionProps extends LessonQuizProps {
+  onStartFresh: () => void;
   isSignedIn: boolean;
   ownerId: string;
 }
@@ -160,6 +164,7 @@ function LessonQuizSession({
   topic,
   onComplete,
   isSignedIn,
+  onStartFresh,
   ownerId,
 }: LessonQuizSessionProps) {
   const saveQuizResult = useSaveQuizResult();
@@ -173,10 +178,20 @@ function LessonQuizSession({
 
     const category = QUIZ_CATEGORIES.find((candidate) => candidate.id === topic.quizCategory);
     const validQuestionIds = new Set(category?.questions.map((question) => question.id) ?? []);
+    // Retain answered history; remove only unanswered retired questions.
+    if (topic.quizCategory === 'verbs') {
+      const keep = (id: string) => !isRetiredQuizQuestion(id)
+        || Object.prototype.hasOwnProperty.call(state.answeredQuestions, id);
+      const retainedBeforeCurrent = state.questionIds.slice(0, state.currentIndex).filter(keep).length;
+      state.questionIds = state.questionIds.filter(keep);
+      if (!state.questionIds.length) return null;
+      state.currentIndex = Math.min(retainedBeforeCurrent, state.questionIds.length - 1);
+    }
     const expectedQuestionCount = Math.min(QUESTIONS_PER_QUIZ, validQuestionIds.size);
     if (
-      state.questionIds.length !== expectedQuestionCount
-      || !state.questionIds.every((questionId) => validQuestionIds.has(questionId))
+      (topic.quizCategory !== 'verbs' && state.questionIds.length !== expectedQuestionCount)
+      || !state.questionIds.every((questionId) => validQuestionIds.has(questionId)
+        || (topic.quizCategory === 'verbs' && isRetiredQuizQuestion(questionId) && Object.prototype.hasOwnProperty.call(state.answeredQuestions, questionId)))
     ) {
       clearQuizState(topic.id, ownerId);
       return null;
@@ -195,7 +210,7 @@ function LessonQuizSession({
     
     // If we have saved state with question IDs, use that order
     if (savedState?.questionIds) {
-      const questionMap = new Map(category.questions.map(q => [q.id, q]));
+      const questionMap = new Map([...HISTORICAL_QUIZ_QUESTIONS, ...category.questions].map(q => [q.id, q]));
       const restoredQuestions = savedState.questionIds
         .map(id => questionMap.get(id))
         .filter((q): q is QuizQuestion => q !== undefined);
@@ -310,22 +325,7 @@ function LessonQuizSession({
 
   const handleStartFresh = () => {
     clearQuizState(topic.id, ownerId);
-    attemptIdRef.current = createClientAttemptId();
-    startedAtRef.current = Date.now();
-    completionStartedRef.current = false;
-    setIsSavingResult(false);
-    setSaveError(null);
-    setCurrentIndex(0);
-    setCorrectCount(0);
-    setAnsweredQuestions({});
-    setSelectedAnswer(null);
-    setTypedAnswer('');
-    setIsAnswered(false);
-    setRestoredIsCorrect(null);
-    setShowHint(false);
-    setShowResumePrompt(false);
-    // Note: questions will stay the same since we don't re-shuffle on fresh start
-    // This is intentional - full page refresh would give new questions
+    onStartFresh();
   };
 
   if (allQuestions.length === 0) {
@@ -437,7 +437,7 @@ function LessonQuizSession({
             correct_answer: question.correctAnswer,
             is_correct: answer.isCorrect,
             explanation: question.explanation,
-            concept_id: getQuestionConceptId(question.id),
+            concept_id: (getQuestionConceptId(question.id) ?? getHistoricalQuestionConceptId(question.id)),
           }];
         });
 

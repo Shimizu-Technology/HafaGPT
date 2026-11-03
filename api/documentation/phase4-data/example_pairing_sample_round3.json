@@ -1,0 +1,615 @@
+{
+  "seed": 10303,
+  "population": 7390,
+  "size": 60,
+  "entry_count": 60,
+  "method": "Manual inspection of every raw delimiter-to-pair prefix and the English side after validation was frozen. No translation equivalence or Chamorro correctness judgment. Exploratory samples prompted completeness changes before this final sample.",
+  "summary": {
+    "structure_pass": 60,
+    "english_side_pass": 60,
+    "source_wording_notes": 8,
+    "observed_shifted_or_detached_pairs": 0
+  },
+  "sample": [
+    {
+      "number": 1,
+      "headword": "géfsaga",
+      "pair_index": 0,
+      "english": "This family is well-to-do  because they are industrious",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "6df4083afbfad058149a55112d63ffece4c71c68b9631670d14d95de294c9e86"
+    },
+    {
+      "number": 2,
+      "headword": "påyun duendis",
+      "pair_index": 2,
+      "english": "This mushroom is not edible",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "d8268f5c863f684710efff4facccd33d7be2c642b85f606831585c6937ab0a56"
+    },
+    {
+      "number": 3,
+      "headword": "difinsót",
+      "pair_index": 0,
+      "english": "I am the legal counsel for this case",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "b279c1cc101e6285e253273ffdf23e70a17a3a4c8aa04d54c804ea5a8290d5cd"
+    },
+    {
+      "number": 4,
+      "headword": "mañotsut",
+      "pair_index": 0,
+      "english": "Merced  did not feel guilty about how she treated her mother",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "b74389b49006fdc7cf35a82b7b5122c4a991fc9fae8b63932a8e09c65c6b86b1"
+    },
+    {
+      "number": 5,
+      "headword": "krisidu",
+      "pair_index": 2,
+      "english": "That animal cannot fit in the cage, because of its enormous  size and weight",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "e7f4d1443f5c8512a9db057933730c6f0c77d2bcfc82f089c15aea3b7f4448b0"
+    },
+    {
+      "number": 6,
+      "headword": "garañón",
+      "pair_index": 2,
+      "english": "It is not for just anything, but  for his lewdness, that he was not included in the group",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "a7254a487d8673c9d1d8111a3b15f053b3cb7e945ee5e7c85efcbf9d782d8777"
+    },
+    {
+      "number": 7,
+      "headword": "bulengngu'",
+      "pair_index": 0,
+      "english": "My nose is very flat",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "472dbcb2d951b618255647b5632650af1e7f32f84c7280a7935ab67360894b62"
+    },
+    {
+      "number": 8,
+      "headword": "serå",
+      "pair_index": 0,
+      "english": "Maybe you don't like me",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "5bec9b88168d5c39019e3a5115702f4a3cf9de899b5a95563b948ef17faffd40"
+    },
+    {
+      "number": 9,
+      "headword": "disonru",
+      "pair_index": 0,
+      "english": "It is not  dishonorable to admit your mistake",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "b131fd54a5a199f69499e007ae74776bfc386ac2db147bce788560ecdee998f1"
+    },
+    {
+      "number": 10,
+      "headword": "apetching",
+      "pair_index": 0,
+      "english": "The  child clings to his mother",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "b6250ee92f440b808985786b15287d04e9d204afa9ce89662db1a5f2bcf18d34"
+    },
+    {
+      "number": 11,
+      "headword": "tångku'",
+      "pair_index": 0,
+      "english": "There's a broken armored tank at  Quartermaster Beach",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "b4a31361d1bf70a2a54ec454a34bb405553dfc1bd0c2eb6fa005c8bbceb7c084"
+    },
+    {
+      "number": 12,
+      "headword": "Guaksalu'u",
+      "pair_index": 0,
+      "english": "I have not seen anyone farming at Guaksalu'u, because  it's too rocky",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "8486983a6674a8369869514499c849cf5e42c670542ca427991033b0c46c57ca"
+    },
+    {
+      "number": 13,
+      "headword": "kuentåt ki",
+      "pair_index": 0,
+      "english": "So long as  he’s not a bother, it’s allright with me",
+      "structure": "pass",
+      "english_side": "pass_with_source_wording_note",
+      "note": "Source spelling: allright.",
+      "source_prefix_sha256": "c1178cbac4850d114b20d47e0696b45d288af85d60338ebc2bc419766afc0c11"
+    },
+    {
+      "number": 14,
+      "headword": "gosa",
+      "pair_index": 1,
+      "english": "The child was overwhelmed when she was in the United  States",
+      "structure": "pass",
+      "english_side": "pass_with_source_wording_note",
+      "note": "Earlier English prefix has source spelling mangeos.",
+      "source_prefix_sha256": "0f2a709f5f01ce6a9fb79ef1ae11f9101226d1b659c6957fe3c355af3efd0261"
+    },
+    {
+      "number": 15,
+      "headword": "guñut",
+      "pair_index": 1,
+      "english": "He twisted the neck of the chicken when he was going to  kill it",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "aadb610ab5f104cc69b3d45436d73eaf09b8a052154f2cff71309985cfe076ef"
+    },
+    {
+      "number": 16,
+      "headword": "lotgi",
+      "pair_index": 0,
+      "english": "I filled up my cup with beer",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "6370c6fc02e0f0c3682023a47bbc7ad7d96ec3f51b7740d287353315b2e4b01f"
+    },
+    {
+      "number": 17,
+      "headword": "åsgui",
+      "pair_index": 2,
+      "english": "I do not like to smoke meat",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "9daa5739dde88aec9d6cba49457dc80640ab220c6fe0015accd26c974c39fbc6"
+    },
+    {
+      "number": 18,
+      "headword": "butlón",
+      "pair_index": 0,
+      "english": "The one  who ridicles likes to observe people",
+      "structure": "pass",
+      "english_side": "pass_with_source_wording_note",
+      "note": "Source spelling: ridicles.",
+      "source_prefix_sha256": "b70d4763cd6a2f331fcdc8b006a354fb9820b0f79eacd410b3f2886b31e7f2af"
+    },
+    {
+      "number": 19,
+      "headword": "hacheru",
+      "pair_index": 2,
+      "english": "Tito is working as a lumberjack in the  States",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "dbe82f8a89eaad4ab9bc883739193221c0e00e7681f81ff2db3fa4d99b2755bf"
+    },
+    {
+      "number": 20,
+      "headword": "anít",
+      "pair_index": 0,
+      "english": "The  laundress in the past often used a bluing agent for white clothes",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "b6a0e45210c74f7b6989d099a47cd12957dd737ed5231a33b82406d539a4f3c6"
+    },
+    {
+      "number": 21,
+      "headword": "buké",
+      "pair_index": 2,
+      "english": "I really  like Margarita's bouquet, because it has a nice scent and it is beautifully  done",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "5c1e6f7f9e2e0485bd34d576a9921a59ce8ff4907af2ac274bc214b054c2a1da"
+    },
+    {
+      "number": 22,
+      "headword": "alutung",
+      "pair_index": 2,
+      "english": "This piece of granite has two pounding  holes",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "2e82c1d0b95094987d2c86894c484f5757ffbf40325b4af482febd2b28c2656d"
+    },
+    {
+      "number": 23,
+      "headword": "kahnåyi",
+      "pair_index": 0,
+      "english": "Don't cast  a spell on me",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "88c68d654b9d9a5ff86f2612f5b6d723f54709727ff2ba994469a0264f3b8688"
+    },
+    {
+      "number": 24,
+      "headword": "honñu'",
+      "pair_index": 2,
+      "english": "Don't press on this side, because it  hurts",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "12e8c9736648317ef9da311c9c6cf376ea04acc5f8146776a5e1b76084a88f19"
+    },
+    {
+      "number": 25,
+      "headword": "sopas",
+      "pair_index": 0,
+      "english": "My mother made a delicious potato soup",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "b1211e0e19a66f2317a22918b7d4fada00b46c8d9dfdf62a9ece341b1264d761"
+    },
+    {
+      "number": 26,
+      "headword": "kikanyiu'",
+      "pair_index": 0,
+      "english": "They found two machine guns in the cave",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "03e6cccb2a6476db59247680632cc8a9828a2bd019802eee29bd3305f07b4042"
+    },
+    {
+      "number": 27,
+      "headword": "minitu'",
+      "pair_index": 0,
+      "english": "The  purpose of this program is to help the the young generation",
+      "structure": "pass",
+      "english_side": "pass_with_source_wording_note",
+      "note": "Source repeats the.",
+      "source_prefix_sha256": "b108d8f39e4978137cf84a61aa8f348bcf7efedb93d20cc796f43e263a50d24b"
+    },
+    {
+      "number": 28,
+      "headword": "aguayenti",
+      "pair_index": 1,
+      "english": "The liquor made from ripe bananas is  very strong",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "38f741c279422563d373026b537825d2afadae20f128364fa9c60062b0bb1d67"
+    },
+    {
+      "number": 29,
+      "headword": "rektót",
+      "pair_index": 1,
+      "english": "A  rector does a lot of work",
+      "structure": "pass",
+      "english_side": "pass_with_source_wording_note",
+      "note": "Earlier English prefix has source spelling responsabilities.",
+      "source_prefix_sha256": "3218aea2049b7e59d929968f918bd8b4170aa0e0e5230e98077d3ae917235fcb"
+    },
+    {
+      "number": 30,
+      "headword": "sitiu",
+      "pair_index": 1,
+      "english": "The  Departmen of Land raffled two lots a month for those individuals who are  qualified",
+      "structure": "pass",
+      "english_side": "pass_with_source_wording_note",
+      "note": "Source spelling: Departmen.",
+      "source_prefix_sha256": "588a047d0a0a27a0fc70d0ba9036aad8926724544169849eab138f70af9ac36d"
+    },
+    {
+      "number": 31,
+      "headword": "påola",
+      "pair_index": 0,
+      "english": "There are lots of vegetables in the  stuffed chicken neck",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "0f8ba00e940b13c3e0740ffe407a9fbc47864185b7ccf44f30adb109add91d62"
+    },
+    {
+      "number": 32,
+      "headword": "atdit",
+      "pair_index": 1,
+      "english": "My  headache is so severe and it's making me cry",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "bc3d01d6dc489a8ee0ef5ace0fa5ff0627b78b318e9ce26ec17dba508d780560"
+    },
+    {
+      "number": 33,
+      "headword": "blådu",
+      "pair_index": 0,
+      "english": "The  weather is gloomy, but it is cool and not sunny",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "5aa72fb0c0bc0852947186c05a3393a60a6303c24f11c6804aaf2c7716f13c14"
+    },
+    {
+      "number": 34,
+      "headword": "unus kuåntus",
+      "pair_index": 0,
+      "english": "There were a few people who attended the  mass",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "72925af72e857744c20d4a02f1233a484fc065bf33308dc490dd99557783dde0"
+    },
+    {
+      "number": 35,
+      "headword": "apattåda",
+      "pair_index": 2,
+      "english": "Why did  you separate the tables, because they look too spread out now",
+      "structure": "pass",
+      "english_side": "pass_with_source_wording_note",
+      "note": "Source question punctuation/phrasing is awkward; no detached or shifted field.",
+      "source_prefix_sha256": "5e071e15cee524da37921c7fc8f6ca5e7bdda208c4a9ece239a76dd3c39f2655"
+    },
+    {
+      "number": 36,
+      "headword": "balilis",
+      "pair_index": 0,
+      "english": "The salted fish were put in the wooden  barrel",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "2f6a58a2b1e72b836ec0b7275f5a05ece5bab18bbf27e26b991d3e316fcce242"
+    },
+    {
+      "number": 37,
+      "headword": "machakchak kåttan",
+      "pair_index": 1,
+      "english": "It is good to go hunting for coconut  crabs at daybreak",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "2a8792fb3749a7b94ddccd5487e202fa731bcf2d6b749fcbbcb322d382bbdb09"
+    },
+    {
+      "number": 38,
+      "headword": "pånsa",
+      "pair_index": 0,
+      "english": "Cattle  have more than one stomach part",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "6422082884231f804d91e25e7d08cca41d651fdf3d517c064cefb3f3b0c8048c"
+    },
+    {
+      "number": 39,
+      "headword": "distilipas",
+      "pair_index": 2,
+      "english": "Teresita  refused to take out the cow's intestines because she could not stand it",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "305cddece68186ce36960e771101c1e56138c00d76ae85f5861063f1716a7f69"
+    },
+    {
+      "number": 40,
+      "headword": "manispiga",
+      "pair_index": 0,
+      "english": "The corn plants are very beautiful  because they are really tasseling",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "6f54e65468d0c99ad0b35fc30ab287b83a7123c9b8976f584afc0a78a3deb32b"
+    },
+    {
+      "number": 41,
+      "headword": "ná'ma'si'",
+      "pair_index": 0,
+      "english": "The child  is pitiful, because his mother died",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "a60dfc4937f4ae4040c0dd6d851cf2f705937dac4860c1f8f78c50efda76e168"
+    },
+    {
+      "number": 42,
+      "headword": "guyuriha",
+      "pair_index": 0,
+      "english": "The guyuriha that Alice made is very hard",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "4c7f9b26b975f5aa0c045b34a672f0e20ed2fd369a3fdbf1db7a6e9505e1560c"
+    },
+    {
+      "number": 43,
+      "headword": "manñå'ut",
+      "pair_index": 0,
+      "english": "The crabs have eggs on them",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "a88b6a625a43d391eb5d7115ba0a6537bc866c2cee22b6f7a675ed6a614d2325"
+    },
+    {
+      "number": 44,
+      "headword": "cháta'an",
+      "pair_index": 0,
+      "english": "It looks like it's going to be a rainy  day today",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "18796c6ef0fc9c1bd4ece807932130d6ff704c405e9670744689b94f29155643"
+    },
+    {
+      "number": 45,
+      "headword": "mafañågu",
+      "pair_index": 1,
+      "english": "My elder  son was born during the American period",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "f7ccc5d25bfd7684d0af4b20fd9a49e1ffba46fe1b0ab71ff4ea6d441789fdf9"
+    },
+    {
+      "number": 46,
+      "headword": "måhnguk",
+      "pair_index": 1,
+      "english": "Maria is a smart and well celebrated  lady",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "dbf525aff2da3662da42335e253fe187922d0cd03610314da7f2fe25902f108a"
+    },
+    {
+      "number": 47,
+      "headword": "diskutta",
+      "pair_index": 0,
+      "english": "He released his anger toward his  friends",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "74e279392c96f7b92be71aefedce90e73fecb8de38418905122f80b4dd40826f"
+    },
+    {
+      "number": 48,
+      "headword": "fresku",
+      "pair_index": 0,
+      "english": "Bring  over the fresh fruits",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "3c390516d6490efa10c7e0e02938e0c50e6f4fd33bbd684dc3c89a474abc890e"
+    },
+    {
+      "number": 49,
+      "headword": "oputtunidåt",
+      "pair_index": 0,
+      "english": "There are  job opportunities for people who graduate from university",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "0608e7de52b98b3fcd907983f9499c20728abc97c85372a990e781cc76e51b90"
+    },
+    {
+      "number": 50,
+      "headword": "kina'lik",
+      "pair_index": 0,
+      "english": "I feel a burning sensation in my mouth from the lime",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "68a193500c045eea89a6ae5f5ebeade2d864fe95145d08da55b2bb69a616a0dc"
+    },
+    {
+      "number": 51,
+      "headword": "toka",
+      "pair_index": 0,
+      "english": "I hit the dog with the slingshot",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "772db4d0fc67626d29b643cfa0edb38655e82a228a6a11205489effe71a436cb"
+    },
+    {
+      "number": 52,
+      "headword": "kuntentu",
+      "pair_index": 1,
+      "english": "Mother was  not satisfied about the taking of her land by the government",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "6ed99522da5fefca4e0b539f40d8f1350784836163ae36b24676ec66f69fde4c"
+    },
+    {
+      "number": 53,
+      "headword": "tumaiguihi",
+      "pair_index": 1,
+      "english": "When his  wife's attitude changed, Jose became a different person",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "c9b709f225da77e9d6f61a6479a511b8a07b8fc45c44378f84b4f6c241c2ccf8"
+    },
+    {
+      "number": 54,
+      "headword": "logru",
+      "pair_index": 1,
+      "english": "I  gave Ton a chance at wrestling so he could beat me",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "3b74246c3ad63c0425d71ae0977a30ea796356a7f3a6893cd47f587a1f369496"
+    },
+    {
+      "number": 55,
+      "headword": "bånna",
+      "pair_index": 0,
+      "english": "Both of my feet are swollen",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "1ac5518d37adaa9ee4034ff35e52f6515b520aa4557d360292a373f0f7affc47"
+    },
+    {
+      "number": 56,
+      "headword": "fotyun",
+      "pair_index": 0,
+      "english": "When there  was a strong wind, the breadfruit dropped and were partly damaged",
+      "structure": "pass",
+      "english_side": "pass_with_source_wording_note",
+      "note": "Source subject/verb agreement is awkward; no detached or shifted field.",
+      "source_prefix_sha256": "ac9c3afd1ef7976174573fca80af3abc411481beaf1f37268c1552879069773c"
+    },
+    {
+      "number": 57,
+      "headword": "bilingbingi",
+      "pair_index": 0,
+      "english": "Maryann made a buzzing sound at Jonas  with the bell",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "263d81f46bee6dd9e09b339a173fa29906d82110ad5515f9645c54d94f00e365"
+    },
+    {
+      "number": 58,
+      "headword": "dimålas",
+      "pair_index": 2,
+      "english": "We didn't  have luck when we went fishing",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "f21001c984cd0599bfaac190f9a3bb27dff08c9597d9ca5ecdd819c6ddad4644"
+    },
+    {
+      "number": 59,
+      "headword": "uritåo",
+      "pair_index": 0,
+      "english": "Two long sticks were made for the young  bachelors",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "94e53bdba0aaa0f7919c6ec0f1f7ae51215bdf23a51648600e1d3ee795912a6c"
+    },
+    {
+      "number": 60,
+      "headword": "båtbaru",
+      "pair_index": 0,
+      "english": "Jack is daring to jump from a high  rooftop",
+      "structure": "pass",
+      "english_side": "pass",
+      "note": "Uninterrupted delimited prefix; readable English partner, no detached fragment or taxonomy heading observed.",
+      "source_prefix_sha256": "e5126dff72cba26edec45cb960053a09c75a35c014609ca406985c03f0edff2a"
+    }
+  ]
+}

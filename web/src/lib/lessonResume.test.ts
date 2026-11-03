@@ -23,3 +23,27 @@ describe('lesson resume across revisits', () => {
     vi.useRealTimers();
   });
 });
+
+it('migrates legacy verb positions without crediting removed or unseen cards', () => {
+  window.localStorage.clear();
+  window.localStorage.setItem('hafagpt_lesson_resume_v1_a_verbs', JSON.stringify({
+    ...emptyLessonResume(), step: 'flashcards', cardIndex: 5, viewed: [0, 1, 2, 3, 4, 5],
+  }));
+  expect(loadLessonResume('a', 'verbs', 7)).toMatchObject({
+    step: 'flashcards', cardIndex: 3, viewed: [0, 1, 2, 3], cardOrderSignature: '0,1,3,5,7,8,9',
+  });
+});
+
+it('keeps a legacy pending completion after the deck shrinks and never remaps new saves twice', () => {
+  window.localStorage.clear();
+  window.localStorage.setItem('hafagpt_lesson_resume_v1_a_verbs', JSON.stringify({
+    ...emptyLessonResume(), step: 'complete', cardIndex: 9, viewed: [0, 1, 2, 3, 4, 5, 6, 7, 8, 9],
+    score: 80, saved: false, xpPending: true,
+  }));
+  const migrated = loadLessonResume('a', 'verbs', 7);
+  expect(migrated).toMatchObject({ step: 'complete', cardIndex: 6, viewed: [0, 1, 2, 3, 4, 5, 6], score: 80, saved: false, xpPending: true });
+  saveLessonResume('a', 'verbs', migrated);
+  expect(loadLessonResume('a', 'verbs', 7)).toMatchObject({ ...migrated, updatedAt: expect.any(Number) });
+  saveLessonResume('a', 'verbs', { ...emptyLessonResume(), step: 'flashcards', cardIndex: 5, viewed: [0, 1, 2, 3, 4, 5] });
+  expect(loadLessonResume('a', 'verbs', 7)).toMatchObject({ cardIndex: 5, viewed: [0, 1, 2, 3, 4, 5] });
+});

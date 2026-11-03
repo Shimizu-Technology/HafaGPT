@@ -90,7 +90,9 @@ def curated_concept_id(category_id: str, card_index: int) -> str:
     """Match the established frontend card identity for a curated card."""
 
     normalized_category_id = _normalize_identity_part(category_id)
-    source_id = f"curated:{normalized_category_id}:{card_index}"
+    indices = _MANIFEST.get("card_source_indices", {}).get(normalized_category_id)
+    source_index = indices[card_index] if indices and 0 <= card_index < len(indices) else card_index
+    source_id = f"curated:{normalized_category_id}:{source_index}"
     return f"v1:curated:{_fnv1a(_normalize_identity_part(source_id))}"
 
 
@@ -108,6 +110,15 @@ def validate_curated_concept_manifest(manifest: object) -> None:
     question_concepts = manifest.get("question_concepts")
     if not isinstance(deck_counts, dict) or not isinstance(question_concepts, dict):
         raise ValueError("Curated concept manifest is missing relationship maps")
+
+    source_indices = manifest.get("card_source_indices", {})
+    if not isinstance(source_indices, dict):
+        raise ValueError("Invalid curated card source indices")
+    for category_id, indices in source_indices.items():
+        if (not isinstance(indices, list) or len(indices) != deck_counts.get(category_id)
+                or any(not isinstance(index, int) or isinstance(index, bool) or index < 0 for index in indices)
+                or len(set(indices)) != len(indices)):
+            raise ValueError("Invalid curated card source indices")
 
     for category_id, card_count in deck_counts.items():
         if (
@@ -160,6 +171,22 @@ QUESTION_CONCEPTS: dict[str, tuple[str, int]] = {
 }
 
 
+# Immutable pre-retirement source positions (never active practice/mastery).
+RETIRED_QUESTION_CONCEPTS = {
+    question: f"v1:curated:{_fnv1a(f'curated:verbs:{index}')}"
+    for question, index in (("verb-1", 4), ("verb-2", 2), ("verb-3", 6))
+}
+RETIRED_CONCEPT_IDS = frozenset(RETIRED_QUESTION_CONCEPTS.values())
+
+
+def validate_lesson_exposure_ids(category_id: str, concept_ids: Iterable[str]) -> tuple[str, ...]:
+    """Ignore known retired verb cards; still reject invented/cross-topic IDs."""
+    return validate_curated_concept_ids(category_id, (
+        concept for concept in concept_ids
+        if not (category_id == "verbs" and concept in RETIRED_CONCEPT_IDS)
+    ))
+
+
 def curated_concept_ids(category_id: str) -> tuple[str, ...]:
     card_count = CURATED_DECK_CARD_COUNTS.get(category_id)
     if card_count is None:
@@ -197,6 +224,11 @@ def validate_question_concept(
     """Reject invented or cross-category quiz-to-card relationships."""
 
     if concept_id is None:
+        return
+
+    if question_id in RETIRED_QUESTION_CONCEPTS:
+        if expected_category_id != "verbs" or concept_id != RETIRED_QUESTION_CONCEPTS[question_id]:
+            raise ValueError("Question concept does not match the historical relationship")
         return
 
     relationship = QUESTION_CONCEPTS.get(question_id)

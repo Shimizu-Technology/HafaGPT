@@ -210,3 +210,22 @@ def test_idempotent_retry_returns_the_stored_attempt_without_duplicate_answers()
         "user_123",
         UUID("018f6a6e-9c3d-7b2a-a1c4-8e9f12345678"),
     )
+
+
+@pytest.mark.parametrize("question_id", ["verb-1", "verb-2", "verb-3"])
+def test_historical_verb_submission_keeps_exact_answers_and_retry_identity(question_id):
+    from api.learning_concepts import RETIRED_QUESTION_CONCEPTS, curated_concept_ids
+    answer = {**request_data().answers[0].model_dump(), "question_id": question_id,
+              "concept_id": RETIRED_QUESTION_CONCEPTS[question_id]}
+    request = request_data(category_id="verbs", learning_context={
+        "topic_id": "verbs", "source": "lesson", "assessment_id": "v1:lesson:verbs:embedded-quiz"
+    }, answers=[answer])
+    assert answer["concept_id"] not in curated_concept_ids("verbs")
+    context = validate_quiz_result_request(request)
+    cursor = Cursor([stored_row()])
+    persist_quiz_result(cursor, user_id="user_123", request=request, percentage=100, context=context)
+    assert cursor.executions[1][1][0][1] == question_id
+    assert cursor.executions[1][1][0][-1] == answer["concept_id"]
+    with pytest.raises(ValueError, match="historical relationship"):
+        validate_quiz_result_request(request.model_copy(update={"answers": [request.answers[0].model_copy(
+            update={"concept_id": curated_concept_id("verbs", 0)})]}))

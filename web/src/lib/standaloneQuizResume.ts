@@ -1,3 +1,4 @@
+import { isRetiredQuizQuestion } from '../data/historicalQuizQuestions';
 import type { QuizQuestion } from '../data/quizData';
 import { browserStorage } from './browserStorage';
 export interface QuizResumeResult { question: QuizQuestion; userAnswer: string; isCorrect: boolean }
@@ -29,8 +30,7 @@ export function loadStandaloneQuiz(owner: string, category: string, count: numbe
     if (!raw) return null;
     const saved = JSON.parse(raw) as StandaloneQuizResume;
     if (saved.version !== 1 || !Array.isArray(saved.questions) || !saved.questions.length || saved.questions.length > 100
-      || !saved.questions.every(question => validQuestion(question) && (!allowedIds || allowedIds.has(question.id)))
-      || (allowedIds && saved.questions.length !== allowedIds.size)
+      || !saved.questions.every(question => validQuestion(question) && (!allowedIds || allowedIds.has(question.id) || (category === 'verbs' && isRetiredQuizQuestion(question.id))))
       || new Set(saved.questions.map(question => question.id)).size !== saved.questions.length
       || !Number.isInteger(saved.currentIndex) || saved.currentIndex < 0 || saved.currentIndex >= saved.questions.length
       || !Array.isArray(saved.results) || ![saved.currentIndex, saved.currentIndex + 1].includes(saved.results.length)
@@ -41,6 +41,20 @@ export function loadStandaloneQuiz(owner: string, category: string, count: numbe
         : saved.results.length !== saved.currentIndex + 1 || saved.results[saved.currentIndex].isCorrect !== (saved.answerState === 'correct'))
       || typeof saved.attemptId !== 'string' || !saved.attemptId || !Number.isFinite(saved.startedAt)
       || !Number.isFinite(saved.updatedAt) || Date.now() - saved.updatedAt > 30 * 86400000) return null;
+    // Keep the answered prefix verbatim, including retired results and retry ID.
+    // Only unanswered retired questions disappear; answers never move to new IDs.
+    if (allowedIds && category === 'verbs') {
+      const answeredCount = saved.results.length;
+      const priorCurrentId = saved.questions[saved.currentIndex].id;
+      const keep = (question: QuizQuestion, index: number) => index < answeredCount || allowedIds.has(question.id);
+      const retainedBeforeCurrent = saved.questions.slice(0, saved.currentIndex).filter(keep).length;
+      saved.questions = saved.questions.filter(keep);
+      if (!saved.questions.length) return null;
+      saved.currentIndex = Math.min(retainedBeforeCurrent, saved.questions.length - 1);
+      const answer = saved.results[saved.currentIndex];
+      saved.answerState = answer ? answer.isCorrect ? 'correct' : 'incorrect' : 'unanswered';
+      if (saved.questions[saved.currentIndex].id !== priorCurrentId) saved.userAnswer = answer?.userAnswer ?? '';
+    }
     return saved;
   } catch { return null; }
 }

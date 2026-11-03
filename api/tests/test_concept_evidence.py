@@ -228,3 +228,17 @@ def test_lesson_review_snapshots_cannot_introduce_unrelated_or_duplicate_concept
         )
         assert response.status_code == 400
         assert not connection.cursor_instance.executions
+
+
+def test_replaying_legacy_ten_verb_exposures_records_seven_surviving_ids():
+    from api.learning_concepts import _fnv1a, curated_concept_ids
+    connection = Connection()
+    legacy = [f"v1:curated:{_fnv1a(f'curated:verbs:{index}')}" for index in range(10)]
+    client = make_client(connection)
+    for _ in range(2):
+        response = client.post("/api/learning/lessons/verbs/exposures",
+            headers={"Authorization": "Bearer test-token"}, json={"concept_ids": legacy})
+        assert response.status_code == 200
+        assert response.json()["recorded_concepts"] == 7
+        assert connection.cursor_instance.executions[-1][1][-1] == list(curated_concept_ids("verbs"))
+    assert connection.committed

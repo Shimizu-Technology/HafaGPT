@@ -5,6 +5,8 @@ from __future__ import annotations
 from datetime import datetime, timedelta, timezone
 from typing import Any, Mapping, Optional
 
+from .learning_concepts import RETIRED_CONCEPT_IDS
+
 
 def calculate_sm2(
     quality: int,
@@ -60,6 +62,10 @@ def upsert_spaced_repetition_review(
     Content is a snapshot used to reconstruct a due-review queue. Existing
     non-null content is retained when an older client sends no snapshot.
     """
+
+    if card_id in RETIRED_CONCEPT_IDS:
+        return {"card_id": card_id, "deck_id": deck_id,
+                "ignored": True, "reason": "retired_card"}
 
     reviewed_at = reviewed_at or datetime.now(timezone.utc)
     content = content or {}

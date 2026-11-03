@@ -8,20 +8,8 @@
       "recommended_teaching_term": "Hu kånno'",
       "action": "review_canonical_entry_before_teaching",
       "reason": "Kånno' is valid for eating something, but the standalone beginner phrase lacks the object required by local dictionaries. Keep the current card pending educator review rather than changing to a new intransitive form blindly.",
-      "path": "web/src/data/defaultFlashcards.ts",
-      "line": 634,
-      "snippet": "front: 'Hu kånno\\'',"
-    },
-    {
-      "entry_id": "verbs.eat_i_current",
-      "category": "verbs",
-      "english": "I eat",
-      "term": "Hu kånno'",
-      "recommended_teaching_term": "Hu kånno'",
-      "action": "review_canonical_entry_before_teaching",
-      "reason": "Kånno' is valid for eating something, but the standalone beginner phrase lacks the object required by local dictionaries. Keep the current card pending educator review rather than changing to a new intransitive form blindly.",
-      "path": "web/src/data/quizData.ts",
-      "line": 839,
+      "path": "web/src/data/historicalQuizQuestions.ts",
+      "line": 10,
       "snippet": "question: 'What does \"Hu kånno\\'\" mean?',"
     },
     {
@@ -32,9 +20,21 @@
       "recommended_teaching_term": "Hu kånno'",
       "action": "review_canonical_entry_before_teaching",
       "reason": "Kånno' is valid for eating something, but the standalone beginner phrase lacks the object required by local dictionaries. Keep the current card pending educator review rather than changing to a new intransitive form blindly.",
-      "path": "web/src/data/quizData.ts",
-      "line": 842,
+      "path": "web/src/data/historicalQuizQuestions.ts",
+      "line": 13,
       "snippet": "explanation: '\"Hu kånno\\'\" means \"I eat\" — \"Hu\" is the pronoun and \"kånno\\'\" is the verb.'"
+    },
+    {
+      "entry_id": "verbs.eat_i_current",
+      "category": "verbs",
+      "english": "I eat",
+      "term": "Hu kånno'",
+      "recommended_teaching_term": "Hu kånno'",
+      "action": "review_canonical_entry_before_teaching",
+      "reason": "Kånno' is valid for eating something, but the standalone beginner phrase lacks the object required by local dictionaries. Keep the current card pending educator review rather than changing to a new intransitive form blindly.",
+      "path": "web/src/data/reviewGates.test.ts",
+      "line": 6,
+      "snippet": "const heldTerms = ['Hu hånao', \"Hu kånno'\", \"Hu maigo'\"];"
     },
     {
       "entry_id": "verbs.go_i_current",
@@ -69,19 +69,7 @@
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form.",
       "path": "web/src/data/defaultFlashcards.ts",
-      "line": 624,
-      "snippet": "front: 'Hu hånao',"
-    },
-    {
-      "entry_id": "verbs.go_i_current",
-      "category": "verbs",
-      "english": "I go / I went",
-      "term": "Hu hånao",
-      "recommended_teaching_term": "Hu hånao",
-      "action": "review_canonical_entry_before_teaching",
-      "reason": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form.",
-      "path": "web/src/data/defaultFlashcards.ts",
-      "line": 1027,
+      "line": 1012,
       "snippet": "example: 'Bai hu hånao agupa\\'. — I will go tomorrow.'"
     },
     {
@@ -93,7 +81,7 @@
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form.",
       "path": "web/src/data/defaultFlashcards.ts",
-      "line": 1049,
+      "line": 1034,
       "snippet": "example: 'Hu hånao para i eskuela. — I go to school.'"
     },
     {
@@ -104,8 +92,8 @@
       "recommended_teaching_term": "Hu hånao",
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form.",
-      "path": "web/src/data/quizData.ts",
-      "line": 848,
+      "path": "web/src/data/historicalQuizQuestions.ts",
+      "line": 19,
       "snippet": "options: ['Hu maigo\\'', 'Hu hånao', 'Hu tungo\\'', 'Hu gimen'],"
     },
     {
@@ -116,8 +104,8 @@
       "recommended_teaching_term": "Hu hånao",
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form.",
-      "path": "web/src/data/quizData.ts",
-      "line": 849,
+      "path": "web/src/data/historicalQuizQuestions.ts",
+      "line": 20,
       "snippet": "correctAnswer: 'Hu hånao',"
     },
     {
@@ -128,8 +116,8 @@
       "recommended_teaching_term": "Hu hånao",
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form.",
-      "path": "web/src/data/quizData.ts",
-      "line": 850,
+      "path": "web/src/data/historicalQuizQuestions.ts",
+      "line": 21,
       "snippet": "explanation: '\"Hu hånao\" means \"I go\" — \"hånao\" is the verb for going.'"
     },
     {
@@ -141,7 +129,7 @@
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form.",
       "path": "web/src/data/quizData.ts",
-      "line": 1024,
+      "line": 999,
       "snippet": "options: ['Hu hånao agupa\\'', 'Bai hu hånao agupa\\'', 'Malago\\' yu\\' hånao', 'Siña yu\\' hånao'],"
     },
     {
@@ -153,7 +141,7 @@
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form.",
       "path": "web/src/data/quizData.ts",
-      "line": 1025,
+      "line": 1000,
       "snippet": "correctAnswer: 'Bai hu hånao agupa\\'',"
     },
     {
@@ -165,20 +153,20 @@
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form.",
       "path": "web/src/data/quizData.ts",
-      "line": 1026,
+      "line": 1001,
       "snippet": "explanation: '\"Bai hu\" is the future marker — \"Bai hu hånao agupa\\'\" means \"I will go tomorrow\".'"
     },
     {
-      "entry_id": "verbs.sleep_i_current",
+      "entry_id": "verbs.go_i_current",
       "category": "verbs",
-      "english": "I sleep",
-      "term": "Hu maigo'",
-      "recommended_teaching_term": "Hu maigo'",
+      "english": "I go / I went",
+      "term": "Hu hånao",
+      "recommended_teaching_term": "Hu hånao",
       "action": "review_canonical_entry_before_teaching",
-      "reason": "Root is source-backed, but the current Hu + intransitive card is grammar-sensitive. Deferred for native-speaker/teacher review.",
-      "path": "web/src/data/defaultFlashcards.ts",
-      "line": 644,
-      "snippet": "front: 'Hu maigo\\'',"
+      "reason": "Root is source-backed, but the app's standalone 'Hu hånao' first-person phrase is grammar-sensitive. This pass stops broad Hu+verb guidance and defers replacing the card/quiz until native-speaker or teacher review chooses the best beginner form.",
+      "path": "web/src/data/reviewGates.test.ts",
+      "line": 6,
+      "snippet": "const heldTerms = ['Hu hånao', \"Hu kånno'\", \"Hu maigo'\"];"
     },
     {
       "entry_id": "verbs.sleep_i_current",
@@ -188,8 +176,8 @@
       "recommended_teaching_term": "Hu maigo'",
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the current Hu + intransitive card is grammar-sensitive. Deferred for native-speaker/teacher review.",
-      "path": "web/src/data/quizData.ts",
-      "line": 848,
+      "path": "web/src/data/historicalQuizQuestions.ts",
+      "line": 19,
       "snippet": "options: ['Hu maigo\\'', 'Hu hånao', 'Hu tungo\\'', 'Hu gimen'],"
     },
     {
@@ -200,8 +188,8 @@
       "recommended_teaching_term": "Hu maigo'",
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the current Hu + intransitive card is grammar-sensitive. Deferred for native-speaker/teacher review.",
-      "path": "web/src/data/quizData.ts",
-      "line": 855,
+      "path": "web/src/data/historicalQuizQuestions.ts",
+      "line": 26,
       "snippet": "question: 'What does \"Hu maigo\\'\" mean?',"
     },
     {
@@ -212,9 +200,21 @@
       "recommended_teaching_term": "Hu maigo'",
       "action": "review_canonical_entry_before_teaching",
       "reason": "Root is source-backed, but the current Hu + intransitive card is grammar-sensitive. Deferred for native-speaker/teacher review.",
-      "path": "web/src/data/quizData.ts",
-      "line": 859,
+      "path": "web/src/data/historicalQuizQuestions.ts",
+      "line": 30,
       "snippet": "explanation: '\"Hu maigo\\'\" means \"I sleep\".'"
+    },
+    {
+      "entry_id": "verbs.sleep_i_current",
+      "category": "verbs",
+      "english": "I sleep",
+      "term": "Hu maigo'",
+      "recommended_teaching_term": "Hu maigo'",
+      "action": "review_canonical_entry_before_teaching",
+      "reason": "Root is source-backed, but the current Hu + intransitive card is grammar-sensitive. Deferred for native-speaker/teacher review.",
+      "path": "web/src/data/reviewGates.test.ts",
+      "line": 6,
+      "snippet": "const heldTerms = ['Hu hånao', \"Hu kånno'\", \"Hu maigo'\"];"
     }
   ]
 }

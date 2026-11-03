@@ -98,3 +98,17 @@ def test_manifest_integrity_rejects_concept_identity_collisions(monkeypatch):
             "deck_card_counts": deck_counts,
             "question_concepts": {},
         })
+
+
+def test_removed_verb_cards_do_not_reassign_surviving_progress_identities():
+    from api.learning_concepts import _fnv1a
+    old_indices = (0, 1, 3, 5, 7, 8, 9)
+    assert curated_concept_ids('verbs') == tuple(
+        f'v1:curated:{_fnv1a(f"curated:verbs:{index}")}' for index in old_indices
+    )
+    for index in (2, 4, 6):
+        held_id = f'v1:curated:{_fnv1a(f"curated:verbs:{index}")}'
+        with pytest.raises(ValueError, match='does not belong'):
+            validate_curated_concept_ids('verbs', [held_id])
+    assert question_concept_id('verb-1') is None
+    assert question_concept_id('verb-4') == curated_concept_id('verbs', 3)

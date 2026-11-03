@@ -11,7 +11,8 @@ from pydantic import BaseModel, Field
 from .database_connections import get_db_connection_with_retry
 from .learning_concepts import (
     LEARNING_TOPIC_CATEGORIES,
-    validate_curated_concept_ids,
+    RETIRED_CONCEPT_IDS,
+    validate_lesson_exposure_ids,
 )
 
 
@@ -131,14 +132,16 @@ def create_concept_evidence_router(
             raise HTTPException(status_code=404, detail="Learning topic not found")
 
         try:
-            concept_ids = validate_curated_concept_ids(
+            concept_ids = validate_lesson_exposure_ids(
                 category_id,
                 request.concept_ids,
             )
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
-        if (len({card.concept_id for card in request.review_cards}) != len(request.review_cards)
-                or any(card.concept_id not in concept_ids for card in request.review_cards)):
+        review_cards = tuple(card for card in request.review_cards
+                             if not (category_id == "verbs" and card.concept_id in RETIRED_CONCEPT_IDS))
+        if (len({card.concept_id for card in review_cards}) != len(review_cards)
+                or any(card.concept_id not in concept_ids for card in review_cards)):
             raise HTTPException(status_code=400, detail="Review cards must match the introduced concepts")
 
         try:
@@ -148,7 +151,7 @@ def create_concept_evidence_router(
                 user_id=user_id,
                 topic_id=topic_id,
                 concept_ids=concept_ids,
-                review_cards=tuple(request.review_cards),
+                review_cards=review_cards,
             )
         except Exception:
             logger.exception("Failed to record lesson concept exposure")

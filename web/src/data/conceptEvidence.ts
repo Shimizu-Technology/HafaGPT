@@ -4,6 +4,7 @@ import { createCardIdentity, normalizeIdentityPart } from '../lib/cardIdentity';
 interface CuratedConceptManifest {
   version: number;
   deck_card_counts: Record<string, number>;
+  card_source_indices?: Record<string, number[]>;
   // Distinct assessment prompts may intentionally test the same card concept.
   question_concepts: Record<string, [categoryId: string, cardIndex: number]>;
 }
@@ -54,8 +55,18 @@ export function validateCuratedConceptManifest(
     questionConcepts[questionId] = [categoryId, cardIndex];
   }
 
+  const sourceIndices = value.card_source_indices ?? {};
+  if (!isRecord(sourceIndices)) throw new Error('Invalid curated card source indices');
+  for (const [categoryId, indices] of Object.entries(sourceIndices)) {
+    if (!Array.isArray(indices) || indices.length !== deckCardCounts[categoryId]
+      || indices.some(index => !Number.isInteger(index) || index < 0)
+      || new Set(indices).size !== indices.length) {
+      throw new Error('Invalid curated card source indices');
+    }
+  }
   return {
     version: 1,
+    card_source_indices: sourceIndices as Record<string, number[]>,
     deck_card_counts: deckCardCounts,
     question_concepts: questionConcepts,
   };
@@ -63,11 +74,16 @@ export function validateCuratedConceptManifest(
 
 export const CURATED_CONCEPT_MANIFEST = validateCuratedConceptManifest(manifestJson);
 
-export function getCuratedConceptId(categoryId: string, cardIndex: number): string {
+export function getCuratedCardSourceId(categoryId: string, cardIndex: number): string {
   const normalizedCategoryId = normalizeIdentityPart(categoryId);
+  const sourceIndex = CURATED_CONCEPT_MANIFEST.card_source_indices?.[normalizedCategoryId]?.[cardIndex] ?? cardIndex;
+  return `curated:${normalizedCategoryId}:${sourceIndex}`;
+}
+
+export function getCuratedConceptId(categoryId: string, cardIndex: number): string {
   return createCardIdentity({
     sourceKind: 'curated',
-    sourceId: `curated:${normalizedCategoryId}:${cardIndex}`,
+    sourceId: getCuratedCardSourceId(categoryId, cardIndex),
   });
 }
 

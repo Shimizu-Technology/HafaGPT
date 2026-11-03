@@ -100,6 +100,7 @@ from .atomic_regeneration import atomic_regeneration_events
 from . import chat_requests
 from . import tutor_reservations
 from . import conversations
+from .learning_concepts import RETIRED_CONCEPT_IDS
 from .spaced_repetition import (
     calculate_sm2 as _calculate_sm2,
     quality_from_confidence,
@@ -4917,8 +4918,8 @@ def _fetch_sr_summary(user_id: str, cursor):
             COUNT(*) FILTER (WHERE easiness_factor > 2.3 AND interval > 30) as mastered,
             COUNT(*) FILTER (WHERE interval < 7) as learning
         FROM spaced_repetition
-        WHERE user_id = %s
-    """, (user_id,))
+        WHERE user_id = %s AND NOT (card_id = ANY(%s))
+    """, (user_id, sorted(RETIRED_CONCEPT_IDS)))
     
     row = cursor.fetchone()
     if row:
@@ -5572,11 +5573,12 @@ async def get_due_flashcards(
                 FROM spaced_repetition
                 WHERE user_id = %s 
                 AND deck_id = %s
+                AND NOT (card_id = ANY(%s))
                 AND (next_review IS NULL OR next_review <= NOW())
                 AND front IS NOT NULL AND back IS NOT NULL
                 ORDER BY next_review ASC NULLS FIRST
                 LIMIT %s
-            """, (user_id, deck_id, limit))
+            """, (user_id, deck_id, sorted(RETIRED_CONCEPT_IDS), limit))
         else:
             # Get due cards across all decks
             cursor.execute("""
@@ -5585,11 +5587,12 @@ async def get_due_flashcards(
                        front, back, pronunciation, example, source_kind
                 FROM spaced_repetition
                 WHERE user_id = %s 
+                AND NOT (card_id = ANY(%s))
                 AND (next_review IS NULL OR next_review <= NOW())
                 AND front IS NOT NULL AND back IS NOT NULL
                 ORDER BY next_review ASC NULLS FIRST
                 LIMIT %s
-            """, (user_id, limit))
+            """, (user_id, sorted(RETIRED_CONCEPT_IDS), limit))
         
         rows = cursor.fetchall()
         
@@ -5598,16 +5601,18 @@ async def get_due_flashcards(
             cursor.execute("""
                 SELECT COUNT(*) FROM spaced_repetition
                 WHERE user_id = %s AND deck_id = %s
+                AND NOT (card_id = ANY(%s))
                 AND (next_review IS NULL OR next_review <= NOW())
                 AND front IS NOT NULL AND back IS NOT NULL
-            """, (user_id, deck_id))
+            """, (user_id, deck_id, sorted(RETIRED_CONCEPT_IDS)))
         else:
             cursor.execute("""
                 SELECT COUNT(*) FROM spaced_repetition
                 WHERE user_id = %s
+                AND NOT (card_id = ANY(%s))
                 AND (next_review IS NULL OR next_review <= NOW())
                 AND front IS NOT NULL AND back IS NOT NULL
-            """, (user_id,))
+            """, (user_id, sorted(RETIRED_CONCEPT_IDS)))
         
         total_due = cursor.fetchone()[0]
         
@@ -5668,6 +5673,12 @@ async def record_flashcard_review(
     try:
         user_id = await verify_user(authorization)
         
+        # Older clients may replay a queue cached before retirement. Acknowledge
+        # without changing historical snapshots, counters, or scheduling.
+        if request.card_id in RETIRED_CONCEPT_IDS:
+            return {"card_id": request.card_id, "deck_id": request.deck_id,
+                    "ignored": True, "reason": "retired_card"}
+
         db_url = os.getenv("DATABASE_URL")
         import psycopg2
         conn = psycopg2.connect(db_url)
@@ -5721,39 +5732,11 @@ async def get_spaced_repetition_summary(
         conn = psycopg2.connect(db_url)
         cursor = conn.cursor()
         
-        # Get summary stats
-        cursor.execute("""
-            SELECT 
-                COUNT(*) as total_cards,
-                COUNT(*) FILTER (WHERE next_review IS NULL OR next_review <= NOW()) as due_today,
-                COUNT(*) FILTER (WHERE easiness_factor > 2.3 AND interval > 30) as mastered,
-                COUNT(*) FILTER (WHERE interval < 7) as learning
-            FROM spaced_repetition
-            WHERE user_id = %s
-        """, (user_id,))
-        
-        row = cursor.fetchone()
-        
+        summary = _fetch_sr_summary(user_id, cursor)
         cursor.close()
         conn.close()
-        
-        if row:
-            return {
-                "total_cards": row[0],
-                "due_today": row[1],
-                "mastered": row[2],
-                "learning": row[3],
-                "has_cards": row[0] > 0
-            }
-        
-        return {
-            "total_cards": 0,
-            "due_today": 0,
-            "mastered": 0,
-            "learning": 0,
-            "has_cards": False
-        }
-        
+        return summary
+
     except HTTPException:
         raise
     except Exception as e:

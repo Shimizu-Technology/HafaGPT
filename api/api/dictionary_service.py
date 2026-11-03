@@ -15,6 +15,8 @@ from typing import Optional
 from pathlib import Path
 
 from .time_utils import get_guam_date
+from .dictionary_glosses import definition_gloss_segments, format_definition
+from .dictionary_example_validation import supported_example_pair
 
 logger = logging.getLogger(__name__)
 
@@ -177,6 +179,42 @@ def normalize_chamorro(text: str) -> str:
     return text
 
 
+@lru_cache(maxsize=1)
+def _search_reference_words() -> tuple[dict, ...]:
+    """Expose the existing Chamoru.info snapshot for search, with its own IDs.
+
+    Category practice and the daily-word pool keep their Revised snapshot scope.
+    No new source text is downloaded or added to a RAG collection here.
+    """
+    path = API_ROOT / "dictionary_data" / "chamoru_info_dictionary.json"
+    dictionary = json.loads(path.read_text(encoding="utf-8"))
+    trust = {
+        **DICTIONARY_TRUST,
+        "summary": "This entry comes from the bundled Chamoru.info dictionary. Its source traditions and regional spellings vary.",
+        "sources": [{"name": "Chamoru.info dictionary", "url": "http://www.chamoru.info/dictionary/"}],
+        "region": "Guam",
+        "orthography": "Mixed source lineage",
+    }
+    words = []
+    for headword, definition in dictionary.items():
+        digest = hashlib.sha256(unicodedata.normalize("NFC", headword).strip().encode("utf-8")).hexdigest()
+        words.append({
+            "word_id": f"chamoru-info-word-v1-{digest}",
+            "source_id": f"chamoru-info-v1:{headword}",
+            "chamorro": headword,
+            "part_of_speech": "",
+            "definition": format_definition(definition),
+            "examples": [],
+            "trust": trust,
+        })
+    return tuple(words)
+
+
+@lru_cache(maxsize=1)
+def _search_reference_ids() -> dict[str, dict]:
+    return {word["word_id"]: word for word in _search_reference_words()}
+
+
 def get_spelling_variants(text: str) -> list[str]:
     """
     Generate common Chamorro spelling variants for fuzzy matching.
@@ -320,13 +358,15 @@ class DictionaryService:
             for source_index, (word, data) in enumerate(dictionary.items()):
                 word_id = dictionary_word_id(word)
                 if isinstance(data, dict):
+                    examples, unpaired = self._parse_examples(data.get("Other", []), word)
                     entry = {
                         "word_id": word_id,
                         "source_id": f"revised-dictionary-v1:{source_index}",
                         "chamorro": word,
                         "part_of_speech": data.get("PartOfSpeech", ""),
                         "definition": data.get("Definition", ""),
-                        "examples": self._extract_examples(data.get("Other", [])),
+                        "examples": examples,
+                        "unpaired_examples": unpaired,
                         "trust": DICTIONARY_TRUST,
                     }
                 else:
@@ -371,29 +411,49 @@ class DictionaryService:
             self._categories_cache = {}
             logger.error(f"Failed to load dictionary: {e}")
     
-    def _extract_examples(self, other_data: list) -> list:
-        """Extract example sentences from the 'Other' field."""
-        examples = []
-        if not other_data:
-            return examples
-        
-        # The 'Other' field contains alternating Chamorro/English sentences
-        i = 0
-        while i < len(other_data) - 1:
-            chamorro = other_data[i].strip() if other_data[i] else ""
-            english = other_data[i + 1].strip() if i + 1 < len(other_data) and other_data[i + 1] else ""
-            
-            # Skip empty entries, metadata entries (Syn:, Variant:, etc.)
-            if chamorro and not chamorro.startswith(("Syn:", "Variant:", "See:", "Cf:", "Alt:")):
-                if english and not english.startswith(("Syn:", "Variant:", "See:", "Cf:", "Alt:")):
-                    examples.append({
-                        "chamorro": chamorro,
-                        "english": english
-                    })
-            i += 2
-        
-        return examples[:3]  # Limit to 3 examples
-    
+    @staticmethod
+    def _parse_examples(other_data: list, headword: str = "") -> tuple[list[dict], list[str]]:
+        """Pair only the snapshot's delimited alternating example blocks.
+
+        The leading empty field is a delimiter, not a Chamorro sentence. Other
+        layouts contain sense numbers, taxonomy, or flattened multi-sentence
+        strings. Preserve those as unpaired source text rather than guessing.
+        """
+        if not isinstance(other_data, list) or not all(isinstance(item, str) for item in other_data):
+            return [], []
+        fields = [item.strip() for item in other_data]
+        while fields and not fields[-1]:
+            fields.pop()
+        if not fields:
+            return [], []
+        if fields[0]:
+            return [], [item for item in fields if item]
+        fields = fields[1:]
+        metadata = re.compile(r"^(?:Syn|Variant|See|Cf|Alt|From|Ant|Note|Pl|Sg)\s*:", re.I)
+        for index, field in enumerate(fields):
+            if metadata.match(field):
+                fields = fields[:index]
+                break
+        examples, unpaired = [], []
+        for index in range(0, len(fields), 2):
+            pair = fields[index:index + 2]
+            # Three or more spaces mark collapsed fields in this extraction
+            # (e.g. chinikulåti na kulót); do not split or relabel their text.
+            if (len(pair) < 2 or not all(pair)
+                    or not supported_example_pair(pair[0], pair[1], headword)
+                    or any(re.search(r"\S\s{3,}\S|\n|\b(?:Syn|Variant|See|From):|^\d+\)|Information\s+forthcoming|Please\s+check\s+later|^Family\b", field, re.I)
+                           for field in pair)):
+                # Never resume after uncertainty: a collapsed/missing field
+                # may have changed the parity of every remaining field.
+                unpaired.extend(item for item in fields[index:] if item)
+                break
+            chamorro, english = pair
+            examples.append({"chamorro": chamorro, "english": english})
+        return examples[:3], unpaired
+
+    def _extract_examples(self, other_data: list, headword: str = "") -> list:
+        return self._parse_examples(other_data, headword)[0]
+
     def _build_category_cache(self):
         """Pre-categorize words into categories based on definitions."""
         self._categories_cache = {cat_id: [] for cat_id in CATEGORY_DEFINITIONS.keys()}
@@ -666,7 +726,8 @@ class DictionaryService:
         
         Priority system ensures best matches appear first:
         - Priority 0-1: Exact Chamorro matches
-        - Priority 2: English definition starts with query (e.g., "water" → "water; liquid")
+        - Priority 1.6-1.8: Complete English glosses
+        - Priority 2.5: English definition starts with a whole query word
         - Priority 3-4: Chamorro starts-with/contains
         - Priority 5: English as complete word (e.g., "water" in "fresh water")
         - Priority 6+: Partial matches
@@ -675,106 +736,91 @@ class DictionaryService:
             return []
         
         query_lower = query.lower().strip()
-        query_normalized = normalize_chamorro(query)
-        query_variants = get_spelling_variants(query)  # e.g., ["hanom", "hanum"]
+        query_normalized = normalize_chamorro(query_lower)
+        query_variants = get_spelling_variants(query_lower)  # e.g., ["hanom", "hanum"]
         results = []
-        seen_words = set()  # Avoid duplicates
         
         # Search through all words
-        for entry in self._word_list:
+        for entry in [*self._word_list, *_search_reference_words()]:
             chamorro_lower = entry["chamorro"].lower()
             chamorro_normalized = normalize_chamorro(entry["chamorro"])
             definition_lower = entry["definition"].lower()
             
-            # Skip if we've already added this word
-            if chamorro_lower in seen_words:
-                continue
-            
             # Priority 0: Exact Chamorro match (with diacritics)
             if query_lower == chamorro_lower:
                 results.append((0, entry))
-                seen_words.add(chamorro_lower)
                 continue
             
             # Priority 1: Exact Chamorro match (normalized/without diacritics)
             if query_normalized == chamorro_normalized:
                 results.append((1, entry))
-                seen_words.add(chamorro_lower)
                 continue
             
             # Priority 1.5: Exact match with spelling variant (o/u swap)
             if chamorro_normalized in query_variants:
                 results.append((1, entry))
-                seen_words.add(chamorro_lower)
                 continue
             
-            # Priority 2: English definition STARTS with query
-            # (e.g., searching "water" matches "water; liquid" but not "fresh water")
-            if definition_lower.startswith(query_lower):
-                results.append((2, entry))
-                seen_words.add(chamorro_lower)
+            # Complete glosses outrank a longer definition that merely begins
+            # with the query ("tree" versus "tree fern"). Use the same conservative
+            # segments as deterministic tutor lookup, including semicolon senses.
+            glosses = definition_gloss_segments(entry["definition"])
+            exact_ranks = [rank for gloss, rank in glosses if gloss == query_normalized]
+            if exact_ranks:
+                results.append((1.5 + min(exact_ranks) / 10, entry))
                 continue
-            
-            # Priority 2.5: Query is one of the first meanings (comma-separated)
-            # e.g., "tåsi" has "sea, ocean, beach" - "ocean" should match highly
-            first_meanings = [m.strip() for m in definition_lower.split(',')[:3]]
-            if query_lower in first_meanings:
-                results.append((2, entry))
-                seen_words.add(chamorro_lower)
+
+            if re.match(rf"^{re.escape(query_lower)}\b", definition_lower):
+                results.append((2.5, entry))
                 continue
-            
+
             # Priority 3: Chamorro starts with (with diacritics)
             if chamorro_lower.startswith(query_lower):
                 results.append((3, entry))
-                seen_words.add(chamorro_lower)
                 continue
             
             # Priority 4: Chamorro starts with (normalized)
             if chamorro_normalized.startswith(query_normalized):
                 results.append((4, entry))
-                seen_words.add(chamorro_lower)
                 continue
             
             # Priority 4.5: Starts with spelling variant
             if any(chamorro_normalized.startswith(v) for v in query_variants):
                 results.append((4, entry))
-                seen_words.add(chamorro_lower)
                 continue
             
             # Priority 5: English definition contains query as a complete word
             # Use word boundary check to avoid matching "water" in "underwater"
             if re.search(rf'\b{re.escape(query_lower)}\b', definition_lower):
                 results.append((5, entry))
-                seen_words.add(chamorro_lower)
                 continue
             
             # Priority 6: Chamorro contains (with diacritics)
             if query_lower in chamorro_lower:
                 results.append((6, entry))
-                seen_words.add(chamorro_lower)
                 continue
             
             # Priority 7: Chamorro contains (normalized)
             if query_normalized in chamorro_normalized:
                 results.append((7, entry))
-                seen_words.add(chamorro_lower)
                 continue
             
             # Priority 7.5: Contains spelling variant
             if any(v in chamorro_normalized for v in query_variants):
                 results.append((7, entry))
-                seen_words.add(chamorro_lower)
                 continue
             
             # Priority 8: English definition contains query (partial match)
             if query_lower in definition_lower:
                 results.append((8, entry))
-                seen_words.add(chamorro_lower)
         
         # Sort by priority, then alphabetically
-        results.sort(key=lambda x: (x[0], x[1]["chamorro"].lower()))
+        results.sort(key=lambda x: (x[0], len(x[1]["chamorro"]), x[1]["chamorro"].lower()))
         
-        return [r[1] for r in results[:limit]]
+        unique = {}
+        for _rank, entry in results:
+            unique.setdefault(entry["chamorro"].casefold(), entry)
+        return list(unique.values())[:limit]
     
     def get_word(self, word: str) -> Optional[dict]:
         """
@@ -790,6 +836,10 @@ class DictionaryService:
         if exact_entry:
             return dict(exact_entry)
         
+        for reference_word in _search_reference_words():
+            if reference_word["chamorro"].casefold() == exact_word.casefold():
+                return dict(reference_word)
+
         # Try case-insensitive match
         word_lower = word.lower()
         for entry in self._word_list:
@@ -815,7 +865,7 @@ class DictionaryService:
 
         if len(word_id) > 100:
             return None
-        entry = self._words_by_id.get(word_id)
+        entry = self._words_by_id.get(word_id) or _search_reference_ids().get(word_id)
         return dict(entry) if entry else None
     
     def get_word_with_morphology(self, word: str) -> dict:
