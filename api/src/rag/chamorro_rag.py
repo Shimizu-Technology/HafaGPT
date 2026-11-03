@@ -6,6 +6,7 @@ Loads the Chamorro grammar vector database and provides search capabilities.
 import os
 import re
 import unicodedata
+import threading
 import time
 from contextlib import closing
 from langchain_postgres import PGVector
@@ -682,10 +683,32 @@ class ChamorroRAG:
         index = self._homograph_index()
         return {headword: index.get(headword, ()) for headword in headwords}
 
+    # One scan per process: concurrent cold callers wait for the first, and a
+    # failed scan is not retried until the backoff passes.
+    _homograph_lock = threading.Lock()
+    HOMOGRAPH_RETRY_SECONDS = 60.0
+
     def _homograph_index(self):
         cached = getattr(self, "_homograph_cache", None)
         if cached is not None:
             return cached
+        with self._homograph_lock:
+            cached = getattr(self, "_homograph_cache", None)
+            if cached is not None:
+                return cached
+            failed_at = getattr(self, "_homograph_failed_at", None)
+            if failed_at is not None and time.monotonic() - failed_at < self.HOMOGRAPH_RETRY_SECONDS:
+                return {}
+            try:
+                self._homograph_cache = self._load_homograph_index()
+            except Exception as error:
+                self._homograph_failed_at = time.monotonic()
+                print(f"⚠️  Dictionary homograph senses unavailable; retrying after "
+                      f"{self.HOMOGRAPH_RETRY_SECONDS:.0f}s: {type(error).__name__}")
+                return {}
+            return self._homograph_cache
+
+    def _load_homograph_index(self):
         # Chamoru.info entry documents begin "entry | <headword>" and carry a
         # "meaning | ..." row. Plain string functions keep this one scan fast;
         # grouping happens here rather than in a slower SQL aggregate.
@@ -722,8 +745,7 @@ class ChamorroRAG:
             for meaning, metadata in by_entry.values():
                 if is_retrieval_allowed(metadata, "lookup"):
                     index.setdefault(key, []).append((meaning, annotate_metadata(metadata)))
-        self._homograph_cache = {key: tuple(values) for key, values in index.items()}
-        return self._homograph_cache
+        return {key: tuple(values) for key, values in index.items()}
 
     def _english_to_chamorro_search(self, english_word, k=3):
         """

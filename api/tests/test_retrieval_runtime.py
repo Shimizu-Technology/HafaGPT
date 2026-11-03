@@ -164,3 +164,45 @@ def test_cancelled_scope_never_starts_an_embedding_lookup():
     retrieve, _ = _load_get_rag_context(fake_rag=rag, card_context='')
     retrieve('What does fixture mean?', cancelled=lambda: True)
     rag.create_context.assert_not_called()
+
+
+def test_concurrent_cold_homograph_lookups_share_one_scan(monkeypatch):
+    rag = bare_rag()
+    entered, release, calls = threading.Event(), threading.Event(), []
+
+    def load(self):
+        calls.append(True)
+        entered.set()
+        release.wait(5)
+        return {'un': (('A, an, one (indefinite article).', {}),)}
+
+    monkeypatch.setattr(ChamorroRAG, '_load_homograph_index', load)
+    results = []
+    first = threading.Thread(target=lambda: results.append(rag.dictionary_homograph_senses(('un',))))
+    second = threading.Thread(target=lambda: results.append(rag.dictionary_homograph_senses(('un',))))
+    first.start()
+    assert entered.wait(5)
+    second.start()
+    second.join(0.1)
+    assert second.is_alive()  # Waiting for the first scan, not running its own.
+    release.set()
+    first.join(5); second.join(5)
+    assert len(calls) == 1
+    assert results == [{'un': (('A, an, one (indefinite article).', {}),)}] * 2
+
+
+def test_failed_homograph_scan_backs_off_before_retrying(monkeypatch):
+    rag = bare_rag()
+    calls = []
+
+    def load(self):
+        calls.append(True)
+        raise RuntimeError('database unavailable')
+
+    monkeypatch.setattr(ChamorroRAG, '_load_homograph_index', load)
+    assert rag.dictionary_homograph_senses(('un',)) == {'un': ()}
+    assert rag.dictionary_homograph_senses(('un',)) == {'un': ()}
+    assert len(calls) == 1
+    rag._homograph_failed_at -= ChamorroRAG.HOMOGRAPH_RETRY_SECONDS + 1
+    monkeypatch.setattr(ChamorroRAG, '_load_homograph_index', lambda self: {'un': (('A, an, one.', {}),)})
+    assert rag.dictionary_homograph_senses(('un',)) == {'un': (('A, an, one.', {}),)}
