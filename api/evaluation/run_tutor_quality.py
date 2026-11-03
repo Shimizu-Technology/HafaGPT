@@ -48,7 +48,8 @@ CANNOT_ANSWER = re.compile(
     r"(?:provide|translate|give|verify|confirm|review|answer|list|tell you|teach)\b", re.I)
 LACKS_COVERAGE = re.compile(
     r"\b(?:references|sources|evidence|materials|dictionar(?:y|ies)|entries)(?: \w+){0,3} "
-    r"(?:do not|don't|does not|doesn't|did not|didn't) (?:include|contain|cover|list|show|have|give)\b", re.I)
+    r"(?:do not|don't|does not|doesn't|did not|didn't) (?:include|contain|cover|list|show|have|give)\b|"
+    r"\bI (?:do not|don't) have (?:any |the )?(?:\w+ ){0,4}(?:terms?|words?|entries|references|sources|list)\b", re.I)
 ASKS_FOR_MATERIAL = re.compile(
     r"\b(?:send|give|share|provide|paste|upload)(?: me)? (?:the|a|an|your|that)(?: \w+){0,3} "
     r"(?:list|source|words?|terms?|text|sentence|message|vocabulary)\b", re.I)

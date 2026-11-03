@@ -355,6 +355,11 @@ def test_non_answer_detection_widens_without_changing_the_legacy_refusal_signal(
     # Asking for the requested material is enough even without a hedged "can't".
     unhedged = 'The supplied references do not include color words. Send me the color list and I will review it.'
     assert tq.score(case, unhedged, '')['refusal_or_non_answer'] is True
+    # The T4-r1 paid run's wording for the same non-answer.
+    no_terms = ("I don’t have any supplied Chamorro color terms to review. "
+                "Please send the color list or the specific words you want checked.")
+    assert tq.score(case, no_terms, '')['refusal'] is False
+    assert tq.score(case, no_terms, '')['refusal_or_non_answer'] is True
     partial = ('**tronkon håyu** is supported as “tree” [Chamoru.info dictionary], but the supplied references '
                'do not cover “all.” Send me the full sentence if you want a draft.')
     assert tq.score(case, partial, '')['refusal_or_non_answer'] is False
