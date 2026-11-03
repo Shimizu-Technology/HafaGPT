@@ -4330,6 +4330,161 @@
         "verified_without_citation"
       ],
       "notes": "Phone/OCR spacing from the production report (PR #65 idea)."
+    },
+    {
+      "id": "tq2-015",
+      "category": "polysemy",
+      "history": [],
+      "user_message": "How do I say \"I will eat later\" in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "will (future marker)",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "bai"
+            },
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "bai"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PR #109 polysemy: future \"will\". Source defines bai as \"Will (future marker)\"; gånas is the desire sense of \"will\".",
+      "must_not_direct_headwords": [
+        "gånas",
+        "ganas"
+      ]
+    },
+    {
+      "id": "tq2-016",
+      "category": "polysemy",
+      "history": [],
+      "user_message": "How do I say \"The food at the party is free\" in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "free (no cost)",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "dibåtde"
+            },
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "dibatde"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "dibåtdi"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PR #109 polysemy: \"free\" as no cost. Source defines dibåtdi as \"free, not costing anything, gratis\"; franko is the candid sense.",
+      "must_not_direct_headwords": [
+        "franko"
+      ]
+    },
+    {
+      "id": "tq2-017",
+      "category": "polysemy",
+      "history": [],
+      "user_message": "How do I say \"You may go now\" in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "may (permission)",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "siña"
+            },
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "siña"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "siña"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PR #109 polysemy: modal \"may\". Source defines siña as \"can, be able, may\"; Måyu is the month.",
+      "must_not_direct_headwords": [
+        "Måyu",
+        "Mayu",
+        "måkmamao",
+        "Makmamao",
+        "Makmåmåo"
+      ]
+    },
+    {
+      "id": "tq2-018",
+      "category": "polysemy",
+      "history": [],
+      "user_message": "How do I say \"My birthday is in May\" in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "May (month)",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "Måyu"
+            },
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "Mayu"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "Måyu"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "måkmamao"
+            },
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "Makmamao"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "Makmåmåo"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PR #109 polysemy: the month sense of \"may\" stays reachable when the sentence asks for it.",
+      "must_not_direct_headwords": []
     }
   ]
 }
