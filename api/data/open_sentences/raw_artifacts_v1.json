@@ -1,0 +1,14 @@
+{
+  "snapshot_version": "v1",
+  "retrieved_at": "2026-11-03",
+  "files": {
+    "tatoeba-api-2.json": "e8105538e4757e85bb8c7a052408306ad4667aca3a954fcbb793bc34d1fe8f92",
+    "tatoeba-api-3.json": "7b0aaf439723ee0c49b82ecf98d1bcc703c5a3ada2000dea0669167734a0953c",
+    "tatoeba-api-4.json": "68a0b00a3d1e66e069b59cce6af22a890163457e7c8e4b2c47f53a8b74ec5dd7",
+    "tatoeba-api.json": "081a69315c6ee693cd68059f46e4e6b8a6f4fc395cee6008b4336d94fb3eb116",
+    "translatewiki.zip": "efb0272d37a5a01116adb4f0a8481df9748660b9b184eabd8b91ead5aab6c80f",
+    "ch-en.xml.gz": "9950899cb756091d37414a73c2f21d7773e348ef9c618bcff0e833ee08fc6571",
+    "ch.zip": "d61582cdaf6ed6b97f41e821add427c1d1080564cd0d5b973ed55877cf0ed573",
+    "en.zip": "50642c03a74516f9711c09f593d1d221342570efe1ae64d30241daf221545129"
+  }
+}

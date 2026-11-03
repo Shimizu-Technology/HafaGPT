@@ -1,0 +1,81 @@
+[
+  {
+    "source_id": "tatoeba_chamorro",
+    "path": [
+      "sentence_ids",
+      "chamorro"
+    ],
+    "value": [
+      "12not-an-id"
+    ]
+  },
+  {
+    "source_id": "tatoeba_chamorro",
+    "path": [
+      "sentence_ids",
+      "english"
+    ],
+    "value": [
+      "0"
+    ]
+  },
+  {
+    "source_id": "tatoeba_chamorro",
+    "path": [
+      "pair_id"
+    ],
+    "value": "tatoeba:wrong:1"
+  },
+  {
+    "source_id": "opus_translatewiki_ch_en",
+    "path": [
+      "sentence_ids",
+      "chamorro"
+    ],
+    "value": [
+      "translatewiki.ch-en.ch:0"
+    ]
+  },
+  {
+    "source_id": "opus_translatewiki_ch_en",
+    "path": [
+      "pair_id"
+    ],
+    "value": "opus_translatewiki_ch_en:v2026-07-01:bad"
+  },
+  {
+    "source_id": "opus_translatewiki_ch_en",
+    "path": [
+      "alignment_row"
+    ],
+    "value": true
+  },
+  {
+    "source_id": "opus_translatewiki_ch_en",
+    "path": [
+      "provenance",
+      "alignment_id"
+    ],
+    "value": "SLnot-an-id"
+  },
+  {
+    "source_id": "opus_translatewiki_ch_en",
+    "path": [
+      "provenance",
+      "source_sentence_ids",
+      "english"
+    ],
+    "value": [
+      "not-an-id"
+    ]
+  },
+  {
+    "source_id": "opus_translatewiki_ch_en",
+    "path": [
+      "provenance",
+      "source_documents",
+      "chamorro"
+    ],
+    "value": "../../unknown.xml.gz"
+  }
+]
