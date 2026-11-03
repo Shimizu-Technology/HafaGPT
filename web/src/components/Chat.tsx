@@ -1522,7 +1522,7 @@ End of Export
 
   const headerTitle = activeConversationId ? conversationTitle : linkedTopic?.title || 'Tutor';
   const showTaskTabs = !viewport.keyboardOpen && !routeConversationId && !activeConversationId && !resumedReply.pending;
-  const taskTabs = <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} />;
+  const taskTabs = <ModeSelector intent={chatIntent} onIntentChange={handleStarterSelect} disabled={loading || preparingSend} layout={singleRowHeader ? 'compact' : 'default'} />;
 
   return (
     <main id="main-content" style={viewportStyle}
@@ -1568,7 +1568,7 @@ End of Export
               </h1>
             </div>
             {/* A new chat compares all three tasks; once chatting, the composer's task menu takes over. */}
-            {singleRowHeader && showTaskTabs && <div className="w-[26rem] shrink-0 [&>div]:border-t-0 [&>div]:p-0 [&>div>div]:max-w-none">{taskTabs}</div>}
+            {singleRowHeader && showTaskTabs && <div className="w-[26rem] shrink-0">{taskTabs}</div>}
             <div className={`flex min-w-0 items-center justify-end gap-1 ${singleRowHeader && showTaskTabs ? 'flex-1 basis-0' : 'shrink-0'}`}>
               {isSignedIn && activeConversationId && <button type="button" onClick={() => void handleNewConversation()} aria-label="New chat" title="New chat"
                 className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl text-brown-700 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
