@@ -165,3 +165,35 @@ describe('reconciliation is synchronous and guards adoption', () => {
     expect(readTutorDraft(tutorDraftKey('account-b', null)).text).toBe('');
   });
 });
+
+describe('a temporary storage failure fails closed', () => {
+  beforeEach(() => { window.sessionStorage.clear(); clearTutorDrafts(); });
+  afterEach(() => { vi.restoreAllMocks(); });
+
+  it('never hands a draft to a later account when storage refused to bind or delete it', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Private guest question', files: [] });
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    const removeItem = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('unavailable'); });
+    reconcileDraftAccount('account-a'); // binding and deletion both fail
+    reconcileDraftAccount(null);
+    setItem.mockRestore();
+    removeItem.mockRestore(); // storage recovers
+    reconcileDraftAccount('account-b');
+    expect(adoptGuestDraft('account-b')).toBe(false);
+    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
+  });
+
+  it('keeps a new guest draft typed after the failure', () => {
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Old', files: [] });
+    const removeItem = vi.spyOn(Storage.prototype, 'removeItem').mockImplementation(() => { throw new Error('unavailable'); });
+    const setItem = vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => { throw new Error('quota'); });
+    reconcileDraftAccount('account-a');
+    reconcileDraftAccount(null);
+    setItem.mockRestore();
+    removeItem.mockRestore();
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Fresh guest question', files: [] });
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('Fresh guest question');
+    expect(adoptGuestDraft('account-c')).toBe(true);
+  });
+});

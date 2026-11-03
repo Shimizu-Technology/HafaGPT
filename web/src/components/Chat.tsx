@@ -165,8 +165,9 @@ function ChatSession() {
   const [isSwitchingConversation, setIsSwitchingConversation] = useState(false);
   
   // A learner who signed in to send a guest draft continues in a new chat with that draft.
-  // A saved conversation in the URL is not where that draft belongs; leave it for a new chat.
-  const [adoptedGuestDraft] = useState(() => !routeConversationId && Boolean(user?.id) && adoptGuestDraft(user!.id));
+  // Adopted into this account's new-chat draft even when a saved conversation is open, so
+  // New chat shows it; only the account that signed in after the guest typed it gets it.
+  const [adoptedGuestDraft] = useState(() => Boolean(user?.id) && adoptGuestDraft(user!.id));
   // On mount, check if user has an active conversation from a previous session (page refresh)
   // If first login, start with new chat. If page refresh, restore their conversation.
   const restoredConversationIdRef = useRef<string | null>(null);

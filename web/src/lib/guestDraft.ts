@@ -12,10 +12,21 @@ const guestClockSkewMs = 5_000;
 const guestDraftMaxChars = 20_000;
 export interface GuestRecord { text: string; at: number; owner?: string }
 
+// Set when a draft had to be discarded but storage refused. Until a delete or a fresh
+// guest write succeeds, the stored record is treated as gone, so a temporary storage
+// failure can never hand a previous account's draft to the next one.
+let staleRecordPending = false;
 export function removeGuestRecord(): void {
-  try { window.sessionStorage.removeItem(guestDraftKey); } catch { /* Storage can be unavailable. */ }
+  try {
+    window.sessionStorage.removeItem(guestDraftKey);
+    staleRecordPending = false;
+  } catch { staleRecordPending = true; }
 }
 export function readGuestRecord(): GuestRecord | null {
+  if (staleRecordPending) {
+    removeGuestRecord();
+    if (staleRecordPending) return null;
+  }
   try {
     const saved = JSON.parse(window.sessionStorage.getItem(guestDraftKey) || 'null') as Partial<GuestRecord> | null;
     if (saved && typeof saved.text === 'string' && typeof saved.at === 'number'
@@ -29,7 +40,10 @@ export function readGuestRecord(): GuestRecord | null {
 function writeGuestRecord(record: GuestRecord | null): void {
   if (!record || !record.text.trim() || record.text.length > guestDraftMaxChars) return removeGuestRecord();
   // A failed write must not leave an older, obsolete draft to be adopted later.
-  try { window.sessionStorage.setItem(guestDraftKey, JSON.stringify(record)); } catch { removeGuestRecord(); }
+  try {
+    window.sessionStorage.setItem(guestDraftKey, JSON.stringify(record));
+    staleRecordPending = false; // the new record replaced any stale one
+  } catch { removeGuestRecord(); }
 }
 
 // A draft already bound to an account is never shown in the guest composer: a later
@@ -78,4 +92,4 @@ export function takeGuestDraftFor(ownerId: string): string | null {
   return record.owner === ownerId ? record.text : null;
 }
 
-export function resetGuestDraft(): void { knownAccount = undefined; removeGuestRecord(); }
+export function resetGuestDraft(): void { knownAccount = undefined; staleRecordPending = false; removeGuestRecord(); }
