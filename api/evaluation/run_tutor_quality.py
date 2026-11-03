@@ -37,6 +37,31 @@ REFUSAL = re.compile(
     r"I (?:do not|don't) have (?:a |an |any )?(?:verified|reliable|confirmed)|"
     r"no (?:verified|attested|reliable) (?:dictionary )?(?:entry|translation|word)|"
     r"(?:send|write|say) (?:it|this|that|the message) in English)\b", re.I)
+# Wider non-answer triage, reported beside the unchanged REFUSAL signal so old
+# and new runs stay comparable. It adds hedged refusals ("I can't accurately
+# review them") and replies that say the references lack the topic and ask the
+# learner to supply the very thing they asked about ("Review Chamorro colors" ->
+# "Send me the color list or a source"). An offer to check a further sentence
+# after a partial answer does not count.
+CANNOT_ANSWER = re.compile(
+    r"\bI (?:cannot|can't|won't|am unable to|couldn't|could not)(?: (?:currently|accurately|reliably|fully|confidently|properly))? "
+    r"(?:provide|translate|give|verify|confirm|review|answer|list|tell you|teach)\b", re.I)
+LACKS_COVERAGE = re.compile(
+    r"\b(?:references|sources|evidence|materials|dictionar(?:y|ies)|entries)(?: \w+){0,3} "
+    r"(?:do not|don't|does not|doesn't|did not|didn't) (?:include|contain|cover|list|show|have|give)\b", re.I)
+ASKS_FOR_MATERIAL = re.compile(
+    r"\b(?:send|give|share|provide|paste|upload)(?: me)? (?:the|a|an|your|that)(?: \w+){0,3} "
+    r"(?:list|source|words?|terms?|text|sentence|message|vocabulary)\b", re.I)
+_MATERIAL_WORDS = frozenset('send give share provide paste upload list source words word terms term text sentence message vocabulary'.split())
+
+
+def asks_for_requested_material(response: str, request: str) -> bool:
+    stems = {word[:5] for word in re.findall(r'[a-z]{4,}', request.casefold())} - {'chamo'}
+    return any(word[:5] in stems
+               for match in ASKS_FOR_MATERIAL.finditer(response)
+               for word in re.findall(r'[a-z]{4,}', match.group(0).casefold()) if word not in _MATERIAL_WORDS)
+
+
 UNCERTAIN = re.compile(r"\b(?:unverified|uncertain|not (?:locally )?(?:attested|verified)|cannot verify|can't verify|couldn't verify|could not verify|couldn't find|could not find|no .{0,35}(?:entry|match)|not found|don't have|do not have)\b", re.I)
 PATTERNS = {
     'send_in_english': r"\b(?:send|text|write|say|reply)(?:\s+\w+){0,7}\s+in English\b",
@@ -47,8 +72,10 @@ PATTERNS = {
     # The production error: "un" is only "you (sg.)", so the learner's form is wrong.
     'rejects_un_as_only_you': r"\bun\b[^\n]{0,80}\b(?:only|just)\s+(?:means?|is)\b[^\n]{0,20}\byou\b|(?:should(?:n't| not)|cannot|can't|don't|do not|avoid)\s+(?:be\s+)?(?:use[ds]?|using|say|saying)\b[^\n]{0,40}\bun\b",
 }
-# Evidence blocks that present a headword as the word for the requested concept.
-DIRECT_EVIDENCE_HEADER = re.compile(r'^\[(?:Direct dictionary gloss|Exact English dictionary gloss)')
+# Evidence blocks that present a headword as the word for the requested concept,
+# including strong Chamorro headword matches ("mango'" for "mango").
+DIRECT_EVIDENCE_HEADER = re.compile(
+    r'^\[(?:Direct dictionary gloss|Exact English dictionary gloss|Exact dictionary headword|Headword matching)')
 
 
 def digest(value: str) -> str:
@@ -127,8 +154,9 @@ def score(case: dict, response: str | None, evidence: str) -> dict:
     groups = case['expected_retrieved_headwords']
     hits = [g['concept'] for g in groups if any(headword_present(r['headword'], evidence) for r in g['any_of'])]
     result = {'expected_headwords': len(groups), 'retrieved_headwords': len(hits),
-              'retrieved_concepts': hits, 'refusal': None, 'must_not_violations': None,
-              'expected_behavior_signal': None,
+              'retrieved_concepts': hits, 'refusal': None, 'refusal_or_non_answer': None,
+              'answer_used_headwords': None, 'answer_used_concepts': None,
+              'must_not_violations': None, 'expected_behavior_signal': None,
               'false_direct_evidence': direct_evidence_headwords(evidence, case.get('must_not_direct_headwords', []))}
     if response is None:
         return result
@@ -149,8 +177,14 @@ def score(case: dict, response: str | None, evidence: str) -> dict:
             # Absence of uncertainty is a warning, not proof of fabrication.
             violations.append(rule)
     refusal = bool(REFUSAL.search(response))
+    non_answer = refusal or bool(CANNOT_ANSWER.search(response)) or bool(
+        LACKS_COVERAGE.search(response) and asks_for_requested_material(response, case['user_message']))
+    # Retrieval recall counts a headword anywhere in the evidence; this counts
+    # only expected headwords the reply itself uses (same exact-form matching).
+    used = [g['concept'] for g in groups if any(headword_present(r['headword'], response) for r in g['any_of'])]
     behavior = case['expected_behavior']
-    result.update(refusal=refusal, must_not_violations=violations,
+    result.update(refusal=refusal, refusal_or_non_answer=non_answer,
+                  answer_used_headwords=len(used), answer_used_concepts=used, must_not_violations=violations,
                   expected_behavior_signal=bool(UNCERTAIN.search(response)) if behavior == 'refuse_absent' else
                   '?' in response if behavior == 'clarify' else not refusal)
     return result
@@ -166,6 +200,9 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
     scored = [r for r in ok if r['must_not_violations'] is not None]
     expected = sum(r['expected_headwords'] for r in ok)
     hits = sum(r['retrieved_headwords'] for r in ok)
+    responded = [r for r in ok if r.get('answer_used_headwords') is not None]
+    used_total = sum(r['expected_headwords'] for r in responded)
+    used_hits = sum(r['answer_used_headwords'] for r in responded)
     categories = {}
     for category in sorted({row['category'] for row in rows}):
         category_rows = [row for row in rows if row['category'] == category]
@@ -179,6 +216,8 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
             'headword_recall': found / total if total else None,
             'answerable_responses': len(answers),
             'refusal_count': sum(row['refusal'] for row in answers),
+            'refusal_or_non_answer_count': sum(bool(row.get('refusal_or_non_answer')) for row in answers),
+            'answer_used_headword_hits': sum(row.get('answer_used_headwords') or 0 for row in usable),
             'router_misses': sum(row['router'] != row['expected_router'] for row in category_rows),
         }
     return {**metadata, 'cases': len(rows), 'completed_cases': len(ok),
@@ -187,8 +226,19 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
             'answerable_responses': len(answerable),
             'refusal_count': sum(r['refusal'] for r in answerable),
             'refusal_rate_answerable': sum(r['refusal'] for r in answerable) / len(answerable) if answerable else None,
+            'refusal_or_non_answer_count': sum(bool(r.get('refusal_or_non_answer')) for r in answerable),
+            'refusal_or_non_answer_rate_answerable': sum(bool(r.get('refusal_or_non_answer')) for r in answerable) / len(answerable) if answerable else None,
+            'refusal_or_non_answer_case_ids': [r['id'] for r in answerable if r.get('refusal_or_non_answer')],
             'expected_headword_hits': hits, 'expected_headword_total': expected,
             'expected_headword_recall': hits / expected if expected else None,
+            'answer_used_headword_hits': used_hits, 'answer_used_headword_total': used_total,
+            'answer_used_headword_rate': used_hits / used_total if used_total else None,
+            'metric_notes': {
+                'refusal_count': 'legacy REFUSAL regex, unchanged for comparison with earlier runs',
+                'refusal_or_non_answer_count': 'legacy regex plus hedged refusals and lacks-coverage replies that ask the learner for the material',
+                'expected_headword_recall': 'expected headword present anywhere in retained evidence (retrieval presence, not use)',
+                'answer_used_headword_rate': 'expected headword present in the model response, exact form',
+            },
             'must_not_violating_cases': sum(bool(r['must_not_violations']) for r in scored),
             'must_not_violations': dict(Counter(v for r in scored for v in r['must_not_violations'])),
             'response_checks_scored': len(scored),
@@ -214,7 +264,9 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
 
 
 SUBSET_KEYS = ('cases', 'completed_cases', 'answerable_responses', 'refusal_count', 'refusal_rate_answerable',
+               'refusal_or_non_answer_count', 'refusal_or_non_answer_case_ids',
                'expected_headword_hits', 'expected_headword_total', 'expected_headword_recall',
+               'answer_used_headword_hits', 'answer_used_headword_total', 'answer_used_headword_rate',
                'must_not_violating_cases', 'must_not_violations', 'must_not_case_ids', 'refusal_case_ids',
                'latency_p50_s', 'latency_p95_s', 'false_direct_evidence_cases')
 
@@ -428,7 +480,8 @@ def main(argv=None) -> int:
         by_id = {case['id']: case for case in cases}
         for row in rows:
             checks = score(by_id[row['id']], row['response'], '')
-            for key in ['refusal', 'must_not_violations', 'expected_behavior_signal']:
+            for key in ['refusal', 'refusal_or_non_answer', 'answer_used_headwords', 'answer_used_concepts',
+                        'must_not_violations', 'expected_behavior_signal']:
                 row[key] = checks[key]
         metadata['response_scoring_harness_sha256'] = digest(Path(__file__).read_text())
         (args.output / 'cases.jsonl').write_text(''.join(json.dumps(row, ensure_ascii=False) + '\n' for row in rows))

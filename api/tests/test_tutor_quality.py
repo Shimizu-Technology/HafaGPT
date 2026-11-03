@@ -334,3 +334,42 @@ def test_subset_summaries_compare_suite_versions():
     assert subsets['tq1']['expected_headword_recall'] == 1
     assert subsets['tq2']['expected_headword_recall'] == 0
     assert tq.subset_summaries([dict(row, id='tq1-001')]) == {}
+
+
+def test_answer_use_is_scored_separately_from_retrieval_presence():
+    case = next(c for c in tq.load_cases() if c['expected_retrieved_headwords'])
+    headword = case['expected_retrieved_headwords'][0]['any_of'][0]['headword']
+    unused = tq.score(case, 'A reply that never names the word.', f'Definition entry: {headword}')
+    assert unused['retrieved_headwords'] >= 1 and unused['answer_used_headwords'] == 0
+    used = tq.score(case, f'Use **{headword}** here [dictionary].', '')
+    assert used['retrieved_headwords'] == 0 and used['answer_used_headwords'] >= 1
+    assert tq.score(case, None, headword)['answer_used_headwords'] is None
+
+
+def test_non_answer_detection_widens_without_changing_the_legacy_refusal_signal():
+    case = next(c for c in tq.load_cases() if c['user_message'] == 'Review Chamorro colors')
+    colors = ('The supplied references do not include Chamorro color words, so I can’t accurately review them '
+              'from the available sources. Send me the color list or a source, and I’ll review the Guam spelling.')
+    result = tq.score(case, colors, '')
+    assert result['refusal'] is False and result['refusal_or_non_answer'] is True
+    # Asking for the requested material is enough even without a hedged "can't".
+    unhedged = 'The supplied references do not include color words. Send me the color list and I will review it.'
+    assert tq.score(case, unhedged, '')['refusal_or_non_answer'] is True
+    partial = ('**tronkon håyu** is supported as “tree” [Chamoru.info dictionary], but the supplied references '
+               'do not cover “all.” Send me the full sentence if you want a draft.')
+    assert tq.score(case, partial, '')['refusal_or_non_answer'] is False
+    rows = [dict(tq.score(case, text, ''), id=f'tq1-00{i}', category=case['category'], expected_behavior='answer',
+                 router='none', expected_router='none', latency_s=1, error=None)
+            for i, text in enumerate((colors, partial))]
+    summary = tq.summarize(rows, {})
+    assert summary['refusal_count'] == 0
+    assert summary['refusal_or_non_answer_count'] == 1
+    assert summary['refusal_or_non_answer_case_ids'] == ['tq1-000']
+
+
+def test_strong_chamorro_headword_labels_count_as_false_direct_evidence():
+    case = next(c for c in tq.load_cases() if c.get('must_not_direct_headwords') == ['gutos'])
+    exact = '[Exact dictionary headword "gutos": gutos]\nSource: X\nDefinition: snap off'
+    assert tq.score(case, None, exact)['false_direct_evidence'] == ['gutos']
+    lead = '[Chamorro headword spelled like "gutos" (not a translation): gutos]\nSource: X'
+    assert tq.score(case, None, lead)['false_direct_evidence'] == []
