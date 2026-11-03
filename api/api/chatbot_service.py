@@ -26,6 +26,7 @@ from .prompt_budget import assemble_system_prompt
 from .image_translation import translate_image_pages
 from .image_translation_legacy import translate_image_pages as translate_image_pages_legacy
 from .canonical_context import get_canonical_tutor_context
+from .verification_evidence import verification_term_context
 from .tutor_intent import tutor_task_guidance
 from .source_citations import format_source_citations
 from .upload_storage import resolve_private_upload_reference
@@ -33,6 +34,7 @@ from src.rag.conversation_retrieval import (
     ConversationHistory,
     build_contextual_retrieval_query,
     resolve_translation_routing_query,
+    resolve_verification_follow_up,
 )
 from src.rag.image_translation_context import (
     ImageTranslationContext,
@@ -1194,6 +1196,7 @@ def get_rag_context(
     intent: str | None = None,
     learning_topic_id: str | None = None,
     cancelled: "Callable[[], bool] | None" = None,
+    verification_terms: tuple[str, ...] = (),
 ) -> tuple[str, list]:
     """
     Get relevant RAG context with token limit.
@@ -1203,6 +1206,8 @@ def get_rag_context(
         conversation_length: Number of messages in conversation
         max_tokens: Maximum tokens for RAG context
         contextual_card_ids: Production card ids supplied by trusted app context
+        verification_terms: Terms from the previous answer the user asked to
+            re-check; each gets an exact dictionary and ledger lookup
     
     Returns:
         tuple: (context_string, sources_list)
@@ -1217,6 +1222,9 @@ def get_rag_context(
         # An image can contain the trigger text even when the typed message is
         # empty or conversational. Trusted vision context still needs a prompt
         # path, and full mode preserves any relevant corpus support.
+        use_rag, rag_mode = True, "full"
+    if verification_terms and not use_rag:
+        # "Are you sure?" has no lookup words of its own; the terms do.
         use_rag, rag_mode = True, "full"
     
     curriculum_context, curriculum_sources = curriculum_tutor_context(
@@ -1237,6 +1245,15 @@ def get_rag_context(
     
     contexts: list[str] = [curriculum_context] if curriculum_context else []
     sources: list[object] = list(curriculum_sources)
+
+    # Term lookups go first so truncation drops broad retrieval, not them.
+    if verification_terms:
+        verification_context, verification_sources = verification_term_context(
+            verification_terms,
+        )
+        if verification_context:
+            contexts.append(verification_context)
+            sources.extend(verification_sources)
 
     # Exact canonical matches and approved cards do not depend on the vector
     # database, so a transient database failure must not erase them.
@@ -1566,15 +1583,26 @@ def get_chatbot_response(
         message,
         image_context,
     )
-    # Natural requests ("I want to say…"), short follow-ups ("What about
-    # tree?"), and text typed under the Translate task share one routing query.
-    translation_message = resolve_translation_routing_query(
-        effective_translation_message, past_messages, intent,
+    # "Are you sure about these words?" names none of the words, so retrieval
+    # re-runs the request the previous answer replied to and looks up each
+    # term that answer gave.
+    verification = None if normalized_image_inputs else resolve_verification_follow_up(
+        effective_translation_message, past_messages,
     )
-    retrieval_message = build_contextual_retrieval_query(
-        translation_message,
-        past_messages,
-    )
+    if verification:
+        translation_message = effective_translation_message
+        retrieval_message = verification.retrieval_query
+    else:
+        # Natural requests ("I want to say…"), short follow-ups ("What about
+        # tree?"), and text typed under the Translate task share one routing
+        # query.
+        translation_message = resolve_translation_routing_query(
+            effective_translation_message, past_messages, intent,
+        )
+        retrieval_message = build_contextual_retrieval_query(
+            translation_message,
+            past_messages,
+        )
     conversation_length = len(past_messages) // 2
     
     # Get mode configuration
@@ -1627,6 +1655,7 @@ def get_chatbot_response(
         intent=intent,
         learning_topic_id=learning_topic_id,
         cancelled=lambda: is_message_cancelled(pending_id),
+        verification_terms=verification.terms if verification else (),
     )
     if is_message_cancelled(pending_id):
         return early_cancelled_response()
@@ -1656,6 +1685,8 @@ def get_chatbot_response(
         translation_message,
         has_references=bool(rag_context),
     )
+    if verification:
+        system_prompt += verification.prompt_guidance()
 
     if not rag_context and not is_passage_translation(translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
@@ -1972,15 +2003,26 @@ def get_chatbot_response_stream(
         message,
         image_context,
     )
-    # Natural requests ("I want to say…"), short follow-ups ("What about
-    # tree?"), and text typed under the Translate task share one routing query.
-    translation_message = resolve_translation_routing_query(
-        effective_translation_message, past_messages, intent,
+    # "Are you sure about these words?" names none of the words, so retrieval
+    # re-runs the request the previous answer replied to and looks up each
+    # term that answer gave.
+    verification = None if normalized_image_inputs else resolve_verification_follow_up(
+        effective_translation_message, past_messages,
     )
-    retrieval_message = build_contextual_retrieval_query(
-        translation_message,
-        past_messages,
-    )
+    if verification:
+        translation_message = effective_translation_message
+        retrieval_message = verification.retrieval_query
+    else:
+        # Natural requests ("I want to say…"), short follow-ups ("What about
+        # tree?"), and text typed under the Translate task share one routing
+        # query.
+        translation_message = resolve_translation_routing_query(
+            effective_translation_message, past_messages, intent,
+        )
+        retrieval_message = build_contextual_retrieval_query(
+            translation_message,
+            past_messages,
+        )
     conversation_length = len(past_messages) // 2
     
     # Get mode configuration
@@ -2034,6 +2076,7 @@ def get_chatbot_response_stream(
         intent=intent,
         learning_topic_id=learning_topic_id,
         cancelled=lambda: is_message_cancelled(pending_id),
+        verification_terms=verification.terms if verification else (),
     )
     if is_message_cancelled(pending_id):
         yield cancelled_event()
@@ -2063,6 +2106,8 @@ def get_chatbot_response_stream(
         translation_message,
         has_references=bool(rag_context),
     )
+    if verification:
+        system_prompt += verification.prompt_guidance()
 
     if not rag_context and not is_passage_translation(translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD

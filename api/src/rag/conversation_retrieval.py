@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from typing import Any
 
 from src.rag.translation_policy import (
@@ -11,6 +12,11 @@ from src.rag.translation_policy import (
     natural_translation_payload,
     selected_task_translation_query,
     translation_direction,
+)
+from src.rag.verification_follow_up import (
+    extract_answer_terms,
+    is_verification_follow_up,
+    verification_follow_up_guidance,
 )
 
 
@@ -191,6 +197,10 @@ def _resolve_turn(
         return "", state
     if classify_translation_request(current) != "none":
         return current, _explicit_translation_request(current)
+    if state and is_verification_follow_up(current):
+        # "Are you sure?" re-checks the last answer; it is not new text to
+        # translate, and the thread stays open for a later "What about X?".
+        return "", state
 
     replacement_target = _replacement_target(current)
     same_target_follow_up = bool(_SAME_TARGET_FOLLOW_UP_PATTERN.search(current))
@@ -344,3 +354,96 @@ def build_contextual_retrieval_query(
                 )
             return f"{current} — prior user topic: {topic}"
     return current_message
+
+
+_CANCELLED_REPLY = "[Message was cancelled by user]"
+
+
+def _message_text(message: dict[str, Any]) -> str:
+    content = message.get("content")
+    if isinstance(content, str):
+        return content.strip()
+    if isinstance(content, list):
+        return "\n".join(
+            item["text"].strip()
+            for item in content
+            if isinstance(item, dict)
+            and item.get("type") == "text"
+            and isinstance(item.get("text"), str)
+        ).strip()
+    return ""
+
+
+@dataclass(frozen=True)
+class VerificationFollowUp:
+    """A request to re-check the previous answer, with what to look up.
+
+    ``terms`` are lookup keys taken from the previous assistant answer, never
+    evidence. ``retrieval_query`` is the user request that answer replied to,
+    routed as it was when sent, so retrieval sees that request again.
+    """
+
+    terms: tuple[str, ...]
+    retrieval_query: str
+    truncated: bool = False
+
+    def prompt_guidance(self) -> str:
+        return verification_follow_up_guidance(self.terms, self.truncated)
+
+
+def resolve_verification_follow_up(
+    current_message: str,
+    past_messages: list[dict[str, Any]],
+) -> VerificationFollowUp | None:
+    """Return what to look up when the user questions the previous answer.
+
+    "Are you sure about these words?" names none of the words. The previous
+    assistant answer is read only to find which Chamorro terms to look up, and
+    the user request it answered is re-resolved for retrieval. Returns None
+    for any other message, or when the previous answer gave no Chamorro terms
+    (so "Are you sure you can help me?" stays ordinary chat).
+    """
+
+    if not is_verification_follow_up(current_message):
+        return None
+    answer_index = next(
+        (
+            index
+            for index in range(len(past_messages) - 1, -1, -1)
+            if past_messages[index].get("role") == "assistant"
+            and _message_text(past_messages[index])
+            and _message_text(past_messages[index]) != _CANCELLED_REPLY
+        ),
+        None,
+    )
+    if answer_index is None:
+        return None
+    terms, truncated = extract_answer_terms(_message_text(past_messages[answer_index]))
+    if not terms:
+        return None
+
+    request_index = next(
+        (
+            index
+            for index in range(answer_index - 1, -1, -1)
+            if past_messages[index].get("role") == "user"
+        ),
+        None,
+    )
+    request = _plain_user_text(past_messages[request_index]) if request_index is not None else ""
+    if not request:
+        return VerificationFollowUp(terms, "Chamorro terms: " + ", ".join(terms), truncated)
+
+    # Replay the earlier request with the history and task it was sent with.
+    earlier = ConversationHistory(past_messages[:request_index])
+    intents = tuple(getattr(past_messages, "user_turn_intents", ()) or ())
+    user_count = sum(1 for message in past_messages if message.get("role") == "user")
+    earlier_users = sum(1 for message in earlier if message.get("role") == "user")
+    request_intent = None
+    if len(intents) == user_count:
+        earlier.user_turn_intents = intents[:earlier_users]
+        request_intent = intents[earlier_users]
+    routed = resolve_translation_routing_query(request, earlier, request_intent)
+    return VerificationFollowUp(
+        terms, build_contextual_retrieval_query(routed, earlier), truncated,
+    )

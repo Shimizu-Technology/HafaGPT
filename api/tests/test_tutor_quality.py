@@ -216,6 +216,7 @@ def test_real_production_function_uses_fixture_history_and_never_persists(tmp_pa
         'MODE_PROMPTS': {'english': {'prompt': 'Tutor'}},
         'should_use_web_search': lambda *a, **k: (False, None), 'web_search': db_forbidden,
         'resolve_translation_routing_query': lambda message, history, intent: message,
+        'resolve_verification_follow_up': lambda message, history: None,
         'resolve_school_message_context': lambda *a, **k: ('', False, ()),
         'get_rag_context': lambda *a, **k: ('tronkon håyu [dictionary]', []),
         'tutor_task_guidance': lambda _: '', '_history_has_images': lambda _: False,

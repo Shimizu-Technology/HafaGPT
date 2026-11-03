@@ -84,6 +84,12 @@ def chamorro_headword_tokens() -> frozenset[str]:
     return frozenset(token for token in tokens if len(token) > 1 and token.isalpha())
 
 
+def is_distinctive_chamorro_token(token: str) -> bool:
+    """Return whether a normalized token is a headword and not common English."""
+
+    return token in chamorro_headword_tokens() and token not in _COMMON_ENGLISH_WORDS
+
+
 def is_probably_chamorro(text: str) -> bool:
     """Return whether undirected learner text reads as Chamorro.
 
