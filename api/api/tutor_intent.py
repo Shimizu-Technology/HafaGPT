@@ -27,7 +27,7 @@ def normalize_tutor_intent(value: str | None) -> TutorIntent | None:
 def tutor_task_guidance(intent: str | None) -> str:
     task = normalize_tutor_intent(intent)
     guidance = {
-        "translate": "Translate the supplied text directly first, in the form the user asked for. Ask one clarification only if the text is genuinely ambiguous. Keep extra explanation brief, and do not append a quiz.",
+        "translate": "Translate the supplied text directly first, in the form the user asked for. If short text could be read as either English or Chamorro, translate it in the more likely direction and briefly give the other reading. Ask one clarification only if the text is otherwise genuinely ambiguous. Keep extra explanation brief, and do not append a quiz.",
         "explain": "Answer the question directly, then explain one relevant point in plain language. Use one supplied example when helpful. Do not force a practice exercise.",
         "practice": "Guide a short practice exchange. Ask one question at a time and wait for the learner. Offer a hint before revealing an answer when they are stuck. Give specific feedback about their actual response, not generic praise. End with one clear next action. Do not count an English request for help as demonstrated Chamorro.",
     }

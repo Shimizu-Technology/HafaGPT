@@ -208,3 +208,33 @@ def test_recognized_request_is_never_rewritten() -> None:
     message = "How would we write don't cut down all the trees"
 
     assert resolve_translation_routing_query(message, _thread("What is tree in Chamorro?")) == message
+
+
+# Review round 1 -----------------------------------------------------------
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["hafa adai", "buenas dias", "Si Yu'os ma'ase", "hanom", "guma", "hu guaiya hao"],
+)
+def test_selected_translate_task_reads_plain_chamorro_as_chamorro(text: str) -> None:
+    routed = selected_task_translation_query(text)
+
+    assert routed == f'What does "{text}" mean in English?'
+    assert translation_direction(routed) == "to_english"
+
+
+@pytest.mark.parametrize(
+    "text",
+    ["tree", "blue", "good morning", "I love you", "see you tomorrow at school", "no"],
+)
+def test_selected_translate_task_keeps_english_as_english(text: str) -> None:
+    routed = selected_task_translation_query(text)
+
+    assert routed == f'How do you say "{text}" in Chamorro?'
+    assert translation_direction(routed) == "to_chamorro"
+
+
+def test_undirected_translate_command_uses_headword_detection() -> None:
+    assert translation_direction("Translate hanom") == "to_english"
+    assert translation_direction("Translate tree") == "to_chamorro"

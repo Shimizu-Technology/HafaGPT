@@ -5,6 +5,8 @@ from __future__ import annotations
 import re
 from typing import Literal
 
+from src.rag.language_detection import is_probably_chamorro
+
 
 TranslationIntent = Literal[
     "none",
@@ -397,13 +399,15 @@ def classify_translation_request(query: str) -> TranslationIntent:
 
 
 def looks_like_chamorro(text: str) -> bool:
-    """Cheap orthographic hint for undirected text; never used as evidence."""
+    """Direction hint for undirected text; never used as evidence.
+
+    Uses orthography, marker words, and a diacritic-insensitive comparison with
+    local dictionary and ledger headwords, so "hafa adai" typed without å still
+    reads as Chamorro.
+    """
 
     normalized_words = {word.casefold() for word in _words(text)}
-    return bool(
-        normalized_words & _CHAMORRO_PASSAGE_MARKERS
-        or re.search(r"[åÅñÑ]|\w[’']\w*[’']|\w[’']$", text)
-    )
+    return bool(normalized_words & _CHAMORRO_PASSAGE_MARKERS) or is_probably_chamorro(text)
 
 
 def translation_direction(query: str) -> Literal["to_chamorro", "to_english", ""]:
