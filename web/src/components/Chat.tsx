@@ -4,7 +4,7 @@ import { RefreshCw, Moon, Sun, Download, ArrowDown, ArrowLeft, Share2, Link2, Ch
 import { useChatbot, ChatMessage, CancelledError } from '../hooks/useChatbot';
 import { ConnectionLostError, describeSendFailure } from '../lib/sendErrors';
 import { waitForReplyOutcome, waitOrWake, type RecoveryOutcome } from '../lib/replyRecovery';
-import { adoptGuestDraft, captureDispatchedDraft, confirmDispatchedDraft, forgetPreparingSend, clearTutorDrafts, keepTutorDraft, readTutorDraft, moveTutorDraft, tutorDraftKey, GUEST_DRAFT_SCOPE, forgetPendingReply, hasSavedPendingReply, rememberPendingReply, type PendingReply } from '../lib/pendingReply';
+import { adoptGuestDraft, captureDispatchedDraft, confirmDispatchedDraft, forgetPreparingSend, keepTutorDraft, readTutorDraft, moveTutorDraft, tutorDraftKey, GUEST_DRAFT_SCOPE, forgetPendingReply, hasSavedPendingReply, rememberPendingReply, type PendingReply } from '../lib/pendingReply';
 import { useResumedReply } from '../hooks/useResumedReply';
 import { prepareFilesForUpload } from '../lib/imageUpload';
 import { useAccountRequest } from '../hooks/useAccountRequest';
@@ -128,22 +128,8 @@ function toChatMessages(conversationMessages: ConversationMessage[]): ChatMessag
   });
 }
 
-const watchedClerks = new WeakSet<object>();
-
 export function Chat() {
   const { user } = useUser();
-  const clerk = useClerk();
-  useEffect(() => {
-    if (!watchedClerks.has(clerk) && clerk.addListener) {
-      watchedClerks.add(clerk);
-      let ownerId = user?.id;
-      clerk.addListener(({ user: next }) => {
-        // Signing in carries a guest's draft into the account; any other account change clears drafts.
-        if (next?.id !== ownerId && ownerId) clearTutorDrafts();
-        ownerId = next?.id;
-      });
-    }
-  }, [clerk, user?.id]);
   return <ChatSession key={user?.id || 'guest'} />;
 }
 

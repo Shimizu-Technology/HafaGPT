@@ -17,6 +17,8 @@ import {
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/admin/AdminRoute';
 import { BottomNav } from './components/BottomNav';
+import { useUser } from '@clerk/clerk-react';
+import { reconcileDraftAccount } from './lib/pendingReply';
 import { ScrollToTop } from './components/ScrollToTop';
 import { lazyNamed, loadRoute } from './lib/lazyNamed';
 
@@ -143,9 +145,18 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
   }
 }
 
+// Drafts follow the account that wrote them, even if the tutor is never opened again.
+function DraftAccountGuard() {
+  const { isLoaded, user } = useUser();
+  const userId = user?.id ?? null;
+  useEffect(() => { if (isLoaded) reconcileDraftAccount(userId); }, [isLoaded, userId]);
+  return null;
+}
+
 function AppRoutes() {
   return (
     <>
+      <DraftAccountGuard />
       <ScrollToTop />
       <BottomNav />
       <RouteErrorBoundary>

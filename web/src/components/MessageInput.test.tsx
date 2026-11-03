@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MessageInput } from './MessageInput';
 import { GUEST_DRAFT_SCOPE } from '../lib/pendingReply';
 
@@ -240,5 +240,39 @@ describe('MessageInput for a signed-out learner', () => {
     fireEvent.change(input, { target: { value: 'My own edit' } });
     view.rerender(<MessageInput onSend={vi.fn()} requireAccount={vi.fn()} prefill={{ text: 'Translate ‘Thank you’ into Chamorro.', id: 1 }} />);
     expect(input).toHaveValue('My own edit');
+  });
+});
+
+describe('MessageInput guest draft lifetime', () => {
+  afterEach(() => { vi.useRealTimers(); window.sessionStorage.clear(); });
+
+  it('does not extend a guest draft by remounting the unchanged composer', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-03T10:00:00Z'));
+    const first = render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Guest question' } });
+    first.unmount();
+    vi.advanceTimersByTime(29 * 60 * 1000);
+    const second = render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    expect(screen.getByRole('textbox')).toHaveValue('Guest question');
+    second.unmount();
+    vi.advanceTimersByTime(2 * 60 * 1000);
+    render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    expect(screen.getByRole('textbox')).toHaveValue('');
+  });
+
+  it('renews a guest draft when the learner edits it', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-03T10:00:00Z'));
+    const first = render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Guest question' } });
+    first.unmount();
+    vi.advanceTimersByTime(29 * 60 * 1000);
+    const second = render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'Guest question, edited' } });
+    second.unmount();
+    vi.advanceTimersByTime(2 * 60 * 1000);
+    render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    expect(screen.getByRole('textbox')).toHaveValue('Guest question, edited');
   });
 });
