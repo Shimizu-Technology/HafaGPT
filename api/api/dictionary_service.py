@@ -64,6 +64,38 @@ def dictionary_word_id(headword: str) -> str:
     return f"revised-word-v1-{digest}"
 
 
+_REVIEW_GATED_ENTRY_STATUSES = {"needs_review", "deprecated", "do_not_teach"}
+_REVIEW_GATED_VARIANT_STATUSES = {"needs_review", "deprecated", "do_not_teach"}
+
+
+@lru_cache(maxsize=1)
+def _review_gated_terms() -> frozenset[str]:
+    """Normalized terms the canonical layer says must not be taught as settled.
+
+    Reads the same `review_status` fields that the canonical audit uses, so a
+    term added to the review gate there is excluded here without a second list.
+    """
+
+    if not CANONICAL_VOCABULARY_PATH.exists():
+        return frozenset()
+    payload = json.loads(CANONICAL_VOCABULARY_PATH.read_text(encoding="utf-8"))
+    gated: set[str] = set()
+    for entry in payload.get("entries", []):
+        entry_gated = entry.get("review_status") in _REVIEW_GATED_ENTRY_STATUSES
+        if entry_gated:
+            gated.add(entry.get("canonical_chamorro"))
+            gated.add(entry.get("recommended_teaching_term"))
+        for variant in entry.get("variants", []) or []:
+            if entry_gated or variant.get("status") in _REVIEW_GATED_VARIANT_STATUSES:
+                gated.add(variant.get("term"))
+        gated.update(item.get("term") for item in entry.get("needs_review_terms", []) or [])
+    return frozenset(normalize_chamorro(term) for term in gated if term)
+
+
+def _is_review_gated(term: str) -> bool:
+    return normalize_chamorro(term) in _review_gated_terms()
+
+
 def _word_of_day_pools(words: list[dict]) -> tuple[list[dict], list[dict]]:
     """Partition daily words without dropping developing canonical entries."""
 
@@ -1055,6 +1087,10 @@ class DictionaryService:
             if chamorro.lower() in blocklist:
                 continue
             
+            # Skip terms the canonical layer holds for review
+            if _is_review_gated(chamorro):
+                continue
+
             # Skip very long words
             if len(chamorro) > 25:
                 continue
