@@ -8,6 +8,7 @@ import pytest
 
 from src.rag.chamorro_rag import detect_query_type, extract_target_word
 from src.rag.conversation_retrieval import (
+    ConversationHistory,
     build_contextual_retrieval_query,
     resolve_translation_routing_query,
 )
@@ -115,6 +116,14 @@ def _thread(*user_messages: str) -> list[dict[str, str]]:
     for content in user_messages:
         history.append({"role": "user", "content": content})
         history.append({"role": "assistant", "content": "Earlier answer."})
+    return history
+
+
+def _recorded(*turns: tuple[str, str | None]) -> ConversationHistory:
+    """Saved history whose user turns carry the task each was sent under."""
+
+    history = ConversationHistory(_thread(*(text for text, _ in turns)))
+    history.user_turn_intents = tuple(intent for _, intent in turns)
     return history
 
 
@@ -330,7 +339,7 @@ def test_undirected_translate_command_uses_headword_detection() -> None:
 def test_translate_task_follow_up_keeps_direction_and_extracts_target(
     previous: str, current: str, expected: str
 ) -> None:
-    history = _thread(previous)
+    history = _recorded((previous, "translate"))
 
     routed = resolve_translation_routing_query(current, history, "translate")
 
@@ -339,19 +348,24 @@ def test_translate_task_follow_up_keeps_direction_and_extracts_target(
 
 
 def test_translate_task_follow_up_chain_keeps_first_direction() -> None:
-    history = _thread("hånom", "What about guma'?")
+    history = _recorded(("hånom", "translate"), ("What about guma'?", "translate"))
 
     assert resolve_translation_routing_query("How about tasi?", history, "translate") == (
         'What does "tasi" mean in English?'
     )
 
 
-def test_plain_earlier_turn_only_sets_a_thread_under_translate_task() -> None:
-    history = _thread("hånom")
-
-    assert resolve_translation_routing_query("What about guma'?", history) == (
+def test_plain_earlier_turn_only_sets_a_thread_when_it_was_sent_under_translate() -> None:
+    assert resolve_translation_routing_query("What about guma'?", _thread("hånom")) == (
         "What about guma'?"
     )
+    assert resolve_translation_routing_query(
+        "What about guma'?", _recorded(("hånom", "explain"))
+    ) == "What about guma'?"
+    # The earlier turn was translated, so the thread is real under any task.
+    assert resolve_translation_routing_query(
+        "What about guma'?", _recorded(("hånom", "translate")), "explain"
+    ) == 'What does "guma\'" mean in English?'
 
 
 def test_assistant_answers_never_supply_translation_state() -> None:
@@ -366,10 +380,138 @@ def test_assistant_answers_never_supply_translation_state() -> None:
 
     # Under the Translate task the user's own earlier text sets the direction,
     # even when the assistant's answer reads like a request the other way.
-    translate_history = [
+    translate_history = ConversationHistory([
         {"role": "user", "content": "tree"},
         {"role": "assistant", "content": 'What does "håyu" mean in English?'},
-    ]
+    ])
+    translate_history.user_turn_intents = ("translate",)
     assert resolve_translation_routing_query(
         "What about blue?", translate_history, "translate"
     ) == 'How do you say "blue" in Chamorro?'
+
+
+# Review round 2, finding 1: the current task never re-reads earlier turns.
+
+
+def test_explain_then_translate_does_not_reinterpret_the_explanation() -> None:
+    # The reviewer's repro: the explanation is not Chamorro input to translate.
+    for history in (
+        _recorded(("Explain the word hånom", "explain")),
+        _thread("Explain the word hånom"),  # Saved before tasks were recorded.
+    ):
+        routed = resolve_translation_routing_query("What about rain?", history, "translate")
+
+        assert routed == 'How do you say "rain" in Chamorro?'
+        assert translation_direction(routed) == "to_chamorro"
+        assert build_contextual_retrieval_query(routed, history) == routed
+
+
+def test_explain_then_translate_payload_uses_its_own_language() -> None:
+    history = _recorded(("Explain the word hånom", "explain"))
+
+    assert resolve_translation_routing_query("What about guma'?", history, "translate") == (
+        'What does "guma\'" mean in English?'
+    )
+    assert resolve_translation_routing_query("rain", history, "translate") == (
+        'How do you say "rain" in Chamorro?'
+    )
+
+
+def test_explanation_turn_ends_an_earlier_translation_thread() -> None:
+    history = _recorded(
+        ("What does hånom mean?", None),
+        ("Explain how plurals work", "explain"),
+    )
+
+    assert resolve_translation_routing_query("What about rain?", history, "translate") == (
+        'How do you say "rain" in Chamorro?'
+    )
+    assert resolve_translation_routing_query("What about rain?", history) == "What about rain?"
+
+
+def test_translate_then_explain_keeps_the_real_translation_thread() -> None:
+    history = _recorded(("hånom", "translate"))
+
+    assert resolve_translation_routing_query("What about guma'?", history, "explain") == (
+        'What does "guma\'" mean in English?'
+    )
+    question = "Why does it start with h?"
+    assert resolve_translation_routing_query(question, history, "explain") == question
+
+
+def test_practice_then_translate_does_not_treat_practice_answers_as_requests() -> None:
+    history = _recorded(("Let's practice greetings", "practice"), ("hafa adai", "practice"))
+
+    # Nothing was translated, so "that" has nothing to refer back to.
+    assert resolve_translation_routing_query("What about that?", history, "translate") == (
+        "What about that?"
+    )
+    assert resolve_translation_routing_query("What about rain?", history, "translate") == (
+        'How do you say "rain" in Chamorro?'
+    )
+
+
+def test_unaligned_recorded_tasks_count_as_unknown() -> None:
+    history = ConversationHistory(_thread("hånom"))
+    history.user_turn_intents = ("translate", "translate")
+
+    assert resolve_translation_routing_query("What about guma'?", history) == "What about guma'?"
+
+
+# Review round 2, finding 2: history replays the live resolver turn by turn.
+
+
+STORE = 'How do you say "the store closes at five" in Chamorro?'
+
+
+@pytest.mark.parametrize(
+    "history",
+    [
+        _thread("What is tree in Chamorro?", "I want to say the store closes at five"),
+        _recorded(
+            ("What is tree in Chamorro?", None),
+            ("I want to say the store closes at five", None),
+        ),
+        _recorded(("I want to say the store closes at five", "translate")),
+        _recorded(
+            ("What is tree in Chamorro?", "translate"),
+            ("I want to say the store closes at five", "translate"),
+        ),
+    ],
+)
+@pytest.mark.parametrize("intent", [None, "translate"])
+def test_context_confirmed_natural_request_supports_follow_ups(history, intent) -> None:
+    assert resolve_translation_routing_query("What about that?", history, intent) == STORE
+    assert resolve_translation_routing_query("and the second part?", history, intent) == STORE
+    assert resolve_translation_routing_query("what about rain?", history, intent) == (
+        'How do you say "rain" in Chamorro?'
+    )
+    assert build_contextual_retrieval_query(STORE, history) == STORE
+
+
+def test_replayed_history_matches_live_routing_turn_by_turn() -> None:
+    turns = [
+        ("What is tree in Chamorro?", None),
+        ("I want to say the store closes at five", None),
+        ("and the second part?", None),
+        ("what about rain?", "translate"),
+        ("What about that?", "explain"),
+    ]
+    expected = [
+        "What is tree in Chamorro?",
+        STORE,
+        STORE,
+        'How do you say "rain" in Chamorro?',
+        'How do you say "rain" in Chamorro?',
+    ]
+    for index, (text, intent) in enumerate(turns):
+        assert resolve_translation_routing_query(text, _recorded(*turns[:index]), intent) == (
+            expected[index]
+        )
+
+
+def test_part_reference_without_a_thread_is_unchanged() -> None:
+    assert resolve_translation_routing_query("and the second part?", []) == (
+        "and the second part?"
+    )
+    assert resolve_translation_routing_query("And the rest?", [], "translate") == "And the rest?"
