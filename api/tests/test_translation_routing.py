@@ -515,3 +515,26 @@ def test_part_reference_without_a_thread_is_unchanged() -> None:
         "and the second part?"
     )
     assert resolve_translation_routing_query("And the rest?", [], "translate") == "And the rest?"
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "I wanted to say thanks yesterday, but I forgot",
+        "I wanted to say thank you to my teacher but she left early",
+    ],
+)
+def test_past_tense_wanted_to_say_reports_stay_ordinary_chat(query: str) -> None:
+    assert classify_translation_request(query) == "none"
+
+
+def test_present_tense_want_to_say_still_routes() -> None:
+    assert classify_translation_request("I want to say thanks") != "none"
+
+
+def test_say_pattern_follow_up_keeps_english_direction() -> None:
+    history = _thread("How do you say håfa adai in English?")
+
+    routed = resolve_translation_routing_query("What about guma'?", history)
+
+    assert translation_direction(routed) == "to_english"

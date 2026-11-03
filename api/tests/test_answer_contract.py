@@ -124,3 +124,10 @@ def test_typical_english_prompt_is_shorter_than_the_prohibition_stack() -> None:
 
     assert len(english) < 2600
     assert len(assembled) < 3500
+
+
+def test_chamorro_draft_rule_applies_only_when_the_answer_is_chamorro() -> None:
+    contract = _flat(PROMPTS["ANSWER_CONTRACT"])
+
+    assert "When the requested answer is a Chamorro sentence or message" in contract
+    assert "For a sentence or message, write your best natural Chamorro draft" not in contract

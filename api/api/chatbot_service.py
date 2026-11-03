@@ -749,8 +749,9 @@ ANSWER CONTRACT:
 2. For a word or short phrase, give the form shown in the supplied dictionary
    entries, canonical vocabulary ledger, or exact governed matches, and cite it
    inline with the exact source name, for example [Chamoru.info dictionary].
-3. For a sentence or message, write your best natural Chamorro draft from the
-   supplied entries and the words already established in this conversation.
+3. When the requested answer is a Chamorro sentence or message, write your best
+   natural Chamorro draft from the supplied entries and the words already
+   established in this conversation.
    Right after any word or construction you are unsure of, add a short note
    such as "(unsure: no entry for 'others')". Do not label the whole answer
    unverified, withhold it, or tell the user to send it in English or to ask

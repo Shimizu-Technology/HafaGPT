@@ -63,7 +63,9 @@ _HOW_SAY_PATTERN = re.compile(
 )
 _WANT_TO_SAY_PATTERN = re.compile(
     r"\b(?:i|we)(?:\s+(?:just|really|also|kind\s+of|kinda))?"
-    r"(?:\s+(?:want(?:ed)?\s+to|wanna|need\s+to|would\s+like\s+to)|['’]d\s+like\s+to)"
+    # Present-tense requests only: "I wanted to say thanks yesterday" reports
+    # something already said rather than asking for Chamorro wording.
+    r"(?:\s+(?:want\s+to|wanna|need\s+to|would\s+like\s+to)|['’]d\s+like\s+to)"
     r"\s+say\b(?:\s+(?:something|anything)\s+like\b)?",
     re.IGNORECASE,
 )

@@ -94,7 +94,8 @@ def _explicit_translation_request(value: str) -> tuple[str, str] | None:
     if re.search(r"\bhow (?:do|would) (?:you|i) say\b", value, re.IGNORECASE):
         target = _clean_target(extract_translation_payload(value))
         if target and target.casefold() not in {"this", "that", "it"}:
-            return target, "to_chamorro"
+            # "How do you say håfa adai in English?" asks for English.
+            return target, translation_direction(value) or "to_chamorro"
 
     for pattern, direction in _TRANSLATION_TARGET_PATTERNS:
         match = pattern.search(value)
