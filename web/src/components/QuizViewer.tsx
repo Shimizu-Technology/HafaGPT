@@ -1,3 +1,4 @@
+import { getHistoricalQuestionConceptId } from '../data/historicalQuizQuestions';
 import { useState, useEffect, useRef } from 'react';
 import { useParams, Link, useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { Check, X, ChevronRight, RotateCcw, Trophy, Brain, Lightbulb, Loader2, HelpCircle, BookOpen } from 'lucide-react';
@@ -424,7 +425,7 @@ function QuizViewerSession() {
             explanation: r.question.explanation,
             concept_id: isDictionaryQuiz
               ? undefined
-              : getQuestionConceptId(r.question.id),
+              : (getQuestionConceptId(r.question.id) ?? getHistoricalQuestionConceptId(r.question.id)),
           }));
           
           const payload: SaveQuizResultParams = {

@@ -48,3 +48,13 @@ def test_ambiguous_taxonomy_senses_and_missing_fields_are_not_repaired():
 def test_real_dictionary_exposes_unpaired_source_text_without_language_labels():
     word = DictionaryService().get_word('chinikulåti na kulót')
     assert word['unpaired_examples'] == SNAPSHOT['chinikulåti na kulót']['Other'][3:5]
+
+
+def test_real_odd_tails_keep_structurally_supported_prefixes():
+    for headword, expected_count in (("luseru", 3), ("å'paka' chåda'", 2), ("achá'ungak", 2)):
+        raw = SNAPSHOT[headword]['Other']
+        pairs, unpaired = DictionaryService._parse_examples(raw)
+        assert pairs == [{'chamorro': raw[i].strip(), 'english': raw[i + 1].strip()}
+                         for i in range(1, 2 * expected_count, 2)]
+        assert unpaired
+        assert all(value in [field.strip() for field in raw] for value in unpaired)

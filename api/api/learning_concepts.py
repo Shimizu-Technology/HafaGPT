@@ -171,6 +171,22 @@ QUESTION_CONCEPTS: dict[str, tuple[str, int]] = {
 }
 
 
+# Immutable pre-retirement source positions (never active practice/mastery).
+RETIRED_QUESTION_CONCEPTS = {
+    question: f"v1:curated:{_fnv1a(f'curated:verbs:{index}')}"
+    for question, index in (("verb-1", 4), ("verb-2", 2), ("verb-3", 6))
+}
+RETIRED_CONCEPT_IDS = frozenset(RETIRED_QUESTION_CONCEPTS.values())
+
+
+def validate_lesson_exposure_ids(category_id: str, concept_ids: Iterable[str]) -> tuple[str, ...]:
+    """Ignore known retired verb cards; still reject invented/cross-topic IDs."""
+    return validate_curated_concept_ids(category_id, (
+        concept for concept in concept_ids
+        if not (category_id == "verbs" and concept in RETIRED_CONCEPT_IDS)
+    ))
+
+
 def curated_concept_ids(category_id: str) -> tuple[str, ...]:
     card_count = CURATED_DECK_CARD_COUNTS.get(category_id)
     if card_count is None:
@@ -208,6 +224,11 @@ def validate_question_concept(
     """Reject invented or cross-category quiz-to-card relationships."""
 
     if concept_id is None:
+        return
+
+    if question_id in RETIRED_QUESTION_CONCEPTS:
+        if expected_category_id != "verbs" or concept_id != RETIRED_QUESTION_CONCEPTS[question_id]:
+            raise ValueError("Question concept does not match the historical relationship")
         return
 
     relationship = QUESTION_CONCEPTS.get(question_id)

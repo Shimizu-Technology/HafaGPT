@@ -432,9 +432,15 @@ class DictionaryService:
             if metadata.match(field):
                 fields = fields[:index]
                 break
-        if len(fields) % 2 or any(not field for field in fields):
+        # A short binomial-like heading before an odd block can shift every
+        # following field (e.g. chacha's taxonomy). Do not label that layout.
+        if len(fields) % 2 and fields and re.fullmatch(r"[A-Z][a-z]+ [a-z]+", fields[0]):
             return [], [item for item in fields if item]
         examples, unpaired = [], []
+        boundary = next((index for index, field in enumerate(fields) if not field), len(fields))
+        paired_end = boundary - boundary % 2
+        unpaired.extend(item for item in fields[paired_end:] if item)
+        fields = fields[:paired_end]
         for chamorro, english in zip(fields[::2], fields[1::2]):
             # Three or more spaces mark collapsed fields in this extraction
             # (e.g. chinikulåti na kulót); do not split or relabel their text.

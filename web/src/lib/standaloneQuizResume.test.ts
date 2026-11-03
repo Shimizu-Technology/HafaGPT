@@ -26,3 +26,26 @@ describe('standalone quiz resume', () => {
     expect(loadStandaloneQuiz('one', 'greetings', 10)?.answerState).toBe('correct');
   });
 });
+
+
+describe('retired verb quiz migration', () => {
+  it('keeps completed history and attempt ID, and drops only unanswered retired items', async () => {
+    const { HISTORICAL_QUIZ_QUESTIONS } = await import('../data/historicalQuizQuestions');
+    const active = getQuizCategory('verbs')!.questions;
+    const legacy = [...HISTORICAL_QUIZ_QUESTIONS, ...active];
+    const complete = { ...saved, questions: legacy, currentIndex: legacy.length - 1,
+      results: legacy.map(question => ({ question, userAnswer: question.correctAnswer, isCorrect: true })),
+      answerState: 'correct' as const };
+    const allowed = new Set(active.map(question => question.id));
+    saveStandaloneQuiz('one', 'verbs', 10, complete);
+    expect(loadStandaloneQuiz('one', 'verbs', 10, allowed)).toMatchObject({ questions: legacy, results: complete.results, attemptId: 'same-attempt' });
+    saveStandaloneQuiz('one', 'verbs', 10, { ...complete, currentIndex: 1, results: complete.results.slice(0, 1), answerState: 'unanswered' });
+    const partial = loadStandaloneQuiz('one', 'verbs', 10, allowed)!;
+    expect(partial.questions.map(question => question.id)).toEqual(['verb-1', ...active.map(question => question.id)]);
+    expect(partial.results).toEqual(complete.results.slice(0, 1));
+    expect(partial.currentIndex).toBe(1);
+    expect(partial.attemptId).toBe('same-attempt');
+    saveStandaloneQuiz('one', 'verbs', 10, partial);
+    expect(loadStandaloneQuiz('one', 'verbs', 10, allowed)).toEqual(partial);
+  });
+});
