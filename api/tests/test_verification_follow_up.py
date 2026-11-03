@@ -91,6 +91,11 @@ def _exchange(*pairs: tuple[str, str]) -> list[dict[str, str]]:
         "Is that right? I want to make sure.",
         # A short remark on why the learner asks keeps the re-check.
         "Are you sure? I want to send it to my boss tonight.",
+        # Real production phrasings (2026-11-04 smoke test).
+        "You're sure about all of these words for this sentence?",
+        "Are you sure about all these words in that sentence?",
+        "Is that sentence right?",
+        "Is this translation correct?",
         "Are you sure? It's for my boss.",
         "Is that right? It's for my teacher.",
         "Are you sure? This is for my daughter's school project.",
