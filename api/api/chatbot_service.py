@@ -1100,9 +1100,19 @@ def log_conversation(
         return False
 
 
-def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
+def should_use_web_search(
+    user_input: str,
+    routing_query: str | None = None,
+) -> tuple[bool, str | None]:
     """
     Determine if we should use web search.
+
+    Args:
+        user_input: The learner's original message.
+        routing_query: The resolved translation routing query, when the chat
+            path has one. A Translate-task message ("rain") or an inherited
+            follow-up ("What about rain?") is a translation even though the
+            original text is not.
     
     Returns:
         tuple: (use_web_search: bool, search_type: str | None)
@@ -1111,7 +1121,9 @@ def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
 
     # Translation intent takes precedence: the supplied phrase can itself contain
     # words such as "rain", "make", "today", or "latest".
-    if classify_translation_request(user_input) != "none":
+    if classify_translation_request(user_input) != "none" or (
+        routing_query and classify_translation_request(routing_query) != "none"
+    ):
         return False, None
     
     # Real-time information (weather, time, current conditions)
@@ -1553,7 +1565,9 @@ def get_chatbot_response(
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])
     
     # Check if we should use web search
-    use_web, search_type = should_use_web_search(message)
+    use_web, search_type = should_use_web_search(
+        message, routing_query=translation_message,
+    )
     web_context = ""
     web_results_used = False
     
@@ -1954,7 +1968,9 @@ def get_chatbot_response_stream(
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])
     
     # Check if we should use web search
-    use_web, search_type = should_use_web_search(message)
+    use_web, search_type = should_use_web_search(
+        message, routing_query=translation_message,
+    )
     web_context = ""
     web_results_used = False
     

@@ -276,7 +276,7 @@ def deferred_stream_namespace(failure: str) -> dict[str, Any]:
         'build_image_translation_query': lambda message, context: (message, None),
         'build_contextual_retrieval_query': lambda message, history: message,
         'resolve_translation_routing_query': lambda message, history, intent: message,
-        'MODE_PROMPTS': {'english': {'prompt': ''}}, 'should_use_web_search': lambda message: (False, None),
+        'MODE_PROMPTS': {'english': {'prompt': ''}}, 'should_use_web_search': lambda message, **kwargs: (False, None),
         'resolve_school_message_context': lambda *args, **kwargs: ('', False, []), 'get_rag_context': lambda *args, **kwargs: ('', []),
         'tutor_task_guidance': lambda intent: '', 'SKILL_LEVEL_MODIFIERS': {}, '_history_has_images': lambda history: False,
         'build_translation_structure_hints': lambda message: '', 'translation_prompt_guidance': lambda *args, **kwargs: '',
