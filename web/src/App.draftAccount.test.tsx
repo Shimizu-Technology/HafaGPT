@@ -1,4 +1,4 @@
-import { act, render, screen } from '@testing-library/react';
+import { act, render, screen, waitFor } from '@testing-library/react';
 import { useSyncExternalStore } from 'react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import App from './App';
@@ -39,8 +39,10 @@ describe('guest draft and account changes away from the tutor', () => {
     expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('Translate this school notice');
 
     act(() => account.set('account-a')); // signs in on Home; the tutor is never mounted
+    await waitFor(() => expect(window.sessionStorage.getItem('tutor_guest_draft')).toContain('account-a'));
     act(() => account.set(null)); // signs out on Home
-    expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
+    // The shell loads the draft store on demand, so clearing lands a tick later.
+    await waitFor(() => expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull());
 
     act(() => account.set('account-b'));
     expect(adoptGuestDraft('account-b')).toBe(false);

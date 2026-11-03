@@ -18,7 +18,6 @@ import { ProtectedRoute } from './components/ProtectedRoute';
 import { AdminRoute } from './components/admin/AdminRoute';
 import { BottomNav } from './components/BottomNav';
 import { useUser } from '@clerk/clerk-react';
-import { reconcileDraftAccount } from './lib/pendingReply';
 import { ScrollToTop } from './components/ScrollToTop';
 import { lazyNamed, loadRoute } from './lib/lazyNamed';
 
@@ -149,7 +148,13 @@ class RouteErrorBoundary extends Component<{ children: ReactNode }, RouteErrorBo
 function DraftAccountGuard() {
   const { isLoaded, user } = useUser();
   const userId = user?.id ?? null;
-  useEffect(() => { if (isLoaded) reconcileDraftAccount(userId); }, [isLoaded, userId]);
+  useEffect(() => {
+    if (!isLoaded) return;
+    // Loaded on demand so the tutor's draft store stays out of the initial bundle.
+    void import('./lib/pendingReply')
+      .then(({ reconcileDraftAccount }) => reconcileDraftAccount(userId))
+      .catch(() => undefined);
+  }, [isLoaded, userId]);
   return null;
 }
 
