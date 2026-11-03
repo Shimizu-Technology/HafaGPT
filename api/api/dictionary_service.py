@@ -327,6 +327,7 @@ class DictionaryService:
                         "part_of_speech": data.get("PartOfSpeech", ""),
                         "definition": data.get("Definition", ""),
                         "examples": self._extract_examples(data.get("Other", [])),
+                        "unpaired_examples": self._parse_examples(data.get("Other", []))[1],
                         "trust": DICTIONARY_TRUST,
                     }
                 else:
@@ -371,29 +372,45 @@ class DictionaryService:
             self._categories_cache = {}
             logger.error(f"Failed to load dictionary: {e}")
     
+    @staticmethod
+    def _parse_examples(other_data: list) -> tuple[list[dict], list[str]]:
+        """Pair only the snapshot's delimited alternating example blocks.
+
+        The leading empty field is a delimiter, not a Chamorro sentence. Other
+        layouts contain sense numbers, taxonomy, or flattened multi-sentence
+        strings. Preserve those as unpaired source text rather than guessing.
+        """
+        if not isinstance(other_data, list) or not all(isinstance(item, str) for item in other_data):
+            return [], []
+        fields = [item.strip() for item in other_data]
+        while fields and not fields[-1]:
+            fields.pop()
+        if not fields:
+            return [], []
+        if fields[0]:
+            return [], [item for item in fields if item]
+        fields = fields[1:]
+        metadata = re.compile(r"^(?:Syn|Variant|See|Cf|Alt|From|Ant|Note|Pl|Sg)\s*:", re.I)
+        for index, field in enumerate(fields):
+            if metadata.match(field):
+                fields = fields[:index]
+                break
+        if len(fields) % 2 or any(not field for field in fields):
+            return [], [item for item in fields if item]
+        examples, unpaired = [], []
+        for chamorro, english in zip(fields[::2], fields[1::2]):
+            # Three or more spaces mark collapsed fields in this extraction
+            # (e.g. chinikulåti na kulót); do not split or relabel their text.
+            if any(re.search(r"\S\s{3,}\S|\n|\b(?:Syn|Variant|See|From):|^\d+\)|Information\s+forthcoming|Please check later|^Family\b", field, re.I)
+                   for field in (chamorro, english)):
+                unpaired.extend((chamorro, english))
+                continue
+            examples.append({"chamorro": chamorro, "english": english})
+        return examples[:3], unpaired
+
     def _extract_examples(self, other_data: list) -> list:
-        """Extract example sentences from the 'Other' field."""
-        examples = []
-        if not other_data:
-            return examples
-        
-        # The 'Other' field contains alternating Chamorro/English sentences
-        i = 0
-        while i < len(other_data) - 1:
-            chamorro = other_data[i].strip() if other_data[i] else ""
-            english = other_data[i + 1].strip() if i + 1 < len(other_data) and other_data[i + 1] else ""
-            
-            # Skip empty entries, metadata entries (Syn:, Variant:, etc.)
-            if chamorro and not chamorro.startswith(("Syn:", "Variant:", "See:", "Cf:", "Alt:")):
-                if english and not english.startswith(("Syn:", "Variant:", "See:", "Cf:", "Alt:")):
-                    examples.append({
-                        "chamorro": chamorro,
-                        "english": english
-                    })
-            i += 2
-        
-        return examples[:3]  # Limit to 3 examples
-    
+        return self._parse_examples(other_data)[0]
+
     def _build_category_cache(self):
         """Pre-categorize words into categories based on definitions."""
         self._categories_cache = {cat_id: [] for cat_id in CATEGORY_DEFINITIONS.keys()}
