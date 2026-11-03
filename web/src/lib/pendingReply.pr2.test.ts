@@ -121,10 +121,10 @@ describe('guest draft ownership across accounts', () => {
 
   it('does not carry an oversized draft through sign-in or leave an older one behind', () => {
     keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'Older draft', files: [] });
-    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'x'.repeat(4001), files: [] });
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'x'.repeat(20_001), files: [] });
     expect(window.sessionStorage.getItem('tutor_guest_draft')).toBeNull();
-    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'x'.repeat(4000), files: [] });
-    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toHaveLength(4000);
+    keepTutorDraft(GUEST_DRAFT_SCOPE, { text: 'x'.repeat(20_000), files: [] });
+    expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toHaveLength(20_000);
   });
 });
 

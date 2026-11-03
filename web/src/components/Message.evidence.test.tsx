@@ -29,7 +29,7 @@ describe('Message evidence disclosure', () => {
       { name: 'Linked reference', page: null, url: 'https://example.com/reference', locator: 'Section 2', content_role: 'lexical evidence', region: 'Guam', temporal_scope: 'Current' },
       { name: 'Local reference', page: null, locator: 'Entry 4', region: 'Guam' },
     ]} />);
-    fireEvent.click(document.querySelector('button[aria-controls]')!);
+    fireEvent.click(document.querySelector('button[aria-expanded]')!);
     expect(screen.getByText('Section 2 • lexical evidence • Guam • Current')).toBeVisible();
     expect(screen.getByText('Entry 4 • Guam')).toBeVisible();
   });
@@ -47,7 +47,7 @@ describe('Message evidence disclosure', () => {
       />,
     );
 
-    fireEvent.click(document.querySelector('button[aria-controls]')!);
+    fireEvent.click(document.querySelector('button[aria-expanded]')!);
     expect(
       screen.getByRole('note', { name: 'Answer evidence: References attached' }),
     ).toHaveTextContent('They may support only parts of this answer.');

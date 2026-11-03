@@ -8,8 +8,8 @@ export const GUEST_DRAFT_SCOPE = 'guest';
 const guestDraftKey = 'tutor_guest_draft';
 const guestDraftLifetimeMs = 30 * 60 * 1000;
 const guestClockSkewMs = 5_000;
-// A longer draft is not worth carrying through sign-in; it stays on screen only.
-const guestDraftMaxChars = 4000;
+// Room for a long pasted school notice; anything longer stays on screen only.
+const guestDraftMaxChars = 20_000;
 export interface GuestRecord { text: string; at: number; owner?: string }
 
 export function removeGuestRecord(): void {

@@ -717,7 +717,7 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
         {/* Evidence: one readable line per answer saying what it rests on. */}
         {!isUser && !isSystem && !isStreaming && !recovery && (references.length > 0 ? (
           <div className="mt-3 px-1">
-            <button type="button" onClick={() => setShowSources(value => !value)} aria-expanded={showSources} aria-controls={sourcesPanelId}
+            <button type="button" onClick={() => setShowSources(value => !value)} aria-expanded={showSources} aria-controls={showSources ? sourcesPanelId : undefined}
               className="-mx-2 flex min-h-11 max-w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left text-sm leading-snug text-brown-700 hover:bg-cream-200/60 dark:text-gray-200 dark:hover:bg-slate-800">
               <BookOpen className="h-4 w-4 flex-none text-teal-700 dark:text-ocean-300" aria-hidden="true" />
               <span className="min-w-0">{evidenceLine}</span>

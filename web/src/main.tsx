@@ -76,6 +76,8 @@ const CLERK_LOCALIZATION = {
     phoneCode: { subtitle: 'to continue to HåfaGPT' },
   },
   signUp: {
+    start: { subtitle: 'to continue to HåfaGPT' },
+    emailCode: { subtitle: 'to continue to HåfaGPT' },
     emailLink: { subtitle: 'to continue to HåfaGPT' },
   },
 };
