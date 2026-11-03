@@ -47,6 +47,9 @@ _REFERENCE = (
     r"(?:words?|wrods?|terms?|answers?|translations?|spellings?|phrases?|"
     r"sentences?|message|draft|ones?|reply|response|one)?"
     r"(?:\s+you\s+(?:just\s+)?(?:gave|used|wrote|said|listed|suggested|gave\s+me)(?:\s+me)?)?"
+    # "…these words for this sentence", "…the words in that message"
+    r"(?:\s+(?:for|in|from|of)\s+(?:this|that|the|your|ur|my)\s+"
+    r"(?:sentence|message|translation|draft|reply|response|phrase|answer|text))?"
 )
 _CORRECT = (
     r"(?:right|correct|accurate|true|ok|okay|legit|"
@@ -56,7 +59,8 @@ _CORRECT = (
 )
 _SUBJECT = (
     r"(?:that|this|it|these|those|they|them|"
-    r"(?:the|your|these|those)\s+(?:words?|terms?|answers?|translations?|spellings?|phrases?|sentences?))"
+    r"(?:the|your|these|those|that|this)\s+(?:words?|terms?|answers?|translations?|spellings?|phrases?|"
+    r"sentences?|message|draft|reply))"
 )
 _VERIFICATION_BODIES = (
     # "Are you sure (about these words)?", "You're sure about all of these words?"
