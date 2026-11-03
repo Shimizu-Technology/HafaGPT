@@ -214,6 +214,80 @@ def test_recognized_request_is_never_rewritten() -> None:
 
 
 @pytest.mark.parametrize(
+    "query",
+    [
+        # App feedback, topic/opinion questions, and writing or coding tasks.
+        "I want to say I love this app",
+        "I'd like to say your translation was really helpful",
+        "How should we say Chamorro culture has changed over time?",
+        "How would we write Python code?",
+        "How would we write the email about Python?",
+        # Ambiguous cue without an utterance-like payload or context.
+        "I want to say the store closes at five",
+        "How should I say it?",
+        # "day" is a real English word here, not a typo for "say".
+        "How do you day trade?",
+    ],
+)
+def test_ambiguous_natural_cues_stay_ordinary_chat(query: str) -> None:
+    assert classify_translation_request(query) == "none"
+    assert translation_direction(query) == ""
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "So I just want to say hahaha thank you, I'll be over in a bit",
+        "Nice so I want to say something like hahaha thank you, I need to practice more",
+        "I want to say see you tomorrow",
+        "I want to say don't forget your lunch",
+        "How should we say thank you in Chamorro?",
+        "How should we say \"the store closes at five\"?",
+    ],
+)
+def test_natural_cues_with_a_translation_signal_still_route(query: str) -> None:
+    assert classify_translation_request(query) == "passage_to_chamorro"
+
+
+@pytest.mark.parametrize(
+    "history",
+    [
+        _thread("What is tree in Chamorro?"),
+        _thread("So I just want to say hahaha thank you"),
+    ],
+)
+def test_translation_thread_confirms_an_ambiguous_natural_cue(history) -> None:
+    routed = resolve_translation_routing_query(
+        "I want to say the store closes at five", history
+    )
+
+    assert routed == 'How do you say "the store closes at five" in Chamorro?'
+    assert classify_translation_request(routed) == "passage_to_chamorro"
+
+
+def test_translate_task_confirms_an_ambiguous_natural_cue() -> None:
+    routed = resolve_translation_routing_query(
+        "I want to say the store closes at five", [], "translate"
+    )
+
+    assert routed == 'How do you say "the store closes at five" in Chamorro?'
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "I want to say I love this app",
+        "How should we say Chamorro culture has changed over time?",
+        "How would we write Python code?",
+    ],
+)
+def test_context_never_turns_excluded_cues_into_translation(query: str) -> None:
+    history = _thread("What is tree in Chamorro?")
+
+    assert resolve_translation_routing_query(query, history) == query
+
+
+@pytest.mark.parametrize(
     "text",
     ["hafa adai", "buenas dias", "Si Yu'os ma'ase", "hanom", "guma", "hu guaiya hao"],
 )

@@ -55,7 +55,7 @@ _EXPLICIT_TO_CHAMORRO_LOOKUP_PATTERN = re.compile(
 )
 # Natural English-to-Chamorro requests. "day"/"sau"/"sya" tolerate common phone
 # typos for "say"; none of them form an ordinary English question after "how
-# would we". "write" and "put" are narrowed in ``_has_to_chamorro_cue``.
+# would we". Ambiguous cues are narrowed in ``_accepts_natural_payload``.
 _HOW_SAY_PATTERN = re.compile(
     r"\bhow\s+(?:do|would|should|can|could|might)\s+(?:you|i|we|one)\s+"
     r"(?P<verb>say|day|sau|sya|write|put)\b",
@@ -66,6 +66,43 @@ _WANT_TO_SAY_PATTERN = re.compile(
     r"(?:\s+(?:want(?:ed)?\s+to|wanna|need\s+to|would\s+like\s+to)|['’]d\s+like\s+to)"
     r"\s+say\b(?:\s+(?:something|anything)\s+like\b)?",
     re.IGNORECASE,
+)
+_NAMES_CHAMORRO_PATTERN = re.compile(r"(?i)\b(?:in|into|to)\s+chamor(?:ro|u)\b")
+_QUOTED_PAYLOAD_PATTERN = re.compile(
+    r"[\"“][^\"”]*\w[^\"”]*[\"”]|(?:^|\s)[‘'][^’']*\w[^’']*[’'](?=\s|$|[?.!,])"
+)
+# Signals that a natural-cue payload is something to say to someone: laughter,
+# greetings and thanks, direct address, or first-person speech.
+_UTTERANCE_PATTERN = re.compile(
+    r"(?ix)\b(?:"
+    r"(?:ha){2,}h?|(?:he){2,}h?|lol|hey|hi|hello|bye|goodbye|yay|wow|oops|"
+    r"ok(?:ay)?|yes|yeah|please|sorry|thanks?|thank\s+you|welcome|congrat\w*|cheers|"
+    r"happy\s+\w+|merry\s+\w+|good\s+(?:morning|afternoon|evening|night|luck|job)|"
+    r"see\s+you|take\s+care|(?:love|miss)\s+you|god\s+bless|bless\s+you|"
+    r"excuse\s+me|nice\s+to\s+meet|"
+    r"you|your|you['’](?:re|ll|ve|d)|y['’]all|i['’](?:ll|m|ve|d)|we['’](?:ll|re)"
+    r")\b"
+)
+_IMPERATIVE_START_PATTERN = re.compile(
+    r"(?i)(?:don['’]?t|do\s+not|never|please|let['’]?s)\b"
+)
+# Natural cues that are really feedback about the app or an answer, questions
+# about a topic or opinion, or requests to write prose or code.
+_APP_FEEDBACK_PATTERN = re.compile(
+    r"(?ix)\b(?:"
+    r"(?:this|the|your)\s+(?:app|application|site|website|tool|chat\s*bot|bot|"
+    r"platform|feature|answer|translation|response|reply|explanation)|"
+    r"h[åa]fa\s*gpt|you\s+guys"
+    r")\b"
+)
+_TOPIC_QUESTION_PATTERN = re.compile(
+    r"(?ix)\b(?:culture|cultural|traditions?|traditional|history|historical(?:ly)?|"
+    r"etymology|over\s+time|ha(?:s|ve)\s+changed|opinion)\b"
+)
+_WRITING_TASK_PATTERN = re.compile(
+    r"(?ix)\b(?:python|javascript|typescript|java|sql|html|css|code|coding|"
+    r"program(?:ming)?|script|function|regex|algorithm|essay|e-?mail|letter|"
+    r"resume|report|paragraph|thesis|article|blog|poem|story|summary|proposal)\b"
 )
 _DEICTIC_TRANSLATION_CUE_PATTERN = re.compile(
     r"(?i)\b(?:what\s+does\s+(?:(?:all|any)\s+of\s+)?this\s+(?:mean|say)|"
@@ -316,8 +353,40 @@ def extract_translation_retrieval_payload(query: str) -> str:
     return _extract_translation_payload(query, require_unambiguous=True)
 
 
-def _has_to_chamorro_cue(query: str) -> bool:
-    """Recognize natural "how would we say/write" and "I want to say" requests."""
+def _natural_to_chamorro_cue(query: str) -> str:
+    """Classify natural to-Chamorro phrasing as "strong", "typo", "ambiguous", or "".
+
+    "How do/would you/I say X" has always been a translation request. "I want to
+    say X", "how should we say X", and "how would we write X" are also ordinary
+    English ("I want to say I love this app"), so they stay ambiguous until
+    ``_accepts_natural_payload`` finds a translation signal.
+    """
+
+    say_match = _HOW_SAY_PATTERN.search(query)
+    if say_match:
+        verb = say_match.group("verb").casefold()
+        tail = query[say_match.end():].lstrip(" \t-:–—\"“'‘")
+        if verb in {"write", "put"}:
+            if _NAMES_CHAMORRO_PATTERN.search(query):
+                return "strong"
+            # Without a named language, "How do I write an essay?" is a writing
+            # question and "How do I put the app in dark mode?" is a how-to.
+            if verb == "put" or not tail or re.match(
+                r"(?i)(?:a|an|about|my|your|this|that|it|"
+                r"the\s+(?:essay|letter|report|paragraph|story))\b",
+                tail,
+            ):
+                return ""
+            return "ambiguous"
+        if verb in {"day", "sau", "sya"}:
+            # "How do you day trade?" is English; otherwise these are phone
+            # typos for "say", which never form an ordinary English question.
+            if re.match(r"(?i)(?:trad\w*|care|dream\w*|job|off|trip|pass|camp)\b", tail):
+                return ""
+            return "typo"
+        if re.search(r"(?i)\bhow\s+(?:do|would)\s+(?:you|i)\s+say\b", query):
+            return "strong"
+        return "ambiguous"
 
     want_match = _WANT_TO_SAY_PATTERN.search(query)
     if want_match:
@@ -325,23 +394,69 @@ def _has_to_chamorro_cue(query: str) -> bool:
         # for a translation of the words "something to my grandma".
         tail = query[want_match.end():].lstrip(" \t-:–—")
         if tail and not re.match(r"(?i)(?:something|anything)\b", tail):
-            return True
+            return "ambiguous"
+    return ""
 
+
+def _natural_payload_is_excluded(query: str, payload: str) -> bool:
+    """Reject app feedback, topic/opinion questions, and writing or coding tasks."""
+
+    if _APP_FEEDBACK_PATTERN.search(payload) or _TOPIC_QUESTION_PATTERN.search(payload):
+        return True
     say_match = _HOW_SAY_PATTERN.search(query)
-    if not say_match:
-        return False
-    if say_match.group("verb").casefold() not in {"write", "put"}:
-        return True
-    if re.search(r"(?i)\b(?:in|into)\s+chamor(?:ro|u)\b", query):
-        return True
-    if say_match.group("verb").casefold() == "put":
-        return False
-    # Without a named language, "How do I write an essay?" is a writing question.
-    tail = query[say_match.end():].lstrip(" \t-:–—\"“'‘")
-    return bool(tail) and not re.match(
-        r"(?i)(?:a|an|about|my|your|this|that|it|the\s+(?:essay|letter|report|paragraph|story))\b",
-        tail,
+    return bool(
+        say_match
+        and say_match.group("verb").casefold() == "write"
+        and _WRITING_TASK_PATTERN.search(payload)
     )
+
+
+def _accepts_natural_payload(query: str, cue: str) -> bool:
+    """Decide whether an ambiguous or typo cue is really a translation request.
+
+    A named Chamorro destination or a quoted payload always is. Otherwise the
+    payload must not be app feedback, a topic question, or a writing task, and an
+    ambiguous cue also needs a payload that reads as something said to someone:
+    a greeting, thanks, laughter, direct address, or an imperative.
+    """
+
+    if cue == "strong":
+        return True
+    if not cue:
+        return False
+    if _NAMES_CHAMORRO_PATTERN.search(query) or _QUOTED_PAYLOAD_PATTERN.search(query):
+        return True
+    payload = extract_translation_payload(query)
+    if not payload or _natural_payload_is_excluded(query, payload):
+        return False
+    if cue == "typo" or re.search(r"(?i)\b(?:something|anything)\s+like\b", query):
+        return True
+    return bool(
+        _UTTERANCE_PATTERN.search(payload) or _IMPERATIVE_START_PATTERN.match(payload)
+    )
+
+
+def _has_to_chamorro_cue(query: str) -> bool:
+    """Recognize natural "how would we say/write" and "I want to say" requests."""
+
+    return _accepts_natural_payload(query, _natural_to_chamorro_cue(query))
+
+
+def natural_translation_payload(query: str) -> str:
+    """Return the payload of a natural cue that conversation context may confirm.
+
+    "I want to say the store closes at five" carries no utterance marker, so on
+    its own it stays ordinary chat. A preceding translation turn or the selected
+    Translate task shows the learner wants Chamorro wording. App feedback, topic
+    questions, and writing tasks are never returned.
+    """
+
+    if not _natural_to_chamorro_cue(query):
+        return ""
+    payload = extract_translation_payload(query)
+    if not payload or _natural_payload_is_excluded(query, payload):
+        return ""
+    return payload
 
 
 def classify_translation_request(query: str) -> TranslationIntent:

@@ -8,6 +8,7 @@ from typing import Any
 from src.rag.translation_policy import (
     classify_translation_request,
     extract_translation_payload,
+    natural_translation_payload,
     selected_task_translation_query,
     translation_direction,
 )
@@ -209,8 +210,10 @@ def resolve_translation_routing_query(
 
     A recognized request is returned unchanged. A short follow-up such as
     "What about tree?" inherits the direction of the user's preceding lookup,
-    and any message typed under the selected Translate task is treated as the
-    text to translate. Only user-authored history is consulted. The model still
+    an ambiguous natural cue ("I want to say the store closes at five") counts
+    as a translation inside a translation thread or under the Translate task,
+    and any other message typed under the Translate task is the text to
+    translate. Only user-authored history is consulted. The model still
     receives the original message; this string only steers routing.
     """
 
@@ -220,6 +223,15 @@ def resolve_translation_routing_query(
     follow_up = _translation_follow_up_query(current, past_messages)
     if follow_up:
         return follow_up
+    natural_payload = natural_translation_payload(current)
+    if natural_payload and (
+        tutor_intent == "translate" or _translation_thread_state(past_messages)
+    ):
+        if "\n" in natural_payload or len(natural_payload) > 200:
+            return f"Translate this to Chamorro:\n\n{natural_payload}"
+        return _canonical_translation_query(
+            _clean_target(natural_payload), "to_chamorro"
+        )
     if tutor_intent == "translate":
         return selected_task_translation_query(current)
     return current_message
