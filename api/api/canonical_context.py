@@ -34,6 +34,14 @@ EXACT_DICTIONARY_FILES = (
         "Revised and updated Chamorro dictionary",
     ),
 )
+# A dictionary entry is evidence of the senses it lists, not proof that a word
+# has no other use (a learner was once told "un" could not mean "a" because the
+# retrieved "un" entry was the agreement marker).
+SENSE_SCOPE_RULE = (
+    "An entry shows the senses its source records, not every use of the word. Never call a "
+    "form wrong or unusable only because its entry gives a different sense; say which senses "
+    "the references show and that they do not cover this use."
+)
 MAX_CANONICAL_MATCHES = 8
 MAX_PASSAGE_DICTIONARY_MATCHES = 24
 MAX_PASSAGE_SPELLING_CANDIDATES = 2
@@ -404,6 +412,7 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
         "=== HÅFAGPT EXACT GOVERNED REFERENCE MATCHES ===",
         "These deterministic matches outrank non-canonical or semantically similar retrieved usage.",
         "Do not present a complete sentence as fully reference-backed merely because some component words are verified; identify the exact scope of support.",
+        SENSE_SCOPE_RULE,
         "",
     ]
     for entry in matches:

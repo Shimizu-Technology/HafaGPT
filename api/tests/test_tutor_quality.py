@@ -32,9 +32,16 @@ def no_network(monkeypatch):
 
 
 def test_suite_attestations_and_coverage():
+    v1 = tq.load_cases(tq.DEFAULT_CASES.with_name('tutor_quality_v1.json'))
+    assert len(v1) == len({c['id'] for c in v1}) == 150
+    assert {c['category'] for c in v1} == {'production', 'dictionary_lookup', 'phrasing_variant', 'verification', 'school_message', 'communicative_goal', 'absent_word', 'grammar'}
     cases = tq.load_cases()
-    assert len(cases) == len({c['id'] for c in cases}) == 150
-    assert {c['category'] for c in cases} == {'production', 'dictionary_lookup', 'phrasing_variant', 'verification', 'school_message', 'communicative_goal', 'absent_word', 'grammar'}
+    assert tq.suite_id(tq.DEFAULT_CASES) == 'tutor_quality_v2'
+    assert len(cases) == len({c['id'] for c in cases}) == 164
+    # v2 keeps every v1 case byte-for-byte, so the tq1 subset stays comparable.
+    assert cases[:150] == v1
+    assert all(c['id'].startswith('tq2-') for c in cases[150:])
+    assert "You're sure about all of these words for this sentence?" in {c['user_message'] for c in cases}
     assert sum(bool(c['history']) for c in cases) >= 15
     serialized = json.dumps(cases, ensure_ascii=False)
     assert not re.search(r'[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}', serialized)
@@ -298,3 +305,32 @@ def test_retry_completions_accumulate_usage_and_cost(monkeypatch):
     assert capture.current['output_tokens'] == 10
     assert capture.current['reported_cost_usd'] == pytest.approx(.002)
     assert capture.current['completion_calls'] == 2
+
+
+def test_direct_evidence_labels_are_scored_separately_from_mentions():
+    case = next(c for c in tq.load_cases() if c.get('must_not_direct_headwords') == ['gutos'])
+    mention = ('[Definition only mentions "chicken" inside a longer description; this is not a '
+               'dictionary gloss or translation of "chicken": gutos]\nSource: X\nDefinition: snap off')
+    assert tq.score(case, None, mention)['false_direct_evidence'] == []
+    direct = '[Direct dictionary gloss for "chicken": mannok]\nAlso recorded as: gutos (X)'
+    assert tq.score(case, None, direct)['false_direct_evidence'] == ['gutos']
+    canonical = '[Exact English dictionary gloss: chicken]\nChamorro headword: gutos\nSource: X'
+    assert tq.score(case, None, canonical)['false_direct_evidence'] == ['gutos']
+
+
+def test_un_rejection_rule_flags_the_production_error_only():
+    case = next(c for c in tq.load_cases() if 'rejects_un_as_only_you' in c['must_not'])
+    flagged = tq.score(case, 'In the dictionary, un only means "you (sg.)", so un rato should not be used.', '')
+    assert 'rejects_un_as_only_you' in flagged['must_not_violations']
+    supported = tq.score(case, 'The references record un as "you (sg.)" and as "a, an, one" [Chamoru.info dictionary].', '')
+    assert 'rejects_un_as_only_you' not in supported['must_not_violations']
+
+
+def test_subset_summaries_compare_suite_versions():
+    case = tq.load_cases()[0]
+    row = dict(tq.score(case, 'A supported answer [dictionary].', 'tronkon håyu'), category=case['category'],
+               expected_behavior='answer', router='none', expected_router='none', latency_s=1, error=None)
+    subsets = tq.subset_summaries([dict(row, id='tq1-001'), dict(row, id='tq2-001', retrieved_headwords=0)])
+    assert subsets['tq1']['expected_headword_recall'] == 1
+    assert subsets['tq2']['expected_headword_recall'] == 0
+    assert tq.subset_summaries([dict(row, id='tq1-001')]) == {}

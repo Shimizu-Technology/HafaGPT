@@ -26,7 +26,9 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CASES = Path(__file__).with_name('tutor_quality_v1.json')
+# v2 carries every v1 case unchanged plus tq2 additions; v1 stays frozen for
+# its published baselines. Summaries report the tq1 subset separately.
+DEFAULT_CASES = Path(__file__).with_name('tutor_quality_v2.json')
 # These are triage signals. A supported draft plus a precise uncertainty note can
 # still match a refusal expression; the human packet is authoritative.
 REFUSAL = re.compile(
@@ -42,11 +44,22 @@ PATTERNS = {
     'matching_as_monkey': r"\bmatching\b",
     'retracts_canonical_term': r"\b(?:retract|take back|withdraw)\b|(?:do not|don't) (?:verify|treat.{0,35}(?:verified|source))|(?:previous|earlier).{0,60}(?:not verified|unverified|unsupported)",
     'unresolved_school_abbreviation': r"(?:SYM|MSY).{0,100}(?:unclear|unknown|not clear|cannot|can't|not sure)|(?:cannot|can't|unclear|unknown).{0,100}(?:SYM|MSY)",
+    # The production error: "un" is only "you (sg.)", so the learner's form is wrong.
+    'rejects_un_as_only_you': r"\bun\b[^\n]{0,80}\b(?:only|just)\s+(?:means?|is)\b[^\n]{0,20}\byou\b|(?:should(?:n't| not)|cannot|can't|don't|do not|avoid)\s+(?:be\s+)?(?:use[ds]?|using|say|saying)\b[^\n]{0,40}\bun\b",
 }
+# Evidence blocks that present a headword as the word for the requested concept.
+DIRECT_EVIDENCE_HEADER = re.compile(r'^\[(?:Direct dictionary gloss|Exact English dictionary gloss)')
 
 
 def digest(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
+
+
+EMPTY_DIGEST = digest('')
+
+
+def suite_id(path: Path) -> str:
+    return json.loads(path.read_text(encoding='utf-8')).get('suite_id', path.stem)
 
 
 def load_cases(path: Path = DEFAULT_CASES) -> list[dict]:
@@ -65,6 +78,8 @@ def load_cases(path: Path = DEFAULT_CASES) -> list[dict]:
             raise ValueError('Invalid tutor intent')
         if set(case['must_not']) - allowed_rules:
             raise ValueError('Unknown must_not rule')
+        if not all(isinstance(item, str) and item for item in case.get('must_not_direct_headwords', [])):
+            raise ValueError('Invalid must_not_direct_headwords')
         for turn in case['history']:
             if turn['role'] not in {'user', 'assistant'} or not isinstance(turn['content'], str):
                 raise ValueError('Only in-memory text history is supported')
@@ -91,12 +106,30 @@ def headword_present(headword: str, text: str) -> bool:
     return bool(re.search(r'(?<![\w\'’])' + re.escape(headword) + r'(?![\w\'’])', text, re.I))
 
 
+def direct_evidence_headwords(evidence: str, headwords: list[str]) -> list[str]:
+    """Headwords that retained evidence labels as a direct gloss for the request.
+
+    A direct block names its headword after the label's last colon, on a
+    "Chamorro headword:" line, or on an "Also recorded as:" line.
+    """
+    named, in_direct_block = [], False
+    for line in evidence.splitlines():
+        if line.startswith('['):
+            in_direct_block = bool(DIRECT_EVIDENCE_HEADER.match(line))
+            if in_direct_block:
+                named.append(line.rsplit(':', 1)[-1])
+        elif in_direct_block and line.startswith(('Chamorro headword:', 'Also recorded as:')):
+            named.append(line.split(':', 1)[1])
+    return [headword for headword in headwords if any(headword_present(headword, text) for text in named)]
+
+
 def score(case: dict, response: str | None, evidence: str) -> dict:
     groups = case['expected_retrieved_headwords']
     hits = [g['concept'] for g in groups if any(headword_present(r['headword'], evidence) for r in g['any_of'])]
     result = {'expected_headwords': len(groups), 'retrieved_headwords': len(hits),
               'retrieved_concepts': hits, 'refusal': None, 'must_not_violations': None,
-              'expected_behavior_signal': None}
+              'expected_behavior_signal': None,
+              'false_direct_evidence': direct_evidence_headwords(evidence, case.get('must_not_direct_headwords', []))}
     if response is None:
         return result
     # Matching only: normalize quote typography and Markdown emphasis, keeping
@@ -174,13 +207,30 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
             'category_metrics': categories,
             'refusal_case_ids': [r['id'] for r in answerable if r['refusal']],
             'must_not_case_ids': [r['id'] for r in scored if r['must_not_violations']],
-            'router_miss_case_ids': [r['id'] for r in rows if r['router'] != r['expected_router']]}
+            'router_miss_case_ids': [r['id'] for r in rows if r['router'] != r['expected_router']],
+            'false_direct_evidence_cases': sum(bool(r.get('false_direct_evidence')) for r in ok),
+            'false_direct_evidence_case_ids': [r['id'] for r in ok if r.get('false_direct_evidence')],
+            'used_retrieval_cases': sum(bool(r.get('evidence_hash')) and r.get('evidence_hash') != EMPTY_DIGEST for r in ok)}
+
+
+SUBSET_KEYS = ('cases', 'completed_cases', 'answerable_responses', 'refusal_count', 'refusal_rate_answerable',
+               'expected_headword_hits', 'expected_headword_total', 'expected_headword_recall',
+               'must_not_violating_cases', 'must_not_violations', 'must_not_case_ids', 'refusal_case_ids',
+               'latency_p50_s', 'latency_p95_s', 'false_direct_evidence_cases')
+
+
+def subset_summaries(rows: list[dict]) -> dict:
+    """Per-suite-version metrics: the tq1 subset is comparable with v1 baselines."""
+    prefixes = sorted({row['id'].split('-', 1)[0] for row in rows})
+    return {prefix: {key: value for key, value in summarize([r for r in rows if r['id'].startswith(prefix + '-')], {}).items()
+                     if key in SUBSET_KEYS} for prefix in prefixes} if len(prefixes) > 1 else {}
 
 
 
 def write_summary(summary: dict, output: Path) -> None:
     (output / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
-    lines = ['# Tutor quality v1 run', '', 'Automated behavior/retrieval signals only; native review deferred.', '']
+    lines = [f"# Tutor quality run: {summary.get('suite', 'unknown suite')}", '',
+             'Automated behavior/retrieval signals only; native review deferred.', '']
     for key, value in summary.items():
         lines.append(f'- {key}: `{json.dumps(value, ensure_ascii=False)}`')
     (output / 'summary.md').write_text('\n'.join(lines) + '\n')
@@ -382,7 +432,9 @@ def main(argv=None) -> int:
                 row[key] = checks[key]
         metadata['response_scoring_harness_sha256'] = digest(Path(__file__).read_text())
         (args.output / 'cases.jsonl').write_text(''.join(json.dumps(row, ensure_ascii=False) + '\n' for row in rows))
-        write_summary(summarize(rows, metadata), args.output)
+        summary = summarize(rows, metadata)
+        summary['suite_subsets'] = subset_summaries(rows)
+        write_summary(summary, args.output)
         export_packet([args.output / 'cases.jsonl'], args.output, args.seed)
         return 0
     carried_rows, prior_metadata = [], None
@@ -415,7 +467,7 @@ def main(argv=None) -> int:
     print(json.dumps({'host': db.get('host'), 'dbname': db.get('dbname')}), flush=True)
     if db.get('host') not in {'localhost', '127.0.0.1', '::1'} or db.get('dbname') != 'chamorro_rag':
         raise SystemExit('Only the borrowed local chamorro_rag DB is permitted')
-    metadata = {'suite': 'tutor_quality_v1', 'suite_sha256': digest(args.cases.read_text()),
+    metadata = {'suite': suite_id(args.cases), 'suite_sha256': digest(args.cases.read_text()),
                 'production_pipeline_sha256': digest((ROOT / 'api/chatbot_service.py').read_text()),
                 'git_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                 'started_at_utc': datetime.now(timezone.utc).isoformat(),
@@ -566,6 +618,7 @@ def main(argv=None) -> int:
                             embedding_price_note='text-embedding-3-small estimate $0.02/M tokens; cache-only runs cost zero',
                             requested_cases=len(cases) + len(carried_rows), new_cases_requested=len(cases), completion='complete' if len(rows) == len(cases) + len(carried_rows) else 'budget_stopped')
             summary = summarize(rows, metadata)
+            summary['suite_subsets'] = subset_summaries(rows)
             write_summary(summary, args.output)
     if not args.retrieval_only and rows:
         export_packet([args.output / 'cases.jsonl'], args.output, args.seed)

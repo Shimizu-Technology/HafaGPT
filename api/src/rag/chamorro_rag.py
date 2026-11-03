@@ -291,6 +291,53 @@ def _clip_english_lookup_evidence(content: str, target_word: str, max_chars: int
     return content[:max_chars]
 
 
+MAX_REFERENCE_CHARS = 4000
+_WINDOW_STOP_WORDS = frozenset(
+    "what when where which with would could should about does mean chamorro chamoru "
+    "english translate this that these those there their from have word words".split()
+)
+
+
+def window_reference(content: str, query: str, max_chars: int = MAX_REFERENCE_CHARS) -> str:
+    """Return the part of an oversized chunk around the request's terms.
+
+    A few legacy chunks hold whole chapters (one grammar chunk is 337k
+    characters). Prefix truncation then keeps only the chapter opening. This
+    read-time window keeps the passage that mentions the request instead; the
+    stored chunk is unchanged.
+    """
+
+    if len(content) <= max_chars:
+        return content
+    lowered = content.casefold()
+    terms = {
+        term
+        for term in re.findall(r"[^\W\d_][\w'’]{3,}", (query or "").casefold())
+        if term not in _WINDOW_STOP_WORDS
+    }
+    positions = sorted(
+        (match.start(), term)
+        for term in terms
+        for match in re.finditer(rf"(?<![^\W\d_]){re.escape(term)}", lowered)
+    )
+    if not positions:
+        return content[:max_chars] + f"\n[Excerpt: first {max_chars} of {len(content)} characters]"
+    best_start, best_score = positions[0][0], 0
+    for index, (position, _term) in enumerate(positions):
+        window_terms = {term for other, term in positions[index:] if other < position + max_chars * 2 // 3}
+        if len(window_terms) > best_score:
+            best_start, best_score = position, len(window_terms)
+    start = max(0, best_start - max_chars // 3)
+    line_start = content.rfind("\n", 0, start)
+    if line_start != -1 and start - line_start < 400:
+        start = line_start + 1
+    end = min(len(content), start + max_chars)
+    return (
+        f"[Excerpt: characters {start + 1}-{end} of {len(content)}, centered on the request's terms]\n"
+        + content[start:end]
+    )
+
+
 def _is_low_quality_semantic_chunk(content: str, metadata: dict) -> bool:
     """Exclude book-navigation fragments that are poor evidence for an answer."""
 
@@ -623,6 +670,61 @@ class ChamorroRAG:
             print(f"⚠️  Keyword search error: {e}")
             return []
     
+    def dictionary_homograph_senses(self, headwords):
+        """Return extra governed senses for exact headwords, keyed by headword.
+
+        The bundled dictionary JSON is keyed by headword, so a second entry
+        with the same spelling (Chamoru.info records ``un`` both as the
+        agreement marker and as "A, an, one (indefinite article)") is lost.
+        The governed collection keeps each entry. The index holds only the
+        headword and its meaning line, loaded once with a read-only query.
+        """
+        index = self._homograph_index()
+        return {headword: index.get(headword, ()) for headword in headwords}
+
+    def _homograph_index(self):
+        cached = getattr(self, "_homograph_cache", None)
+        if cached is not None:
+            return cached
+        # Chamoru.info entry documents begin "entry | <headword>" and carry a
+        # "meaning | ..." row. Plain string functions keep this one scan fast;
+        # grouping happens here rather than in a slower SQL aggregate.
+        with closing(self._get_db_connection_with_retry()) as conn, closing(conn.cursor()) as cur:
+            cur.execute(
+                r"""
+                SELECT
+                    lower(trim(split_part(split_part(embedding.document, E'\n', 1), '|', 2))),
+                    trim(split_part(split_part(
+                        substring(embedding.document from strpos(embedding.document, E'\nmeaning |') + 1),
+                        E'\n', 1), '|', 2)),
+                    embedding.cmetadata
+                FROM langchain_pg_embedding AS embedding
+                JOIN langchain_pg_collection AS collection
+                  ON collection.uuid = embedding.collection_id
+                WHERE collection.name = %s
+                  AND embedding.document LIKE 'entry |%%'
+                  AND strpos(embedding.document, E'\nmeaning |') > 0
+                """,
+                (self.collection_name,),
+            )
+            rows = cur.fetchall()
+        entries: dict[str, dict[object, tuple[str, dict]]] = {}
+        for headword, meaning, metadata in rows:
+            metadata = metadata or {}
+            if not headword or not meaning or metadata.get("source_id") != "chamoru_info_dictionary":
+                continue
+            key = " ".join(re.sub(r"[^\w'-]+", " ", unicodedata.normalize("NFC", headword.replace("’", "'"))).split())
+            entries.setdefault(key, {}).setdefault(metadata.get("entry_id") or metadata.get("source"), (meaning, metadata))
+        index: dict[str, list[tuple[str, dict]]] = {}
+        for key, by_entry in entries.items():
+            if len(by_entry) < 2:
+                continue
+            for meaning, metadata in by_entry.values():
+                if is_retrieval_allowed(metadata, "lookup"):
+                    index.setdefault(key, []).append((meaning, annotate_metadata(metadata)))
+        self._homograph_cache = {key: tuple(values) for key, values in index.items()}
+        return self._homograph_cache
+
     def _english_to_chamorro_search(self, english_word, k=3):
         """
         Search for Chamorro translations of an English word.
@@ -963,9 +1065,12 @@ class ChamorroRAG:
         else:
             context += "If the references are incomplete, answer what they support and say briefly what they do not cover.\n"
         context += "Do not let authentic usage, tourism copy, cultural context, or historical material decide canonical spelling or a single-word translation.\n"
-        context += "Preserve Guam/CNMI or author-specific differences and explain them when relevant.\n\n"
+        context += "Preserve Guam/CNMI or author-specific differences and explain them when relevant.\n"
+        context += "An entry shows the senses its source records, not every use of the word; never call a form wrong or unusable only because its entry gives a different sense.\n\n"
         
+        window_query = extract_translation_retrieval_payload(query) or query
         for i, (content, metadata) in enumerate(chunks, 1):
+            content = window_reference(content, window_query)
             # Extract source information
             source_file = str(metadata.get('source', 'Unknown source'))
             page = metadata.get('page', 0)

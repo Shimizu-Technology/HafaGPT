@@ -85,8 +85,9 @@ def strip_prefix(word: str) -> Tuple[str, Optional[str]]:
     word_lower = word.lower()
     
     for prefix, meaning in PREFIXES:
-        prefix_clean = prefix.replace('-', '').replace("'", '\u2019')
-        if word_lower.startswith(prefix_clean):
+        prefix_clean = prefix.replace('-', '')
+        # Learners type either apostrophe; the table uses the ASCII one.
+        if word_lower.replace('\u2019', "'").startswith(prefix_clean):
             root = word[len(prefix_clean):]
             if len(root) >= 2:
                 return root, meaning
@@ -201,6 +202,89 @@ def normalize_for_lookup(word: str) -> List[str]:
             unique.append(v)
     
     return unique
+
+
+# Hyphen-like characters seen in learner input and the bundled dictionaries
+# (the revised snapshot writes lugåt‑mu with a non-breaking hyphen).
+_HYPHEN_LIKE = str.maketrans({'\u2010': '-', '\u2011': '-', '\u2012': '-', '\u2013': '-', '\u2014': '-'})
+INFIXES = [
+    ('um', 'actor focus infix -um-'),
+    ('in', 'object focus/nominalizing infix -in-'),
+]
+_VOWELS = set('aeiouåáéíóúü')
+
+
+def strip_infix(word: str) -> List[Tuple[str, str]]:
+    """Return forms with -um- or -in- removed after the first consonant.
+
+    The infix follows a word-initial consonant (or consonant cluster), so
+    ``kumåti`` may be ``kåti`` + -um-. These are retrieval keys only; callers
+    must keep a candidate only when a dictionary attests it.
+    """
+    lowered = word.lower()
+    candidates = []
+    for position in (1, 2):
+        onset = lowered[:position]
+        if not onset or any(char in _VOWELS for char in onset):
+            continue
+        for infix, meaning in INFIXES:
+            if lowered[position:position + len(infix)] == infix:
+                root = word[:position] + word[position + len(infix):]
+                if len(root) >= 3:
+                    candidates.append((root, meaning))
+    return candidates
+
+
+def affix_root_candidates(word: str) -> List[Tuple[str, str]]:
+    """Ordered (root, affix explanation) retrieval candidates for one word.
+
+    Only the affixes listed in this module are removed. No candidate is a
+    claim that the form exists: ``attested_root_candidates`` keeps a root only
+    when a dictionary records it, and the explanation stays a possibility.
+    """
+    cleaned = word.translate(_HYPHEN_LIKE).strip('.,!?;:"()[]{}')
+    if len(cleaned) < 3:
+        return []
+    ordered: List[Tuple[str, str]] = []
+
+    def add(root: str, explanation: str) -> None:
+        root = root.strip('-')
+        if len(root) >= 2 and root.lower() != cleaned.lower() and all(
+            root.lower() != existing.lower() for existing, _ in ordered
+        ):
+            ordered.append((root, explanation))
+
+    suffix_root, suffix_meaning = strip_possessive_suffix(cleaned)
+    if suffix_meaning:
+        add(suffix_root, f"possessive suffix ({suffix_meaning})")
+    for base, base_note in ((cleaned, ''), (suffix_root, ' with a possessive suffix') if suffix_meaning else (None, None)):
+        if not base:
+            continue
+        prefix_root, prefix_meaning = strip_prefix(base)
+        if prefix_meaning:
+            add(prefix_root, f"prefix ({prefix_meaning}){base_note}")
+            prefix_reduplicated = handle_reduplication(prefix_root)
+            if prefix_reduplicated:
+                add(prefix_reduplicated, f"prefix ({prefix_meaning}) and reduplication{base_note}")
+        for infix_root, infix_meaning in strip_infix(base):
+            add(infix_root, f"{infix_meaning}{base_note}")
+    reduplicated = handle_reduplication(cleaned)
+    if reduplicated:
+        add(reduplicated, "reduplication")
+    return ordered
+
+
+def attested_root_candidates(word: str, is_attested) -> List[Tuple[str, str]]:
+    """Return the first affix-stripped root that ``is_attested(root)`` confirms.
+
+    Candidates are ordered from the most to the least common analysis; one
+    attested root keeps a coincidental shorter headword (``guma'-hu`` could
+    also be read as ``ga'`` + -um-) from being offered beside the likely one.
+    """
+    for root, note in affix_root_candidates(word):
+        if is_attested(root):
+            return [(root, note)]
+    return []
 
 
 # Quick test

@@ -959,6 +959,10 @@ async def startup_event():
     if FREE_PROMO_ACTIVE:
         logger.info(f"🎄 FREE PROMO PERIOD ACTIVE until {FREE_PROMO_END_DATE}")
     logger.info("="*80)
+    # Per-word dictionary indexes take a few seconds to build; do it once in
+    # the background so the first tutor request does not pay for it.
+    from .lexical_lookup import warm_lexical_indexes
+    threading.Thread(target=warm_lexical_indexes, name="lexical-index-warmup", daemon=True).start()
 
 
 @app.get("/", tags=["Root"])

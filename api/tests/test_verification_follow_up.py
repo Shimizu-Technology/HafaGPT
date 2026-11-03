@@ -16,6 +16,7 @@ import pytest
 
 from api.source_citations import format_source_citations
 from api.canonical_context import get_canonical_tutor_context
+from api.lexical_lookup import homograph_sense_context, lexical_lookup_context, lexical_lookup_request
 from api.verification_evidence import (
     MAX_VERIFICATION_LOOKUPS,
     verification_term_context,
@@ -576,6 +577,10 @@ def _real_rag_context(calls: list[dict]):
         "detect_query_type": detect_query_type,
         "get_canonical_tutor_context": get_canonical_tutor_context,
         "verification_term_context": verification_term_context,
+        "lexical_lookup_request": lexical_lookup_request,
+        "lexical_lookup_context": lexical_lookup_context,
+        "homograph_sense_context": homograph_sense_context,
+        "uncovered_card_clauses": lambda _query: "",
         # Vector search and cards need the database; the lookups do not.
         "get_knowledge_card_context": lambda *args, **kwargs: ("", []),
         "rag": None,

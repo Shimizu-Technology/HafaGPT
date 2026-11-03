@@ -375,6 +375,27 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
     return [card for _score, card in scored[:limit]]
 
 
+def uncovered_card_clauses(query: str) -> str:
+    """Return the clauses of a compound question that no approved card matches.
+
+    An empty string means the request is a single clause, or every clause is
+    covered, so the matched cards remain the complete answer.
+    """
+
+    sentences = re.split(r"(?<=[?.!])\s+|\s*;\s*|\n+", query or "")
+    clauses = [
+        re.sub(r"(?i)^\s*(?:and\s+)?(?:also|additionally|plus|then)\b[\s,]*", "", sentence).strip()
+        for sentence in sentences
+    ]
+    clauses = [clause for clause in clauses if len(clause.split()) >= 3]
+    if len(clauses) < 2:
+        return ""
+    uncovered = [clause for clause in clauses if not matching_production_cards(clause)]
+    if not uncovered or len(uncovered) == len(clauses):
+        return ""
+    return " ".join(uncovered)
+
+
 def get_knowledge_card_context(
     query: str,
     *,
