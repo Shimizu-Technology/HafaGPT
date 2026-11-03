@@ -358,8 +358,10 @@
       "requested_uses": [],
       "evidence_reference": "https://opus.nlpl.eu/legacy/Tatoeba-v2026-07-08.php",
       "expires_at": null,
-      "restrictions": "Derivative of Tatoeba; not independent corroboration. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
-      "next_action": "Preserve attribution and license on redistribution. Any RAG ingestion requires a later explicit approval and registry change."
+      "restrictions": "Not bundled: insufficient original sentence-owner attribution; direct attributed Tatoeba covers 226 overlapping pairs from the removed 237-row snapshot.",
+      "next_action": "Retain this evidence record only. Any replacement dataset or ingestion requires separate approval.",
+      "bundling_status": "not_bundled",
+      "bundling_reason": "Not bundled: insufficient original sentence-owner attribution; direct attributed Tatoeba covers 226 overlapping pairs from the removed 237-row snapshot."
     },
     {
       "source_id": "opus_bible_uedin_ch_en",
@@ -368,8 +370,10 @@
       "requested_uses": [],
       "evidence_reference": "https://opus.nlpl.eu/legacy/bible-uedin-v1.php",
       "expires_at": null,
-      "restrictions": "Bible-derived pairs are historical only; exclude from modern teaching. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
-      "next_action": "Preserve attribution and license on redistribution. Any RAG ingestion requires a later explicit approval and registry change."
+      "restrictions": "Not bundled: 192 corrupted alignments reported in review (including Psalm 10:4 with an Acts 28:30 fragment); the 14.23 MB snapshot has no runtime consumer. The text matches the 1908 ABS edition, not a 2007 edition. A future historical lane requires separately approved rebuilding from verified eBible USFM, not OPUS alignments.",
+      "next_action": "Retain this evidence record only. Any replacement dataset or ingestion requires separate approval.",
+      "bundling_status": "not_bundled",
+      "bundling_reason": "Not bundled: 192 corrupted alignments reported in review (including Psalm 10:4 with an Acts 28:30 fragment); the 14.23 MB snapshot has no runtime consumer. The text matches the 1908 ABS edition, not a 2007 edition. A future historical lane requires separately approved rebuilding from verified eBible USFM, not OPUS alignments."
     },
     {
       "source_id": "opus_translatewiki_ch_en",
@@ -388,8 +392,10 @@
       "requested_uses": [],
       "evidence_reference": "https://opus.nlpl.eu/legacy/wikimedia-v20260327.php",
       "expires_at": null,
-      "restrictions": "Retain attribution and share-alike terms for this subset; machine alignment remains unreviewed. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
-      "next_action": "Preserve attribution and license on redistribution. Any RAG ingestion requires a later explicit approval and registry change."
+      "restrictions": "Not bundled: the 49-row snapshot lacks article/contributor attribution needed for traceable redistribution.",
+      "next_action": "Retain this evidence record only. Any replacement dataset or ingestion requires separate approval.",
+      "bundling_status": "not_bundled",
+      "bundling_reason": "Not bundled: the 49-row snapshot lacks article/contributor attribution needed for traceable redistribution."
     },
     {
       "source_id": "opus_qed_ch_en",

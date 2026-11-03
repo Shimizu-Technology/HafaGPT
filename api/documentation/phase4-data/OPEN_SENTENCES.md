@@ -1,63 +1,65 @@
 # Offline open sentence snapshots, v1
 
-Captured 2026-11-03. These files make licensed source text inspectable locally. They are not connected to the tutor, an import job, a database, or a RAG collection. All pairs remain `unreviewed` and `teaching_eligible: false`. Native review is deferred; it did not block this offline data work.
+Captured 2026-11-03; scope revised during review round 1. These files are offline evidence with no app, tutor, database, import-job, or RAG consumer. All records remain `unreviewed` and `teaching_eligible: false`; native review is deferred.
 
-| Snapshot | Source version | Pairs | License | Orthography |
+| Bundled snapshot | Version | Pairs | License | Orthography |
 | --- | --- | ---: | --- | --- |
-| Tatoeba direct API | 2026-11-03 | 228 | CC BY 2.0 FR | unknown |
-| OPUS Tatoeba | v2026-07-08 | 237 | CC BY 2.0 FR | unknown |
+| Direct Tatoeba API | 2026-11-03 | 228 | CC BY 2.0 FR | unknown |
 | OPUS translatewiki | v2026-07-01 | 700 | CC BY 3.0 | unknown |
-| OPUS wikimedia | v20260327 | 49 | CC BY-SA 4.0 | unknown |
-| OPUS bible-uedin | v1 | 14,486 | CC0 1.0 | historical |
-| **Total records** | | **15,700** | per pair / per subset | |
+| **Total** | | **928** | per source | |
 
-The default loader returns **1,214 non-historical records**; explicit `include_historical=True` is required for the Bible subset. This is a source inventory, not 15,700 independent or verified sentences. Tatoeba API and OPUS Tatoeba overlap, Bible alignments repeat source verses against two English documents, and translatewiki contains UI strings/placeholders. Exact string-pair comparison found 226 pairs shared by direct Tatoeba and OPUS Tatoeba. Within OPUS snapshots, exact distinct text-pair counts are 227/237 (Tatoeba), 675/700 (translatewiki), 49/49 (wikimedia), and 14,452/14,486 (Bible). Original alignment rows remain separately attributable; no cross-source deduplication or spelling normalization was applied.
+The loader returns 928 records, including 675 distinct translatewiki text pairs from 700 alignment rows. Direct Tatoeba covers 197 Chamorro sentences and 228 direct English links. No cross-source spelling normalization or language correction is applied. No historical corpus is bundled; the compatibility argument `include_historical=True` cannot enable removed sources.
 
-## License and attribution evidence
+## Review disposition
 
-The [Tatoeba downloads page](https://tatoeba.org/en/downloads) identifies CC BY 2.0 FR for sentence data; every captured API sentence and direct English translation also reports that license. Four API pages contain 197 Chamorro sentences with 228 direct English links. Indirect links were not requested or promoted. Sentence owners are preserved when returned; otherwise the attribution says unowned and retains links to the original sentence and revision history.
+The following snapshots and their now-unreferenced packaged notices were removed. Their registry, editorial, and permission records remain, with `bundling_status: not_bundled` and the reason. All 13 added source records retain ingestion and retrieval disabled (45 registry records, 45 editorial records, 42 permission records total).
 
-The OPUS subset pages and the README/LICENSE inside each pinned archive agree:
+| Removed snapshot | Former rows | Reason |
+| --- | ---: | --- |
+| OPUS Tatoeba | 237 | Insufficient original sentence-owner attribution; direct attributed Tatoeba already covers 226 overlapping pairs. |
+| OPUS Wikimedia | 49 | Missing article/contributor attribution; archive-line IDs alone do not provide it. |
+| OPUS bible-uedin | 14,486 | Lead review reported 192 corrupted alignments, including Psalm 10:4 pulling an Acts 28:30 fragment; 14.23 MB with no runtime consumer. |
 
-- [Tatoeba](https://opus.nlpl.eu/legacy/Tatoeba-v2026-07-08.php): [CC BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/).
-- [translatewiki](https://opus.nlpl.eu/legacy/translatewiki-v2026-07-01.php): [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/).
-- [wikimedia](https://opus.nlpl.eu/legacy/wikimedia-v20260327.php): [CC BY-SA 4.0](https://creativecommons.org/licenses/by-sa/4.0/). Retain attribution and this subset's share-alike license on redistribution/adaptation; a source's license is not replaced by a repository code license.
-- [bible-uedin](https://opus.nlpl.eu/legacy/bible-uedin.php): [CC0 1.0](https://creativecommons.org/publicdomain/zero/1.0/). The packaged notice credits Christos Christodoulopoulos and Mark Steedman's Bible corpus as well as OPUS. Bible-derived language is kept in the historical lane regardless of this permissive license.
+The builder no longer supports those three datasets and requires no raw files for them. The loader rejects their source IDs even if a stale snapshot is copied into its input directory. QED remains unbundled for lack of a clear reuse grant; it was not downloaded.
 
-Packaged README and full license notices are copied unchanged under `api/data/open_sentences/v1/licenses/`. Per-pair attribution includes the source and OPUS citation (J. Tiedemann, 2012, *Parallel Data, Tools and Interfaces in OPUS*). The structured text copies retain source spelling and punctuation. Removing the plain-text archive's line delimiter and wrapping strings in JSON are the only text transformations.
+## Bible edition evidence retained
 
-[QED](https://opus.nlpl.eu/legacy/QED.php) was skipped: its page describes QCRI all-rights-reserved material without a clear reuse license. No QED sentence archive was downloaded. The [1908 ABS rights page](https://ebible.org/cha/copyright.htm) separately identifies its edition as public domain; it is registered as a historical candidate, not separately imported or equated with every OPUS Bible document.
+The removed corpus's Chamorro text matches the **1908 American Bible Society Gospels, Acts, and Psalms**. The lead verified all **7,245 corpus verses** against eBible USFM after markup normalization. This identifies the text edition; it does not validate OPUS's English alignments. The corpus metadata value **2007 is not the edition date**. The [eBible rights page](https://ebible.org/cha/copyright.htm) identifies the American Bible Society translation and marks it public domain (rechecked 2026-11-03).
 
-## Identifiers and provenance
+A future historical Bible lane should be rebuilt directly from verified eBible USFM, with checked verse identifiers and independently validated alignments. That is a separately approved step; this PR does not import it or rewrite historical wording into modern spelling.
 
-Every pair contains source ID/URL, license and license URL, attribution, both language strings, sentence IDs and their kind, retrieval date, orthography, and unreviewed/offline status.
+## License, identifiers, and translatewiki provenance
 
-- Direct Tatoeba pairs use original Tatoeba numeric sentence IDs and both source-page URLs.
-- The three modern OPUS Moses packages contain aligned text and notices, but no original contributor sentence IDs. Their `archive_line` identifiers name the actual archive member and one-based line, scoped to the pinned source version and SHA-256. They are reproducible artifact identifiers, not invented Tatoeba/Wikimedia contributor IDs.
-- Bible pairs preserve the original OPUS XML `xtargets` sentence IDs, including one-to-many links, and the source document paths. The archive has 7,241 alignments to `en/English-WEB.xml.gz` and 7,245 to `en/English.xml.gz`; the combined Moses files contain 14,486 rows in that order.
-- Each snapshot header records its download URL, upstream version, pair count, and raw artifact SHA-256. Tatoeba records all four captured page checksums. The source inventory/permission/editorial ledgers all keep RAG ingestion and retrieval disabled for these additions.
+The [Tatoeba downloads page](https://tatoeba.org/en/downloads) identifies [CC BY 2.0 FR](https://creativecommons.org/licenses/by/2.0/fr/) for sentence data. Every captured source and direct English translation reports that license. Records preserve numeric sentence IDs, both source-page URLs, and owners where supplied; unowned records explicitly retain their source/revision-history links. No indirect links are promoted.
 
-`unknown` is used unless the source establishes an orthography. These snapshots make no claim to Guam 2024 or CNMI spelling. Historical Bible wording is never rewritten into modern spelling.
+The [OPUS translatewiki package](https://opus.nlpl.eu/legacy/translatewiki-v2026-07-01.php) and its unchanged packaged README/LICENSE identify [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/), translatewiki contributors, the [upstream translation dumps](https://translatewiki.net/static/translation-dump), and the OPUS citation (J. Tiedemann, 2012, *Parallel Data, Tools and Interfaces in OPUS*). Both packaged notices remain under `api/data/open_sentences/v1/licenses/`.
 
-## Rebuild without executing downloads
+Each translatewiki record keeps its stable Moses archive-line IDs and now adds the package's document paths, Chamorro/English XML sentence IDs, scoped XML alignment ID, and upstream dump URL under `provenance`. Pinned alignment XML plus both raw language packages reproduce **all 700 Moses rows byte for byte** before provenance is attached. The packages provide no original translatewiki message keys or individual contributor identities: `message_key: null` and `message_key_status: not_provided_in_opus_package` record that limit. Project-document paths and sentence IDs are not presented as message keys. These are UI localization strings, including placeholders, rather than certified natural-sentence examples. Nothing is displayed in the app.
 
-Create a new private temporary directory for raw files. Download the pinned OPUS archives from the URLs recorded in the snapshot headers, naming them `Tatoeba.zip`, `translatewiki.zip`, `wikimedia.zip`, and `bible-uedin.zip`. Fetch the Tatoeba API URL in its header, saving the first page as `tatoeba-api.json` and following the server's `paging.next` links as `tatoeba-api-2.json` etc. Check that the final page has no next page. Do not execute any downloaded file or copy audio.
+Header artifacts pin the original download URLs, source versions, and SHA-256 values, including the three translatewiki provenance inputs. Record fields also preserve license, attribution, retrieval date, unknown orthography, and lack of teaching approval. The validator enforces exact source-specific pair/sentence IDs, positive row numbers, document paths, alignment IDs, and provenance IDs; malformed identifiers fail closed.
 
-From the repository root, parse the raw data with isolated Python:
+## Rebuild from pinned inputs
+
+In a private scratch directory, obtain the four captured Tatoeba API pages listed in the direct snapshot header (`tatoeba-api.json`, then `tatoeba-api-2.json` through `-4.json`) and the following translatewiki files:
+
+- `translatewiki.zip`: `https://object.pouta.csc.fi/OPUS-translatewiki/v2026-07-01/moses/ch-en.txt.zip`
+- `ch-en.xml.gz`: `https://object.pouta.csc.fi/OPUS-translatewiki/v2026-07-01/xml/ch-en.xml.gz`
+- `ch.zip`: `https://object.pouta.csc.fi/OPUS-translatewiki/v2026-07-01/raw/ch.zip`
+- `en.zip`: `https://object.pouta.csc.fi/OPUS-translatewiki/v2026-07-01/raw/en.zip`
+
+Do not execute downloads or extract archive members to disk. Run:
 
 ```sh
 python3 -I api/scripts/build_open_sentence_snapshots.py \
-  --raw-dir /path/to/new-private-temp-dir \
-  --output-dir /path/to/rebuilt-v1 \
+  --raw-dir /path/to/private-raw-dir \
+  --output-dir /path/to/empty-rebuilt-v1 \
   --retrieved-at 2026-11-03
 ```
 
-The builder verifies every raw input against `data/open_sentences/raw_artifacts_v1.json` before creating output and rejects an existing non-empty output directory. It only reproduces the pinned 2026-11-03 v1 capture. A live API refresh can change owners, links, or text; record a new capture/version and approved manifest instead of silently replacing an artifact. The builder checks languages, direct links, licenses, pagination totals, alignment counts, archive member sizes, and XML IDs. It reads named members without extraction and rejects XML entity declarations. It performs no network requests or database writes. The offline loader separately validates the resulting provenance and digest shape, license, dates, duplicate IDs, orthography flags, and approval status.
+The builder verifies every raw input against `data/open_sentences/raw_artifacts_v1.json` before output, rejects non-empty destinations and XML entity declarations, reads only named archive members, and checks every translatewiki source string against its alignment. It performs no downloads, database writes, or ingestion. A live API refresh that changes bytes requires a separately versioned capture; do not loosen the pinned hashes to force a rebuild.
 
 ## Verification and limits
 
-Focused loader/source-policy tests check the counts above, historical exclusion, original-versus-artifact ID kinds, missing/invalid metadata rejection, and fail-closed ingestion/retrieval. Rebuilding from the captured raw files must reproduce the checked-in JSON and notices byte for byte. No linguistic correction, native certification, full semantic alignment audit, live tutor evaluation, production inspection, or RAG ingestion is claimed here.
+Regression tests cover the retained counts, removed-source rejection (including historical opt-in), preserved ledger records, malformed-ID fixtures, provenance/row mismatch rejection, pinned input preflight, and output protection. Full repository gate results and final commit are recorded in the PR's Review round 1 section and the worker handoff. No production inspection, native-language certification, provider inference, or ingestion is claimed. No server is needed for this slice.
 
-Execution on integration base `4d5b75a` (design PR #101 and evaluation PR #102 included): `./scripts/check.sh` passed with **927 API tests passed / 34 skipped**, **127 Vitest files / 793 tests passed**, canonical/governance/routing/audio checks, lint, typecheck, production build, PWA, and bundle checks. The first pre-integration run found the old HTTPS citation expectation; the expectation was updated to the verified HTTP dictionary URL and the complete gate rerun successfully. A clean rebuild from the captured downloads reproduced all JSON and packaged notices byte for byte. No server was started for this slice, and no database ingestion, embedding, or provider inference was performed.
-
-After the initial CodeRabbit review, pinned raw-input preflight and output-directory protection were added, artifact digest validation was tightened, and source-citation availability handling was verified. The complete gate passed again: **936 API tests passed / 34 skipped**, **793 Vitest tests**, all validators/lint/typecheck/build checks. A second clean pinned rebuild remained byte-for-byte identical to the committed snapshots and notices. Original sentence data did not change during review fixes.
+Review round 1 execution on remote main `6d83b7f`: `./scripts/check.sh` passed with **1,123 API passed / 34 skipped**, **127 Vitest files / 793 tests**, canonical/governance/routing/audio validators, lint, typecheck, production build/PWA/bundle checks. Focused snapshot/source-policy tests: **67 passed**. All four direct Tatoeba pages still match their frozen hashes. A complete pinned CLI rebuild reproduced both retained snapshots and both translatewiki notices byte for byte; a second translatewiki-only rebuild also matched. Source strings are unchanged. No server was started; all owned resources from the earlier #103 QA phase were cleaned. Signed-in browser, production, native-language, and replacement Bible acceptance are not claimed. This branch is independent of #103 and remains held for lead review/merge.

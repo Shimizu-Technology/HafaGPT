@@ -8,6 +8,7 @@ See documentation/phase4-data/OPEN_SENTENCES.md for download URLs and licenses.
 
 import argparse
 from datetime import date
+import gzip
 import hashlib
 import json
 from pathlib import Path
@@ -19,15 +20,15 @@ RAW_MANIFEST = Path(__file__).resolve().parents[1] / "data/open_sentences/raw_ar
 
 
 OPUS = (
-    ('Tatoeba', 'v2026-07-08', 'opus_tatoeba_ch_en', 'CC-BY-2.0-FR',
-     'https://creativecommons.org/licenses/by/2.0/fr/', 'unknown', 237),
     ('translatewiki', 'v2026-07-01', 'opus_translatewiki_ch_en', 'CC-BY-3.0',
      'https://creativecommons.org/licenses/by/3.0/', 'unknown', 700),
-    ('wikimedia', 'v20260327', 'opus_wikimedia_ch_en', 'CC-BY-SA-4.0',
-     'https://creativecommons.org/licenses/by-sa/4.0/', 'unknown', 49),
-    ('bible-uedin', 'v1', 'opus_bible_uedin_ch_en', 'CC0-1.0',
-     'https://creativecommons.org/publicdomain/zero/1.0/', 'historical', 14486),
 )
+TRANSLATEWIKI_PROVENANCE = {
+    'ch-en.xml.gz': 'https://object.pouta.csc.fi/OPUS-translatewiki/v2026-07-01/xml/ch-en.xml.gz',
+    'ch.zip': 'https://object.pouta.csc.fi/OPUS-translatewiki/v2026-07-01/raw/ch.zip',
+    'en.zip': 'https://object.pouta.csc.fi/OPUS-translatewiki/v2026-07-01/raw/en.zip',
+}
+
 
 
 def sha256(path: Path) -> str:
@@ -89,6 +90,51 @@ def build_tatoeba(raw_dir: Path, output_dir: Path, retrieved_at: str) -> int:
     return len(pairs)
 
 
+def parse_source_xml(value: bytes) -> ET.Element:
+    if b'<!ENTITY' in value or len(value) > 16_000_000:
+        raise ValueError('Unsafe or oversized source XML')
+    return ET.fromstring(value)
+
+
+def translatewiki_provenance(raw_dir: Path, ch_lines: list[str], en_lines: list[str]) -> list[dict[str, Any]]:
+    """Verify every Moses row against XML text before attaching source IDs.
+
+    The package preserves project documents and sentence IDs, but no original
+    translatewiki message keys or contributor identities. Do not invent them.
+    """
+    root = parse_source_xml(gzip.decompress((raw_dir / 'ch-en.xml.gz').read_bytes()))
+    records = []
+    with zipfile.ZipFile(raw_dir / 'ch.zip') as ch_archive, zipfile.ZipFile(raw_dir / 'en.zip') as en_archive:
+        for group in root.findall('linkGrp'):
+            documents = dict(zip(('chamorro', 'english'), (group.attrib['fromDoc'], group.attrib['toDoc']), strict=True))
+            text_maps = []
+            for language, archive in zip(('chamorro', 'english'), (ch_archive, en_archive), strict=True):
+                member = 'translatewiki/raw/' + documents[language].removesuffix('.gz')
+                if archive.getinfo(member).file_size > 16_000_000:
+                    raise ValueError('Unexpected oversized provenance member')
+                text = parse_source_xml(archive.read(member))
+                text_maps.append({sentence.attrib['id']: ''.join(sentence.itertext()) for sentence in text.iter('s')})
+            for link in group.findall('link'):
+                targets = [value.split() for value in link.attrib['xtargets'].split(';')]
+                if len(targets) != 2 or not all(targets):
+                    raise ValueError('Unexpected translatewiki alignment IDs')
+                row = len(records)
+                texts = tuple(' '.join(mapping[value] for value in ids) for mapping, ids in zip(text_maps, targets, strict=True))
+                if row >= len(ch_lines) or texts != (ch_lines[row], en_lines[row]):
+                    raise ValueError('Translatewiki provenance text differs from Moses row')
+                records.append({
+                    'source_documents': documents,
+                    'source_sentence_ids': dict(zip(('chamorro', 'english'), targets, strict=True)),
+                    'alignment_id': link.attrib['id'],
+                    'message_key': None,
+                    'message_key_status': 'not_provided_in_opus_package',
+                    'upstream_dump_url': 'https://translatewiki.net/static/translation-dump',
+                })
+    if len(records) != len(ch_lines):
+        raise ValueError('Translatewiki provenance count differs from Moses rows')
+    return records
+
+
 def build_opus(raw_dir: Path, output_dir: Path, retrieved_at: str) -> dict[str, int]:
     counts = {}
     for corpus, version, source_id, license_id, license_url, orthography, expected_count in OPUS:
@@ -108,40 +154,29 @@ def build_opus(raw_dir: Path, output_dir: Path, retrieved_at: str) -> dict[str, 
             notice_dir.mkdir(exist_ok=True)
             (notice_dir / f'{source_id}.README.txt').write_text(readme, encoding='utf-8')
             (notice_dir / f'{source_id}.LICENSE.txt').write_text(license_text, encoding='utf-8')
-            xml_links = None
-            if corpus == 'bible-uedin':
-                xml = archive.read(f'{corpus}.ch-en.xml')
-                if b'<!ENTITY' in xml:
-                    raise ValueError('XML entity declarations are not allowed')
-                root = ET.fromstring(xml)
-                groups = root.findall('linkGrp')
-                xml_links = [(link.attrib['xtargets'].split(';'), group.attrib['fromDoc'], group.attrib['toDoc'])
-                             for group in groups for link in group.findall('link')]
-                if len(xml_links) != len(ch_lines):
-                    raise ValueError('Bible alignment IDs do not match sentence rows')
+            provenance = translatewiki_provenance(raw_dir, ch_lines, en_lines)
             if len(ch_lines) != expected_count or len(en_lines) != expected_count:
                 raise ValueError(f'Unexpected {corpus} alignment count')
             source_url = f'https://opus.nlpl.eu/legacy/{corpus}-{version}.php'
             pairs = []
             for row, (chamorro, english) in enumerate(zip(ch_lines, en_lines, strict=True), 1):
                 ids = {'chamorro': [f'{ch_name}:{row}'], 'english': [f'{en_name}:{row}']}
-                if xml_links:
-                    ids = {'chamorro': xml_links[row - 1][0][0].split(), 'english': xml_links[row - 1][0][1].split()}
                 pair = {
                     'pair_id': f'{source_id}:{version}:{row}', 'source_id': source_id,
                     'source': source_url, 'license': license_id, 'license_url': license_url,
                     'attribution': f'{corpus} contributors and OPUS; J. Tiedemann (2012), Parallel Data, Tools and Interfaces in OPUS. See packaged notices.',
-                    'sentence_id_kind': 'opus_xml' if xml_links else 'archive_line',
+                    'sentence_id_kind': 'archive_line',
                     'sentence_ids': ids, 'alignment_row': row, 'retrieved_at': retrieved_at,
                     'orthography': orthography, 'review_status': 'unreviewed',
                     'teaching_eligible': False, 'chamorro': chamorro, 'english': english,
                 }
-                if xml_links:
-                    pair['source_documents'] = {'chamorro': xml_links[row - 1][1], 'english': xml_links[row - 1][2]}
+                pair['provenance'] = provenance[row - 1]
                 pairs.append(pair)
         write_snapshot(output_dir, source_id, version,
                        {'url': f'https://object.pouta.csc.fi/OPUS-{corpus}/{version}/moses/ch-en.txt.zip',
-                        'sha256': sha256(path), 'files': [ch_name, en_name]}, pairs,
+                        'sha256': sha256(path), 'files': [ch_name, en_name],
+                        'provenance_artifacts': [{'file': name, 'url': url, 'sha256': sha256(raw_dir / name)}
+                                                 for name, url in TRANSLATEWIKI_PROVENANCE.items()]}, pairs,
                        [f'licenses/{source_id}.README.txt', f'licenses/{source_id}.LICENSE.txt',
                         'Text copied without translation or spelling changes. Archive-line IDs identify exact lines in the pinned archive, not original contributor sentence IDs.'])
         counts[source_id] = len(pairs)
@@ -155,6 +190,8 @@ def verify_raw_inputs(raw_dir: Path, retrieved_at: str, manifest_path: Path = RA
         raise ValueError('This builder only reproduces the pinned v1 capture; record a new version for a refresh')
     expected = manifest['files']
     actual_names = {path.name for path in raw_dir.glob('tatoeba-api*.json')} | {f'{corpus}.zip' for corpus, *_rest in OPUS}
+    if OPUS:
+        actual_names |= set(TRANSLATEWIKI_PROVENANCE)
     if actual_names != set(expected):
         raise ValueError('Raw input files differ from the pinned v1 manifest')
     for name, digest in expected.items():

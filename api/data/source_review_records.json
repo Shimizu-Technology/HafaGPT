@@ -488,7 +488,9 @@
           "supports": "Derivative of Tatoeba; not independent corroboration. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled."
         }
       ],
-      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+      "rationale": "Not bundled: insufficient original sentence-owner attribution; direct attributed Tatoeba covers 226 overlapping pairs from the removed 237-row snapshot. Source/rights inventory only; no teaching approval or ingestion authorization.",
+      "bundling_status": "not_bundled",
+      "bundling_reason": "Not bundled: insufficient original sentence-owner attribution; direct attributed Tatoeba covers 226 overlapping pairs from the removed 237-row snapshot."
     },
     {
       "source_id": "opus_bible_uedin_ch_en",
@@ -505,11 +507,9 @@
         "confidence": "low"
       },
       "usage": {
-        "mode": "historical_only",
+        "mode": "discovery_only",
         "full_text_vectorization": false,
-        "allowed_query_types": [
-          "historical"
-        ],
+        "allowed_query_types": [],
         "citation_required": true,
         "max_source_quote_words": 0
       },
@@ -521,7 +521,9 @@
           "supports": "Bible-derived pairs are historical only; exclude from modern teaching. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled."
         }
       ],
-      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+      "rationale": "Not bundled: 192 corrupted alignments reported in review (including Psalm 10:4 with an Acts 28:30 fragment); the 14.23 MB snapshot has no runtime consumer. The text matches the 1908 ABS edition, not a 2007 edition. A future historical lane requires separately approved rebuilding from verified eBible USFM, not OPUS alignments. Source/rights inventory only; no teaching approval or ingestion authorization.",
+      "bundling_status": "not_bundled",
+      "bundling_reason": "Not bundled: 192 corrupted alignments reported in review (including Psalm 10:4 with an Acts 28:30 fragment); the 14.23 MB snapshot has no runtime consumer. The text matches the 1908 ABS edition, not a 2007 edition. A future historical lane requires separately approved rebuilding from verified eBible USFM, not OPUS alignments."
     },
     {
       "source_id": "opus_translatewiki_ch_en",
@@ -583,7 +585,9 @@
           "supports": "Retain attribution and share-alike terms for this subset; machine alignment remains unreviewed. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled."
         }
       ],
-      "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."
+      "rationale": "Not bundled: the 49-row snapshot lacks article/contributor attribution needed for traceable redistribution. Source/rights inventory only; no teaching approval or ingestion authorization.",
+      "bundling_status": "not_bundled",
+      "bundling_reason": "Not bundled: the 49-row snapshot lacks article/contributor attribution needed for traceable redistribution."
     },
     {
       "source_id": "opus_qed_ch_en",
@@ -645,6 +649,12 @@
           "reference": "https://ebible.org/cha/copyright.htm",
           "accessed_at": "2026-11-03",
           "supports": "The publisher identifies this edition as public domain. Historical reference only; no modern teaching, audio rights claim, or corpus ingestion here."
+        },
+        {
+          "kind": "artifact",
+          "reference": "https://ebible.org/cha/copyright.htm",
+          "accessed_at": "2026-11-03",
+          "supports": "Lead verification: all 7,245 OPUS Chamorro corpus verses match eBible USFM after markup normalization. Edition: 1908 American Bible Society Gospels, Acts, and Psalms; public domain. Corpus metadata 2007 is not the edition date. OPUS alignment corruption is separate from the identified text edition."
         }
       ],
       "rationale": "Source/rights inventory only; no native-speaker language review, teaching approval, or vectorization authorization."

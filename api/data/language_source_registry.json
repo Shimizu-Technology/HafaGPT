@@ -628,12 +628,14 @@
         "allowed_query_types": [],
         "weight": 0.0
       },
-      "decision": "Derivative of Tatoeba; not independent corroboration. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "decision": "Not bundled: insufficient original sentence-owner attribution; direct attributed Tatoeba covers 226 overlapping pairs from the removed 237-row snapshot. Ingestion and retrieval remain disabled.",
       "license": "CC-BY-2.0-FR",
       "license_url": "https://creativecommons.org/licenses/by/2.0/fr/",
       "derivative_of": [
         "tatoeba_chamorro"
-      ]
+      ],
+      "bundling_status": "not_bundled",
+      "bundling_reason": "Not bundled: insufficient original sentence-owner attribution; direct attributed Tatoeba covers 226 overlapping pairs from the removed 237-row snapshot."
     },
     {
       "id": "opus_bible_uedin_ch_en",
@@ -662,9 +664,11 @@
         "allowed_query_types": [],
         "weight": 0.0
       },
-      "decision": "Bible-derived pairs are historical only; exclude from modern teaching. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "decision": "Not bundled: 192 corrupted alignments reported in review (including Psalm 10:4 with an Acts 28:30 fragment); the 14.23 MB snapshot has no runtime consumer. The text matches the 1908 ABS edition, not a 2007 edition. A future historical lane requires separately approved rebuilding from verified eBible USFM, not OPUS alignments. Ingestion and retrieval remain disabled.",
       "license": "CC0-1.0",
-      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/"
+      "license_url": "https://creativecommons.org/publicdomain/zero/1.0/",
+      "bundling_status": "not_bundled",
+      "bundling_reason": "Not bundled: 192 corrupted alignments reported in review (including Psalm 10:4 with an Acts 28:30 fragment); the 14.23 MB snapshot has no runtime consumer. The text matches the 1908 ABS edition, not a 2007 edition. A future historical lane requires separately approved rebuilding from verified eBible USFM, not OPUS alignments."
     },
     {
       "id": "opus_translatewiki_ch_en",
@@ -724,9 +728,11 @@
         "allowed_query_types": [],
         "weight": 0.0
       },
-      "decision": "Retain attribution and share-alike terms for this subset; machine alignment remains unreviewed. License verified on the OPUS subset page and packaged README/LICENSE. Offline snapshot only; ingestion and retrieval remain disabled.",
+      "decision": "Not bundled: the 49-row snapshot lacks article/contributor attribution needed for traceable redistribution. Ingestion and retrieval remain disabled.",
       "license": "CC-BY-SA-4.0",
-      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/"
+      "license_url": "https://creativecommons.org/licenses/by-sa/4.0/",
+      "bundling_status": "not_bundled",
+      "bundling_reason": "Not bundled: the 49-row snapshot lacks article/contributor attribution needed for traceable redistribution."
     },
     {
       "id": "opus_qed_ch_en",
