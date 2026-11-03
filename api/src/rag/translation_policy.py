@@ -15,36 +15,30 @@ TranslationIntent = Literal[
 
 PASSAGE_TRANSLATION_GUIDANCE = """
 
-MULTI-WORD TRANSLATION REQUEST:
-- Give the user a useful, complete translation of the supplied phrase, sentence,
-  or passage. Put the natural translation first.
-- Retrieved references are corroborating evidence; they do not need to contain every
-  inflected word or connective before you can translate the whole passage.
-- You may apply linguistic analysis to the user-supplied text. Do not refuse the
-  entire translation merely because the retrieved chunks cover only some words.
-- Never imply that a partial dictionary hit verifies the complete translation.
-  Cite only the words, grammar, or usage that a supplied reference actually supports.
-- Preserve names and quoted English terms. If a word or construction is materially
-  ambiguous, identify that exact uncertainty and give the most likely reading or
-  concise alternatives instead of withholding everything.
-- For a dialogue, resolve short answers and omitted repeated words from the preceding
-  turn. Preserve the scope of alternatives, negation, recurring schedules, and
-  present-time phrases instead of flattening them into one clause.
-- Interpret familiar loanwords from their local sentence context. In a clothing
-  exchange, for example, "polo" denotes a polo shirt, not a pole; combine dictionary
+TRANSLATION REQUEST (phrase, sentence, or passage):
+- Put the complete natural translation first. References corroborate it; they do
+  not need to contain every inflected word or connective.
+- Where a supplied dictionary or canonical entry covers a concept, use that word
+  (or the form the grammar requires) rather than a different word from memory,
+  and cite it. A match for some words does not verify the whole translation.
+- Mark only a materially uncertain word or construction, inline where it occurs,
+  with the most likely reading or a short alternative.
+- Preserve names and quoted English terms. In a dialogue, resolve short answers
+  and omitted repeated words from the preceding turn, and keep the scope of
+  alternatives, negation, recurring schedules, and present-time phrases.
+- Read familiar loanwords from their sentence context. In a clothing exchange,
+  for example, "polo" denotes a polo shirt, not a pole; combine dictionary
   meanings with linkers and surrounding nouns rather than translating each token
   in isolation.
-- Do not infer a person's gender from Chamorro third-person forms or from their name.
-  Use a gender-neutral English pronoun unless the user's context establishes gender.
-- Do not add unrelated etymology, cultural claims, or invented example sentences.
+- Do not infer a person's gender from Chamorro third-person forms or from their
+  name. Use a gender-neutral English pronoun unless the context establishes it.
+- Do not add etymology, cultural claims, or example sentences.
 """
 
 PASSAGE_WITHOUT_REFERENCE_GUIDANCE = """
-
-No governed reference was retrieved for this multi-word translation. Still provide
-a clearly presented best-effort translation of the user-supplied text. Do not invent
-citations or claim that the result is source-verified. Mark only material uncertainty
-at the specific word or clause where it occurs.
+No governed reference was retrieved for this translation. Still give the complete
+best-effort translation. Do not cite sources or call it verified; mark only the
+specific uncertain words.
 """
 
 _WORD_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ'’\-]+")

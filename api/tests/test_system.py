@@ -52,17 +52,14 @@ def test_chat_model_registry_and_prompts_are_current_modules() -> None:
     assert chatbot_source.count(
         "analysis_guidance, school_announcement, contextual_card_ids = ("
     ) == 2
-    assert "Do not add etymology, pronunciation, cultural-origin" in chatbot_source
-    assert "Do not refuse solely because retrieval returned no match" in chatbot_source
-    assert 'label them "Unverified best effort"' in chatbot_source
-    assert "never invent a percentage confidence" in chatbot_source
+    # The answer contract replaced the stacked refusal rules (T2). Keep its
+    # safety commitments: no invented citations, no unsupported "verified"
+    # claims, labeled guesses, and Chamorro-only immersion.
+    assert "ANSWER CONTRACT:" in chatbot_source
     assert "Never invent a citation" in chatbot_source
-    assert "CORRECT WHEN NO SOURCE MATCHES" in chatbot_source
-    assert "Presenting a guess or non-dictionary content as a verified translation" in chatbot_source
-    assert "do not volunteer a guessed Chamorro spelling" in chatbot_source
-    assert "user asks for guesses, candidates, or possibilities" in chatbot_source
-    assert "Keep the\nentire response in Chamorro" in chatbot_source
-    assert "If there is no credible candidate" in chatbot_source
+    assert "label it a guess" in chatbot_source
+    assert "never give a percentage confidence" in chatbot_source
+    assert "Keep the entire response in Chamorro" in chatbot_source
     assert chatbot_source.count("web_results_used = bool(web_context)") == 2
     assert '"used_web_search": web_results_used' in chatbot_source
 
