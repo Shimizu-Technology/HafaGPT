@@ -134,6 +134,9 @@ def test_detects_verification_follow_ups(message):
         "Are you sure? I want to send my boss a thank-you note.",
         "Are you sure? I want to use the word for red.",
         "Are you sure? I want to send it to my boss, can you also translate goodbye?",
+        "Are you sure? I want to send it to my boss, add a greeting.",
+        "Are you sure? It's for my teacher, include goodbye.",
+        "Are you sure? I'm going to send it tonight, please shorten it.",
         "Are you sure? It's for my boss. What is the word for boss?",
         "Are you sure? I want to send it to my boss. How do I say thank you?",
         "Are you sure? It's for my boss, what does it mean?",
@@ -301,6 +304,8 @@ def test_distinctive_chamorro_terms_survive_the_other_language_filter(answer, ex
         ("mаgof and mạgof", ()),
         ("The word is аsut.", ()),
         ("**asut2**", ()),
+        ("**2asut**", ()),
+        ("2asut is the word", ()),
         # One bad word does not take the good ones with it.
         ("**asut** and **mаgof**", ("asut",)),
         ("**mаgof** or **magof**", ("magof",)),

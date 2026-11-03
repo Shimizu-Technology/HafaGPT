@@ -129,7 +129,10 @@ _CONTEXT_REMARK = re.compile(
 _REQUEST_WORDS = re.compile(
     r"\b(?:translate|translation\s+of|tell\s+me|teach|word\s+for|words\s+for|how|what|which|"
     r"another|also|too|instead|mean|means|spell|say\s+(?!it\b|this\b|that\b|them\b)|"
-    r"(?:can|could|would|will)\s+(?:you|u)|give\s+me|show\s+me|write\s+me)\b",
+    r"(?:can|could|would|will)\s+(?:you|u)|give\s+me|show\s+me|write\s+me|"
+    # Edits to the answer ("add a greeting", "include goodbye", "please shorten it").
+    r"add|shorten|lengthen|simplify|rewrite|rephrase|reword|change|fix|remove|delete|"
+    r"make\s+(?:it|this|that)|include\s+(?!it\b|this\b|that\b|them\b))\b",
     re.IGNORECASE,
 )
 _MAX_CONTEXT_REMARK_WORDS = 16
@@ -198,7 +201,9 @@ _COMBINING_MARKS = "\u0300-\u036f\u1ab0-\u1aff\u1dc0-\u1dff\u20d0-\u20ff\ufe20-\
 # apostrophes, and hyphens. A word is judged whole, so one Cyrillic letter or
 # an underdot rejects it instead of leaving a Latin fragment ("mаgof" is not
 # "gof").
-_TOKEN = re.compile(rf"[^\W\d_](?:[^\W_]|[{_COMBINING_MARKS}{_APOSTROPHE}-])*")
+# Starting at any word character, digits included, so "2asut" is one word (and
+# rejected) instead of yielding the fragment "asut".
+_TOKEN = re.compile(rf"[^\W_](?:[^\W_]|[{_COMBINING_MARKS}{_APOSTROPHE}-])*")
 # The Chamorro alphabet as the sources write it: å, ñ, the glottal stop, and
 # the acute stress mark some dictionary entries use ("Kafé", "Kulót").
 _CHAMORRO_LETTER = "a-zåñáéíóú"
