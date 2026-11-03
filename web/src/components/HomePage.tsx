@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { Suspense, useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import {
   ArrowRight,
@@ -15,12 +15,14 @@ import {
   Settings,
   Sun,
 } from 'lucide-react';
+import { useQueryClient } from '@tanstack/react-query';
 import { useClerk, useUser } from '@clerk/clerk-react';
 import { useInitUserData } from '../hooks/useConversationsQuery';
 import { useHomepageData } from '../hooks/useHomepageData';
 import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
 import { useUserPreferences } from '../hooks/useUserPreferences';
+import { wordOfTheDayQueryOptions } from '../hooks/useVocabularyQuery';
 import { useAuthLoadTimeout } from '../hooks/useAuthLoadTimeout';
 import { buildTodayPlan } from '../lib/todayPlan';
 import { getHomepageSectionAvailability } from '../lib/homepageAvailability';
@@ -29,6 +31,11 @@ import { AuthButton } from './AuthButton';
 import { OnboardingModal } from './OnboardingModal';
 import { TodayPlanCard } from './TodayPlanCard';
 import { BrandMark } from './BrandMark';
+import { PublicWordCardBoundary, PublicWordCardSkeleton } from './PublicWordCardShell';
+import { lazyNamed } from '../lib/lazyNamed';
+
+// Loaded on demand so the signed-in Home and the initial bundle never carry it.
+const PublicWordOfTheDay = lazyNamed(() => import('./PublicWordOfTheDay'), 'PublicWordOfTheDay');
 
 function HomeHeader({ signedIn }: { signedIn: boolean }) {
   const { theme, toggleTheme } = useTheme();
@@ -221,13 +228,28 @@ function TodayDataError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
+const SIGNED_OUT_HIGHLIGHTS = [
+  { icon: MessageCircle, text: 'Quick questions and translations' },
+  { icon: GraduationCap, text: '21 guided lesson topics' },
+  { icon: Book, text: 'A 10,000+ word dictionary' },
+  { icon: Gamepad2, text: 'Listening, stories, cards, and games' },
+] as const;
+
 function SignedOutHome({ onStart }: { onStart: () => void }) {
+  const queryClient = useQueryClient();
+
+  // Start the request now, in parallel with the card's code, instead of after it.
+  useEffect(() => {
+    void queryClient.prefetchQuery(wordOfTheDayQueryOptions());
+  }, [queryClient]);
+
   return (
     <main className="mx-auto max-w-5xl space-y-8 px-4 py-6 pb-28 sm:py-10 sm:pb-12">
       <section className="overflow-hidden rounded-3xl bg-white p-6 dark:bg-slate-800 sm:p-10">
-        <div className="grid items-center gap-8 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr] lg:items-center lg:gap-10">
           <div>
-            <h1 className="max-w-3xl text-3xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-5xl">
+            <p lang="ch" className="font-chamorro text-5xl font-semibold leading-none tracking-tight text-coral-800 dark:text-coral-200 sm:text-6xl lg:text-7xl">Håfa Adai</p>
+            <h1 className="mt-4 max-w-3xl text-balance text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">
               Learn a little Chamorro every day.
             </h1>
             <p className="mt-4 max-w-2xl text-base leading-relaxed text-brown-600 dark:text-gray-300 sm:text-lg">
@@ -246,16 +268,17 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
               <Languages className="h-5 w-5" aria-hidden="true" /> Ask or translate
             </Link>
           </div>
-          <div className="rounded-3xl bg-cream-50 p-5 dark:bg-slate-900/60 sm:p-6">
-            <p className="text-sm font-semibold text-brown-700 dark:text-gray-200">One welcoming place for</p>
-            <ul className="mt-4 space-y-3 text-base text-brown-700 dark:text-gray-300">
-              <li className="flex items-center gap-3"><MessageCircle className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> Quick questions and translations</li>
-              <li className="flex items-center gap-3"><GraduationCap className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> 21 guided lesson topics</li>
-              <li className="flex items-center gap-3"><Book className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> A 10,000+ word dictionary</li>
-              <li className="flex items-center gap-3"><Gamepad2 className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> Listening, stories, cards, and games</li>
-            </ul>
-          </div>
+          <PublicWordCardBoundary>
+            <Suspense fallback={<PublicWordCardSkeleton />}>
+              <PublicWordOfTheDay />
+            </Suspense>
+          </PublicWordCardBoundary>
         </div>
+        <ul aria-label="One welcoming place for" className="mt-8 grid gap-3 border-t border-cream-200 pt-6 text-base text-brown-700 dark:border-slate-700 dark:text-gray-300 sm:grid-cols-2 lg:grid-cols-4">
+          {SIGNED_OUT_HIGHLIGHTS.map(({ icon: Icon, text }) => (
+            <li key={text} className="flex items-center gap-3"><Icon className="h-5 w-5 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" /> {text}</li>
+          ))}
+        </ul>
       </section>
 
       <section aria-labelledby="public-tools-heading">
