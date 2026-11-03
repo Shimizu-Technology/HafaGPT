@@ -31,7 +31,12 @@ function readGuestRecord(): GuestRecord | null {
   } catch { /* Storage can be unavailable; the draft then lives only on screen. */ }
   return null;
 }
-function readGuestText(): string { return readGuestRecord()?.text ?? ''; }
+// A draft already bound to an account is never shown in the guest composer: a later
+// guest could otherwise edit it into a fresh, unowned draft for someone else.
+function readGuestText(): string {
+  const record = readGuestRecord();
+  return record && !record.owner ? record.text : '';
+}
 function writeGuestRecord(record: GuestRecord | null): void {
   if (!record || !record.text.trim() || record.text.length > guestDraftMaxChars) return removeGuestRecord();
   // A failed write must not leave an older, obsolete draft to be adopted later.

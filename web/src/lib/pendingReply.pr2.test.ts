@@ -127,3 +127,11 @@ describe('guest draft ownership across accounts', () => {
     expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toHaveLength(4000);
   });
 });
+
+it('does not show a draft already bound to an account in the guest composer', () => {
+  window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Account A question', at: Date.now(), owner: 'account-a' }));
+  expect(readTutorDraft(GUEST_DRAFT_SCOPE).text).toBe('');
+  expect(adoptGuestDraft('account-b')).toBe(false);
+  window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Account A question', at: Date.now(), owner: 'account-a' }));
+  expect(adoptGuestDraft('account-a')).toBe(true);
+});

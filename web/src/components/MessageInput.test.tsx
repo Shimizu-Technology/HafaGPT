@@ -1,7 +1,7 @@
 import { act, fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { MessageInput } from './MessageInput';
-import { GUEST_DRAFT_SCOPE } from '../lib/pendingReply';
+import { adoptGuestDraft, clearTutorDrafts, GUEST_DRAFT_SCOPE, readTutorDraft, tutorDraftKey } from '../lib/pendingReply';
 
 describe('MessageInput', () => {
   it('updates the typed height floor when the compact layout changes', () => {
@@ -274,5 +274,19 @@ describe('MessageInput guest draft lifetime', () => {
     vi.advanceTimersByTime(2 * 60 * 1000);
     render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
     expect(screen.getByRole('textbox')).toHaveValue('Guest question, edited');
+  });
+});
+
+describe('account-owned guest drafts', () => {
+  afterEach(() => { window.sessionStorage.clear(); clearTutorDrafts(); });
+
+  it('never restores another account’s draft into the guest composer, so it cannot be re-saved for someone else', () => {
+    window.sessionStorage.setItem('tutor_guest_draft', JSON.stringify({ text: 'Account A question', at: Date.now(), owner: 'account-a' }));
+    // Clerk still loading after a reload: the composer opens in guest scope.
+    render(<MessageInput onSend={vi.fn()} draftScope={GUEST_DRAFT_SCOPE} />);
+    expect(screen.getByRole('textbox')).toHaveValue('');
+    fireEvent.change(screen.getByRole('textbox'), { target: { value: 'New guest text' } });
+    expect(adoptGuestDraft('account-b')).toBe(true);
+    expect(readTutorDraft(tutorDraftKey('account-b', null)).text).toBe('New guest text');
   });
 });
