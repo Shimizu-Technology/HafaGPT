@@ -15,5 +15,5 @@ def test_tutor_prompt_does_not_reintroduce_rejected_hardcoded_claims():
     for rejected_claim in rejected_claims:
         assert rejected_claim not in source
 
-    assert "GOVERNED CONTENT POLICY" in source
+    assert "ANSWER CONTRACT" in source
     assert "NO GOVERNED REFERENCE WAS RETRIEVED" in source

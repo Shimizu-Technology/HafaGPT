@@ -65,3 +65,26 @@ def test_translation_intent_wins_when_passage_contains_current_event_words() -> 
         "Translate this to Chamorro: The current schedule was recently updated."
     ) == (False, None)
     assert should_use_web_search("How do you say current in Chamorro?") == (False, None)
+
+
+def test_translation_payload_with_weather_or_recipe_words_stays_off_web() -> None:
+    should_use_web_search = _load_should_use_web_search()
+
+    assert should_use_web_search("How do you say rain in Chamorro?") == (False, None)
+    assert should_use_web_search("I want to say let's make dinner tonight") == (False, None)
+    assert should_use_web_search("What's the weather in Guam today?") == (True, "general")
+
+
+def test_resolved_routing_query_keeps_translations_off_web() -> None:
+    should_use_web_search = _load_should_use_web_search()
+
+    assert should_use_web_search(
+        "rain", routing_query='How do you say "rain" in Chamorro?'
+    ) == (False, None)
+    assert should_use_web_search(
+        "What about rain?", routing_query='How do you say "rain" in Chamorro?'
+    ) == (False, None)
+    assert should_use_web_search(
+        "What's the weather in Guam today?",
+        routing_query="What's the weather in Guam today?",
+    ) == (True, "general")

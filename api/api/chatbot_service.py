@@ -29,7 +29,11 @@ from .canonical_context import get_canonical_tutor_context
 from .tutor_intent import tutor_task_guidance
 from .source_citations import format_source_citations
 from .upload_storage import resolve_private_upload_reference
-from src.rag.conversation_retrieval import build_contextual_retrieval_query
+from src.rag.conversation_retrieval import (
+    ConversationHistory,
+    build_contextual_retrieval_query,
+    resolve_translation_routing_query,
+)
 from src.rag.image_translation_context import (
     ImageTranslationContext,
     ImagePageContext,
@@ -736,61 +740,52 @@ def get_client_for_request(has_image: bool):
     # Use the default configured model
     return llm, LLM_MODEL_ID
 
-# Mode configurations
+# Mode configurations. Every mode shares one answer contract so the layers
+# below describe a good answer once instead of stacking prohibitions.
+ANSWER_CONTRACT = """
+ANSWER CONTRACT:
+1. Answer first, in the form the user asked for: the word, the translation, or
+   the message they want to send. Keep any explanation short and after it.
+2. For a word or short phrase, give the form shown in the supplied dictionary
+   entries, canonical vocabulary ledger, or exact governed matches, and cite it
+   inline with the exact source name, for example [Chamoru.info dictionary].
+3. When the requested answer is a Chamorro sentence or message, write your best
+   natural Chamorro draft from the supplied entries and the words already
+   established in this conversation.
+   Right after any word or construction you are unsure of, add a short note
+   such as "(unsure: no entry for 'others')". Do not label the whole answer
+   unverified, withhold it, or tell the user to send it in English or to ask
+   someone else instead.
+4. Cite a source only beside a word or phrase that appears in that reference.
+   Words you composed or recalled carry no citation, even when part of them is
+   cited. Never invent a citation or call anything "verified" without a
+   supplied source.
+5. Stay consistent. Do not retract a form you earlier cited from the canonical
+   ledger or a dictionary unless newly supplied evidence contradicts it. If the
+   user questions it, check the references and say what they show.
+6. If no supplied source has a single word the user asked about, say so in one
+   sentence. Offer a supplied entry only if it is close in meaning (such as a
+   broader term); otherwise suggest a related word to look up. Offer a guess
+   only if the user asks, and label it a guess.
+7. Teach Guam spelling (Kumisión i Fino' CHamoru 2024 orthography) first,
+   preferring the canonical ledger's recommended term. When the references show
+   a CNMI or older spelling, label it as such.
+8. State pronunciation, etymology, cultural origin, regional usage, word
+   frequency, or abbreviation meanings only when a supplied reference supports
+   them; otherwise leave them out. Do not add example sentences beyond the
+   references; the text the user asked you to write is not an example. When an
+   APPROVED HÅFAGPT KNOWLEDGE CARD is supplied, answer from its approved
+   explanation without adding unsupported facts.
+9. When web search results are supplied, use them for current information and
+   cite them."""
+
 MODE_PROMPTS = {
     "english": {
         "name": "General Chat",
         "prompt": """You are HåfaGPT, a Chamorro language and Guam learning assistant.
-Answer questions naturally in English, using Chamorro examples when relevant.
-Be conversational, encouraging, and informative.
-Do not assume the user is studying, enrolled in a class, or pursuing a learning
-goal unless the user explicitly says so. Refer to the topic directly instead.
-
-SOURCE FAITHFULNESS:
-- Do not add etymology, pronunciation, cultural-origin, regional-usage, or example-sentence claims unless the supplied reference material directly supports them.
-- If the references do not support one of those factual claims, say it is not verified instead of filling the gap from general model knowledge.
-- When an APPROVED HÅFAGPT KNOWLEDGE CARD is supplied, answer only from its approved explanation. Do not enrich it with familiar facts, usage claims, vocabulary examples, or spelling preferences unless another supplied reference explicitly supports them.
-- Multi-word translation requests follow the separate translation policy below; do not require a dictionary entry for every inflected word before translating user-supplied text.
-
-IMPORTANT CAPABILITIES:
-- You have access to a Chamorro language knowledge base (grammar books, dictionaries, bilingual articles)
-- You may receive WEB SEARCH RESULTS for current information (weather, news, events)
-- When you receive web search results, USE THEM to answer the question
-- If you have web search results, acknowledge them: "Based on current information..." or "According to recent sources..."
-- Cite sources when using web information
-
-🔴 CRITICAL INSTRUCTIONS FOR WORD TRANSLATIONS:
-
-When translating single words (e.g., "What is 'listen' in Chamorro?", "How do I say 'house'?"):
-
-1. **ONLY use dictionary sources** (highest authority):
-   - revised_and_updated_chamorro_dictionary
-   - chamoru_info_dictionary
-   - chamorro_english_dictionary_TOD
-
-2. **Never present an unsupported translation as verified**
-   - If a dictionary source is attached, keep the translation and its citation faithful to that source.
-   - If no dictionary source matched, do not volunteer a guessed Chamorro spelling for an ordinary word lookup. State that no verified entry matched.
-   - Only when the user explicitly asks for guesses, candidates, or possibilities may you offer plausible candidates; label them "Unverified best effort" and state the uncertainty plainly.
-   - DO NOT make up citations or use words from blog posts or articles as authoritative translations.
-
-3. **How to answer word translation questions:**
-   ✅ CORRECT: "In Chamorro, 'listen' is **ekungok**. [Source: chamorro_english_dictionary_TOD]"
-   ✅ CORRECT WHEN NO SOURCE MATCHES: "I couldn't find a verified dictionary entry for that word."
-   ✅ CORRECT WHEN THE USER ASKS FOR POSSIBILITIES: "Unverified best effort: one possible candidate is **...**, but I could not verify it in the available dictionaries."
-   ❌ WRONG: Presenting a guess or non-dictionary content as a verified translation
-
-4. **For contextual/cultural questions** (not single-word translations):
-   - You may use all sources (blogs, articles, cultural content)
-   - Continue being conversational and helpful
-
-GOVERNED CONTENT POLICY:
-- Do not rely on hard-coded abbreviation expansions, literal translations, or
-  claims about how commonly a phrase is used. Retrieve a governed source first.
-- Prefer the canonical curriculum term when canonical context is supplied.
-- When sources disagree or a phrase is marked as needing review, name the
-  uncertainty instead of presenting one form as unquestionably standard.
-- Never turn an unverified explanation into a cultural or etymological fact."""
+Reply in English, conversationally and warmly, using Chamorro where it helps.
+Do not assume the user is studying or has a learning goal unless they say so.
+""" + ANSWER_CONTRACT,
     },
     "chamorro": {
         "name": "Immersion Mode (Chamorro Only)",
@@ -799,105 +794,56 @@ GOVERNED CONTENT POLICY:
 IMPORTANTE: MUNGA un usa español o otro lengguahi. Ha' fino' Chamorro!
 (IMPORTANT: NEVER use Spanish or other languages. ONLY Chamorro!)
 
-🔴 Para i tiningo' palåbra (word translations):
-- Usa HA' i diksionarion-måmi (dictionaries): revised_and_updated_chamorro_dictionary, chamoru_info_dictionary, chamorro_english_dictionary_TOD
-- Never present an unsupported candidate as a verified translation.
-- If no dictionary source matched, do not volunteer a guessed Chamorro spelling
-  for an ordinary lookup. Only provide explicitly unverified candidates when the
-  user asks for guesses, candidates, or possibilities.
-- If there is no credible candidate, say so and ask one focused question or
-  suggest a related source-backed lookup.
-
-Use governed Chamorro dictionary/canonical context for language claims. Keep the
-entire response in Chamorro, including any uncertainty label or clarification.
-
-If you receive web search results, use them but respond in Chamorro only."""
+Keep the entire response in Chamorro, including any uncertainty note,
+clarification, or use of web search results.
+""" + ANSWER_CONTRACT,
     },
     "learn": {
         "name": "Learning Mode (Chamorro + Breakdown)",
-        "prompt": """You are a Chamorro language tutor. 
-Respond with Chamorro first, then provide English translation and breakdown.
-
-SOURCE FAITHFULNESS:
-- Do not add etymology, pronunciation, cultural-origin, regional-usage, or example-sentence claims unless the supplied reference material directly supports them.
-- If the references do not support one of those factual claims, say it is not verified instead of filling the gap from general model knowledge.
-- Multi-word translation requests follow the separate translation policy below; do not require a dictionary entry for every inflected word before translating user-supplied text.
-
-If you receive web search results for current information, incorporate them into your response.
-
-🔴 CRITICAL: For single-word translations, ONLY use dictionary sources:
-- revised_and_updated_chamorro_dictionary
-- chamoru_info_dictionary
-- chamorro_english_dictionary_TOD
-
-Never present a guess as a verified Chamorro word. When no dictionary source
-matched, do not volunteer a guessed Chamorro spelling for an ordinary lookup.
-Only when the user asks for guesses, candidates, or possibilities may a plausible
-candidate be offered as an explicitly unverified best effort. Otherwise, say no
-verified entry matched and suggest a related source-backed lookup when useful.
-
-For abbreviations, literal translations, phrase variants, pronunciation, and
-usage claims, retrieve a governed source and state uncertainty when the evidence
-does not establish the requested detail. Prefer supplied canonical curriculum
-context over memorized variants."""
-    }
+        "prompt": """You are a Chamorro language tutor.
+Respond with the Chamorro first, then the English translation and a short
+breakdown of the words.
+""" + ANSWER_CONTRACT,
+    },
 }
 
 NO_REFERENCE_GUARD = """
 
 NO GOVERNED REFERENCE WAS RETRIEVED FOR THIS REQUEST:
-- Do not refuse solely because retrieval returned no match. Give the most useful
-  concise answer you can while preserving the selected response language.
-- For an ordinary single-word Chamorro lookup, do not volunteer a model-memory
-  spelling. Say that no verified entry matched. If the user explicitly asks for
-  guesses, candidates, or possibilities, label each candidate as an unverified
-  best effort.
-- For other accuracy-sensitive Chamorro claims, clearly distinguish unsupported
-  model-memory material as an unverified best effort.
-- Separate what you know from what you are inferring, and name material uncertainty.
-  Use plain certainty wording; never invent a percentage confidence.
-- Never invent a citation or imply that an unverified candidate came from a source.
-- If you do not have a credible candidate, say that directly and ask one focused
-  clarifying question or suggest a related source-backed lookup.
+- Still answer in the selected response language. For a sentence or message,
+  give your best natural draft and mark only the words you are unsure of.
+- For a single Chamorro word, say briefly that no dictionary entry was found
+  and suggest a related word or spelling to look up. Give a form from memory
+  only if the user asks for guesses, and label it a guess.
+- Do not cite sources or call anything verified. Use plain certainty wording;
+  never give a percentage confidence.
 """
 
-# Skill level modifiers - adjust response style based on user's experience
+# Skill level modifiers adjust style only; the answer contract still applies.
 SKILL_LEVEL_MODIFIERS = {
     "beginner": """
-🌱 USER SKILL LEVEL: BEGINNER
-Adjust your responses for a new learner:
-- Use simple, clear explanations
-- Always provide English translations alongside Chamorro
-- Keep the first answer concise: one useful answer or source-backed example
-- Give specific feedback about the learner's response; avoid repeated generic praise
-- Do not invent syllable breaks or pronunciation guides
-- Focus on common, everyday vocabulary
-- Explain cultural context only when directly supported by the supplied sources
-- Avoid overwhelming with too many examples at once
-- Repeat key phrases for reinforcement
+
+USER SKILL LEVEL: BEGINNER
+- Keep the first answer short: the answer, its English meaning, and at most one
+  supporting example from the references.
+- Pair every Chamorro form with its English meaning, in plain language.
+- Give specific feedback on the learner's own attempt rather than generic praise.
+- Do not invent syllable breaks or pronunciation guides.
 """,
     "intermediate": """
-🌿 USER SKILL LEVEL: INTERMEDIATE
-Adjust your responses for a learner with basic knowledge:
-- Balance Chamorro and English explanations
-- Introduce grammar patterns and variations
-- Suggest practice exercises when relevant
-- Connect new vocabulary to words they likely know
-- Include idiomatic expressions with explanations
-- Encourage trying to form their own sentences
-- Point out common mistakes to avoid
+
+USER SKILL LEVEL: INTERMEDIATE
+- Balance Chamorro and English. Point out the grammar pattern behind the answer
+  and a common mistake when relevant.
+- Invite the learner to build their own sentence when it fits.
 """,
     "advanced": """
-🌳 USER SKILL LEVEL: ADVANCED
-Adjust your responses for an experienced learner:
-- Use more Chamorro in your responses
-- Provide nuanced explanations (register, formality, regional variations)
-- Include etymology and historical context only when directly supported by supplied sources
-- Reference cultural practices and traditions in depth
-- Discuss subtle grammar distinctions
-- Less hand-holding, more conversation-style responses
-- Challenge them with complex constructions
-"""
+
+USER SKILL LEVEL: ADVANCED
+- Use more Chamorro and less hand-holding.
+- Discuss register, regional variation, and subtle grammar when the references
+  support it.
+""",
 }
 
 # Learning goal modifiers - tailor content based on user's motivation
@@ -978,7 +924,7 @@ def get_conversation_history(conversation_id: str, max_messages: int | None = No
 
             if max_messages is None:
                 cursor.execute("""
-                    SELECT user_message, bot_response, image_url, file_urls, timestamp
+                    SELECT user_message, bot_response, image_url, file_urls, timestamp, tutor_intent
                     FROM conversation_logs
                     WHERE conversation_id = %s
                       AND COALESCE(role, 'user') != 'system'
@@ -987,9 +933,9 @@ def get_conversation_history(conversation_id: str, max_messages: int | None = No
             else:
                 # Limit from the end, then restore chronological order.
                 cursor.execute("""
-                    SELECT user_message, bot_response, image_url, file_urls, timestamp
+                    SELECT user_message, bot_response, image_url, file_urls, timestamp, tutor_intent
                     FROM (
-                        SELECT id, user_message, bot_response, image_url, file_urls, timestamp
+                        SELECT id, user_message, bot_response, image_url, file_urls, timestamp, tutor_intent
                         FROM conversation_logs
                         WHERE conversation_id = %s
                           AND COALESCE(role, 'user') != 'system'
@@ -1012,8 +958,12 @@ def get_conversation_history(conversation_id: str, max_messages: int | None = No
 
 def conversation_rows_to_history(rows: list[tuple]) -> list[dict]:
     """Format persisted row contents without introducing tentative edited turns."""
-    history = []
-    for user_msg, bot_msg, img_url, file_urls, timestamp in rows:
+    history = ConversationHistory()
+    turn_intents: list[str | None] = []
+    for row in rows:
+        user_msg, bot_msg, img_url, file_urls, _timestamp = row[:5]
+        # Older callers and fixtures pass rows without the recorded task.
+        turn_intent = row[5] if len(row) > 5 else None
         if isinstance(file_urls, str):
             try:
                 file_urls = json.loads(file_urls)
@@ -1070,12 +1020,14 @@ def conversation_rows_to_history(rows: list[tuple]) -> list[dict]:
             })
         else:
             history.append({"role": "user", "content": text_content})
+        turn_intents.append(turn_intent)
 
         # Skip blank assistant messages. Some historical rows can contain
         # NULL/empty bot responses, which OpenAI-compatible APIs reject.
         if bot_msg and bot_msg.strip():
             history.append({"role": "assistant", "content": bot_msg})
 
+    history.user_turn_intents = tuple(turn_intents)
     return history
 
 
@@ -1094,6 +1046,7 @@ def log_conversation(
     image_url: str = None,  # NEW: S3 URL of uploaded image
     file_urls: list[dict] | None = None,
     pending_id: str = None,
+    tutor_intent: str | None = None,
 ) -> bool:
     """
     Log conversation to PostgreSQL database for future training/analysis.
@@ -1110,6 +1063,9 @@ def log_conversation(
         user_id: Optional user ID from Clerk authentication
         conversation_id: Optional conversation ID to attach message to
         image_url: Optional S3 URL of uploaded image
+        tutor_intent: Tutor task selected when the user sent this turn. Later
+            turns read it to route translation follow-ups truthfully, because
+            the task picker can change mid-conversation.
     """
     try:
         # Use retry wrapper for serverless database connections
@@ -1118,8 +1074,9 @@ def log_conversation(
                 cursor.execute("""
                     INSERT INTO conversation_logs (
                         session_id, user_id, conversation_id, mode, user_message, bot_response,
-                        sources_used, used_rag, used_web_search, response_time_seconds, image_url, file_urls, pending_id
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                        sources_used, used_rag, used_web_search, response_time_seconds, image_url, file_urls, pending_id,
+                        tutor_intent
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                 """, (
                     session_id,
                     user_id,
@@ -1134,6 +1091,7 @@ def log_conversation(
                     image_url,
                     json.dumps(file_urls) if file_urls else None,
                     pending_id,
+                    tutor_intent,
                 ))
 
                 if conversation_id and user_id:
@@ -1156,14 +1114,31 @@ def log_conversation(
         return False
 
 
-def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
+def should_use_web_search(
+    user_input: str,
+    routing_query: str | None = None,
+) -> tuple[bool, str | None]:
     """
     Determine if we should use web search.
+
+    Args:
+        user_input: The learner's original message.
+        routing_query: The resolved translation routing query, when the chat
+            path has one. A Translate-task message ("rain") or an inherited
+            follow-up ("What about rain?") is a translation even though the
+            original text is not.
     
     Returns:
         tuple: (use_web_search: bool, search_type: str | None)
     """
     user_lower = user_input.lower().strip()
+
+    # Translation intent takes precedence: the supplied phrase can itself contain
+    # words such as "rain", "make", "today", or "latest".
+    if classify_translation_request(user_input) != "none" or (
+        routing_query and classify_translation_request(routing_query) != "none"
+    ):
+        return False, None
     
     # Real-time information (weather, time, current conditions)
     realtime_keywords = [
@@ -1187,16 +1162,11 @@ def should_use_web_search(user_input: str) -> tuple[bool, str | None]:
         'kelaguen', 'red rice', 'empanada', 'finadene'
     ]
     if any(keyword in user_lower for keyword in recipe_keywords):
-        if 'how do you say' in user_lower or 'translate' in user_lower:
-            return False, None  # Translation, use RAG
         return True, "recipe"
     
     # Current events. A bare time word such as "today" is not enough: it is
     # common inside messages being translated and previously hijacked those
-    # requests into web search. Translation intent takes precedence even when
-    # the supplied phrase itself contains words such as "current" or "recent."
-    if classify_translation_request(user_input) != "none":
-        return False, None
+    # requests into web search.
     current_keywords = [
         'happening', 'news', 'current', 'current events', 'recent', 'recent news', 'latest'
     ]
@@ -1296,7 +1266,7 @@ def get_rag_context(
         if include_vector and rag is not None and (
             not card_context
             or contextual_card_ids
-            or is_passage_translation(user_input)
+            or is_passage_translation(retrieval_query)
         ):
             # Passage translations commonly need several independent lexical and
             # grammar clues. A wider governed window prevents one broad semantic
@@ -1448,6 +1418,7 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
             response_time=response_time, session_id=session_id, user_id=user_id,
             conversation_id=conversation_id, image_url=image_url, file_urls=file_urls,
             pending_id=pending_id,
+            tutor_intent=intent,
         )
         cleanup_cancelled_message(pending_id)
     if was_cancelled:
@@ -1537,6 +1508,7 @@ def get_chatbot_response(
                 image_url=image_url,
                 file_urls=file_urls,
                 pending_id=pending_id,
+                tutor_intent=intent,
             )
         
         cleanup_cancelled_message(pending_id)
@@ -1594,8 +1566,13 @@ def get_chatbot_response(
         message,
         image_context,
     )
+    # Natural requests ("I want to say…"), short follow-ups ("What about
+    # tree?"), and text typed under the Translate task share one routing query.
+    translation_message = resolve_translation_routing_query(
+        effective_translation_message, past_messages, intent,
+    )
     retrieval_message = build_contextual_retrieval_query(
-        effective_translation_message,
+        translation_message,
         past_messages,
     )
     conversation_length = len(past_messages) // 2
@@ -1604,7 +1581,9 @@ def get_chatbot_response(
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])
     
     # Check if we should use web search
-    use_web, search_type = should_use_web_search(message)
+    use_web, search_type = should_use_web_search(
+        message, routing_query=translation_message,
+    )
     web_context = ""
     web_results_used = False
     
@@ -1674,11 +1653,11 @@ def get_chatbot_response(
     system_prompt += build_translation_structure_hints(effective_translation_message)
     
     system_prompt += translation_prompt_guidance(
-        effective_translation_message,
+        translation_message,
         has_references=bool(rag_context),
     )
 
-    if not rag_context and not is_passage_translation(effective_translation_message) and not school_announcement:
+    if not rag_context and not is_passage_translation(translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
     # Initialize token manager for this request
@@ -1830,6 +1809,7 @@ def get_chatbot_response(
             image_url=image_url,
             file_urls=file_urls,
             pending_id=pending_id,
+            tutor_intent=intent,
         )
         cleanup_cancelled_message(pending_id)
         return {
@@ -1858,6 +1838,7 @@ def get_chatbot_response(
         image_url=image_url,
         file_urls=file_urls,
         pending_id=pending_id,
+        tutor_intent=intent,
     )
     
     # Cleanup pending_id tracking
@@ -1946,6 +1927,7 @@ def get_chatbot_response_stream(
                 response_time=time.time() - start_time, session_id=session_id,
                 user_id=user_id, conversation_id=conversation_id, image_url=image_url,
                 file_urls=file_urls, pending_id=pending_id,
+                tutor_intent=intent,
             )
             if not event["saved"]:
                 event["save_warning"] = "This reply could not be saved. Keep this page open and copy it before leaving."
@@ -1990,8 +1972,13 @@ def get_chatbot_response_stream(
         message,
         image_context,
     )
+    # Natural requests ("I want to say…"), short follow-ups ("What about
+    # tree?"), and text typed under the Translate task share one routing query.
+    translation_message = resolve_translation_routing_query(
+        effective_translation_message, past_messages, intent,
+    )
     retrieval_message = build_contextual_retrieval_query(
-        effective_translation_message,
+        translation_message,
         past_messages,
     )
     conversation_length = len(past_messages) // 2
@@ -2000,7 +1987,9 @@ def get_chatbot_response_stream(
     mode_config = MODE_PROMPTS.get(mode, MODE_PROMPTS["english"])
     
     # Check if we should use web search
-    use_web, search_type = should_use_web_search(message)
+    use_web, search_type = should_use_web_search(
+        message, routing_query=translation_message,
+    )
     web_context = ""
     web_results_used = False
     
@@ -2071,11 +2060,11 @@ def get_chatbot_response_stream(
     system_prompt += build_translation_structure_hints(effective_translation_message)
     
     system_prompt += translation_prompt_guidance(
-        effective_translation_message,
+        translation_message,
         has_references=bool(rag_context),
     )
 
-    if not rag_context and not is_passage_translation(effective_translation_message) and not school_announcement:
+    if not rag_context and not is_passage_translation(translation_message) and not school_announcement:
         system_prompt += NO_REFERENCE_GUARD
     
     system_prompt, web_results_used = assemble_system_prompt(
@@ -2164,6 +2153,7 @@ def get_chatbot_response_stream(
                 image_url=image_url,
                 file_urls=file_urls,
                 pending_id=pending_id,
+                tutor_intent=intent,
             )
         
         yield {"type": "error", "content": error_message}
@@ -2281,6 +2271,7 @@ def get_chatbot_response_stream(
                 image_url=image_url,
                 file_urls=file_urls,
                 pending_id=pending_id,
+                tutor_intent=intent,
             )
         
         yield {"type": "error", "content": error_message}
@@ -2318,6 +2309,7 @@ def get_chatbot_response_stream(
             image_url=image_url,
             file_urls=file_urls,
             pending_id=pending_id,
+            tutor_intent=intent,
         )
     
     if persist:

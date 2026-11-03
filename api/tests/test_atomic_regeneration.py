@@ -25,8 +25,8 @@ from api.sse import queue_sse_events
 ROOT = Path(__file__).resolve().parents[1] / 'api'
 
 
-def saved_row(message_id: int, role: str = 'user') -> tuple[Any, ...]:
-    return (message_id, role, f'Original {message_id}', f'Answer {message_id}', datetime(2026, 10, 6), [], False, False, None, 'english', 0.1, None, f'old-{message_id}')
+def saved_row(message_id: int, role: str = 'user', tutor_intent: Optional[str] = None) -> tuple[Any, ...]:
+    return (message_id, role, f'Original {message_id}', f'Answer {message_id}', datetime(2026, 10, 6), [], False, False, None, 'english', 0.1, None, f'old-{message_id}', tutor_intent)
 
 
 def snapshot(rows: Optional[list[tuple[Any, ...]]] = None) -> conversations.RegenerationSnapshot:
@@ -121,8 +121,8 @@ class TransactionConnection:
         else: self.closed = True
 
 
-def swap(snapshot_value: conversations.RegenerationSnapshot, cancelled: Any = lambda: False) -> int:
-    return conversations.replace_regenerated_exchange(snapshot_value, 'Edited question', 'Edited reply', 'english', [], False, False, 0.2, 'session', 'new-pending', [{'url': 's3://approved/new.txt', 'filename': 'new.txt', 'type': 'document'}], cancelled)
+def swap(snapshot_value: conversations.RegenerationSnapshot, cancelled: Any = lambda: False, tutor_intent: Optional[str] = None) -> int:
+    return conversations.replace_regenerated_exchange(snapshot_value, 'Edited question', 'Edited reply', 'english', [], False, False, 0.2, 'session', 'new-pending', [{'url': 's3://approved/new.txt', 'filename': 'new.txt', 'type': 'document'}], cancelled, tutor_intent=tutor_intent)
 
 
 def test_atomic_swap_removes_inclusive_suffix_and_inserts_replacement_once(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -136,6 +136,14 @@ def test_atomic_swap_removes_inclusive_suffix_and_inserts_replacement_once(monke
     assert len([entry for entry in conn.executions if entry[0].startswith('INSERT')]) == 1
     assert 'FOR UPDATE' in conn.executions[0][0]
     assert 'FOR UPDATE OF logs' in conn.executions[1][0]
+
+
+def test_atomic_swap_records_the_task_the_edit_was_sent_under(monkeypatch: pytest.MonkeyPatch) -> None:
+    original = snapshot(); conn = TransactionConnection(original.rows)
+    monkeypatch.setattr(conversations, 'get_db_connection_with_retry', lambda: conn)
+    swap(original, tutor_intent='translate')
+    query, params = next(entry for entry in conn.executions if entry[0].startswith('INSERT'))
+    assert 'tutor_intent' in query and params[-1] == 'translate'
 
 
 @pytest.mark.parametrize('failure', ['insert', 'commit', 'cancel', 'owner', 'changed'])
@@ -154,7 +162,15 @@ def test_failed_atomic_swap_rolls_back_original_rows(monkeypatch: pytest.MonkeyP
 
 def test_prefix_context_excludes_original_suffix_and_system_rows() -> None:
     original = snapshot([saved_row(1), saved_row(4, 'system'), saved_row(2), saved_row(3)])
-    assert conversations.regeneration_prefix_rows(original) == [(original.rows[0][2], original.rows[0][3], None, None, original.rows[0][4])]
+    assert conversations.regeneration_prefix_rows(original) == [(original.rows[0][2], original.rows[0][3], None, None, original.rows[0][4], None)]
+
+
+def test_prefix_context_keeps_each_turns_recorded_task() -> None:
+    original = snapshot([saved_row(1, tutor_intent='explain'), saved_row(2, tutor_intent='translate')])
+    assert [row[5] for row in conversations.regeneration_prefix_rows(original)] == ['explain']
+    cursor = Mock(); cursor.fetchall.return_value = []
+    conversations._owned_regeneration_rows(cursor, 'conv-a', 'learner-a')
+    assert 'logs.tutor_intent' in cursor.execute.call_args.args[0]
 
 
 @pytest.mark.parametrize('role,missing', [('system', False), ('assistant', False), ('user', True)])
@@ -275,7 +291,8 @@ def deferred_stream_namespace(failure: str) -> dict[str, Any]:
         'is_full_image_translation_request': lambda *args, **kwargs: False,
         'build_image_translation_query': lambda message, context: (message, None),
         'build_contextual_retrieval_query': lambda message, history: message,
-        'MODE_PROMPTS': {'english': {'prompt': ''}}, 'should_use_web_search': lambda message: (False, None),
+        'resolve_translation_routing_query': lambda message, history, intent: message,
+        'MODE_PROMPTS': {'english': {'prompt': ''}}, 'should_use_web_search': lambda message, **kwargs: (False, None),
         'resolve_school_message_context': lambda *args, **kwargs: ('', False, []), 'get_rag_context': lambda *args, **kwargs: ('', []),
         'tutor_task_guidance': lambda intent: '', 'SKILL_LEVEL_MODIFIERS': {}, '_history_has_images': lambda history: False,
         'build_translation_structure_hints': lambda message: '', 'translation_prompt_guidance': lambda *args, **kwargs: '',

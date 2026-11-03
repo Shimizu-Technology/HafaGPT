@@ -16,6 +16,7 @@ from src.rag.translation_policy import (
     extract_translation_payload,
     extract_translation_retrieval_payload,
     is_passage_translation,
+    translation_direction,
 )
 
 
@@ -114,12 +115,7 @@ def _lookup_exact_dictionary_entries(headword: str) -> list[tuple[str, str, obje
 def _extract_requested_english_gloss(user_input: str) -> str:
     """Return a short English target from an English-to-Chamorro lookup."""
 
-    if not re.search(
-        r"(?i)\b(?:how (?:do|would) (?:you|i) say|"
-        r"what is .+ in chamor(?:ro|u)|chamor(?:ro|u) word for|"
-        r"translate .+ to chamor(?:ro|u))\b",
-        user_input,
-    ):
+    if translation_direction(user_input) != "to_chamorro":
         return ""
     target = extract_translation_payload(user_input).strip(" \t\r\n.,!?;:")
     words = _PASSAGE_WORD_PATTERN.findall(target)

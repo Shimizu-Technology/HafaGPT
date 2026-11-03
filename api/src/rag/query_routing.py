@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import re
 
+from src.rag.translation_policy import classify_translation_request
+
 
 def should_use_rag(
     user_input: str,
@@ -13,6 +15,10 @@ def should_use_rag(
 
     del conversation_length  # Reserved for future multi-turn routing policy.
     user_lower = user_input.lower().strip()
+    # A recognized translation request always needs dictionary evidence, even
+    # when its payload is "thank you" or mentions a "review".
+    if classify_translation_request(user_input) != "none":
+        return True, "full"
     simple_patterns = [
         r"^(test(ing)?|testing\s*(it\s*)?(out)?|still\s*testing)[\s\?\.!,]*$",
         r"^(ok(ay)?|k|yes|no|sure|yep|nope|yeah|nah|yup)[\s\?\.!,]*$",
