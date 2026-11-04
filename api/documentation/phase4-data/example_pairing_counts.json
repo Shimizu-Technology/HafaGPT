@@ -1,5 +1,5 @@
 {
-  "review_round": 4,
+  "review_round": 5,
   "scope": "Revised snapshot; displayed pairs capped at 3 per entry; first rejected pair stops the block",
   "entries": 10350,
   "snapshot_sha256": "195324ebbb095ef86a2d664f251419a2ef84319679e78337761d235c0b52f6b0",
@@ -14,64 +14,64 @@
     "english_min_tokens": 3,
     "chamorro_min_tokens": 2
   },
-  "shown_pairs": 7337,
-  "entries_with_pairs": 3901,
-  "unpaired_fields": 40528,
-  "entries_with_unpaired": 7692,
+  "shown_pairs": 7772,
+  "entries_with_pairs": 4033,
+  "unpaired_fields": 39620,
+  "entries_with_unpaired": 7526,
   "calibration": [
     {
       "english_min_share": 0.5,
       "chamorro_max_english_share": 0.25,
       "require_headword": false,
-      "shown_pairs": 9663,
-      "entries_with_pairs": 4621,
-      "unpaired_fields": 35582,
-      "entries_with_unpaired": 6715
+      "shown_pairs": 9996,
+      "entries_with_pairs": 4719,
+      "unpaired_fields": 34888,
+      "entries_with_unpaired": 6573
     },
     {
       "english_min_share": 0.6,
       "chamorro_max_english_share": 0.25,
       "require_headword": false,
-      "shown_pairs": 8288,
-      "entries_with_pairs": 4194,
-      "unpaired_fields": 38522,
-      "entries_with_unpaired": 7316
+      "shown_pairs": 8536,
+      "entries_with_pairs": 4272,
+      "unpaired_fields": 38012,
+      "entries_with_unpaired": 7213
     },
     {
       "english_min_share": 0.6,
       "chamorro_max_english_share": 0.25,
       "require_headword": true,
-      "shown_pairs": 7337,
-      "entries_with_pairs": 3901,
-      "unpaired_fields": 40528,
-      "entries_with_unpaired": 7692
+      "shown_pairs": 7772,
+      "entries_with_pairs": 4033,
+      "unpaired_fields": 39620,
+      "entries_with_unpaired": 7526
     },
     {
       "english_min_share": 0.65,
       "chamorro_max_english_share": 0.25,
       "require_headword": true,
-      "shown_pairs": 6275,
-      "entries_with_pairs": 3482,
-      "unpaired_fields": 42714,
-      "entries_with_unpaired": 8079
+      "shown_pairs": 6618,
+      "entries_with_pairs": 3590,
+      "unpaired_fields": 42004,
+      "entries_with_unpaired": 7953
     },
     {
       "english_min_share": 0.7,
       "chamorro_max_english_share": 0.25,
       "require_headword": true,
-      "shown_pairs": 5370,
-      "entries_with_pairs": 3106,
-      "unpaired_fields": 44592,
-      "entries_with_unpaired": 8413
+      "shown_pairs": 5639,
+      "entries_with_pairs": 3199,
+      "unpaired_fields": 44044,
+      "entries_with_unpaired": 8317
     },
     {
       "english_min_share": 0.6,
       "chamorro_max_english_share": 0.2,
       "require_headword": true,
-      "shown_pairs": 6344,
-      "entries_with_pairs": 3538,
-      "unpaired_fields": 42612,
-      "entries_with_unpaired": 8064
+      "shown_pairs": 6701,
+      "entries_with_pairs": 3650,
+      "unpaired_fields": 41876,
+      "entries_with_unpaired": 7931
     }
   ],
   "historical_round_2": {

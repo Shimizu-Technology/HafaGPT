@@ -235,7 +235,7 @@ def test_bare_dictionary_word_is_looked_up_even_when_the_router_skips() -> None:
 
     assert "=== PER-WORD DICTIONARY LOOKUPS ===" in context
     assert "kulót chukulåti" in context
-    assert ("Revised and updated Chamorro dictionary", None) in sources
+    assert ("Revised Chamorro dictionary", None) in sources
     # Light mode: one vector reference after the dictionary entries.
     assert fake_rag.calls == [("brown", 1)]
     assert get_rag_context("good job") == ("", [])

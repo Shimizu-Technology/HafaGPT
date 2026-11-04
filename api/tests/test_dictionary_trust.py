@@ -222,6 +222,41 @@ def test_review_gate_reads_canonical_review_status():
     assert not _review_gated_terms() & {"hafa adai"}
 
 
+SOURCE_BACKED_WORDS_WITH_FLAGGED_SPELLINGS = ("Nåna", "Åtadok", "Å'paka'", "Månnge'", "Chåda'", "Hineksa'", "Fa'nå'gue", "Mångga", "Famagu'on")
+FLAGGED_SPELLINGS = ("Nanå", "Atadok", "A'paka'", "Månnge", "Chåda", "Hineksa", "Fanague", "Mangå", "Famagu", "Mata", "Rosa", "Gris", "Kulot kafe")
+
+
+def test_review_gate_holds_a_flagged_spelling_without_hiding_the_word_it_resembles():
+    """Nanå (a Wordle accent) is flagged; Nåna, mother, is source-backed and stays available."""
+
+    for word in SOURCE_BACKED_WORDS_WITH_FLAGGED_SPELLINGS:
+        assert not _is_review_gated(word), word
+    for spelling in FLAGGED_SPELLINGS:
+        assert _is_review_gated(spelling), spelling
+    # The flagged form is held under either apostrophe a keyboard produces.
+    assert _is_review_gated("Månnge")
+    assert _is_review_gated("CHÅDA")
+
+
+def test_review_gate_leaves_every_source_backed_canonical_term_available():
+    canonical = json.loads(
+        (Path(__file__).parents[1] / "language_content" / "canonical_vocabulary.json").read_text(encoding="utf-8")
+    )
+    for entry in canonical["entries"]:
+        if entry["review_status"] == "source_backed":
+            assert not _is_review_gated(entry["recommended_teaching_term"]), entry["id"]
+            assert not _is_review_gated(entry["canonical_chamorro"]), entry["id"]
+
+
+def test_review_gate_removes_only_flagged_words_from_the_audio_manifest():
+    manifest = json.loads(
+        (Path(__file__).parents[1] / "audio_generation" / "manifest.json").read_text(encoding="utf-8")
+    )["words"]
+    held = sorted(word for word in manifest if _is_review_gated(word))
+
+    assert held == sorted(["Chåda", "Hineksa", "Hu hånao", "Månnge"])
+
+
 def test_word_of_the_day_never_selects_review_gated_phrases_in_a_full_year(monkeypatch):
     """Scan every Guam day of two years (one leap) so no rotation path can pick a gated term."""
 
@@ -259,3 +294,21 @@ def test_word_of_the_day_fallback_skips_review_gated_manifest(monkeypatch, tmp_p
     service._words_by_headword = {}
     result = service.get_word_of_the_day()
     assert result["chamorro"] == "Håfa Adai"
+
+
+def test_word_of_the_day_reports_the_api_clock_for_devices_that_are_off(monkeypatch):
+    from datetime import datetime, timedelta, timezone
+
+    from api import dictionary_service
+
+    service = DictionaryService.__new__(DictionaryService)
+    service._words_by_headword = {}
+    monkeypatch.setattr(dictionary_service, "get_guam_date", lambda moment=None: __import__("datetime").date(2026, 11, 4))
+
+    before = datetime.now(timezone.utc)
+    result = service.get_word_of_the_day()
+    reported = datetime.fromisoformat(result["server_time"])
+
+    assert result["date"] == "2026-11-04"
+    assert reported.utcoffset() == timedelta(0)
+    assert before <= reported <= datetime.now(timezone.utc)

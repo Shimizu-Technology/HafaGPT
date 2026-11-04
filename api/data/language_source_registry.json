@@ -286,7 +286,7 @@
     },
     {
       "id": "local_revised_dictionary_snapshot",
-      "name": "Local Revised Chamorro Dictionary snapshot",
+      "name": "Revised Chamorro dictionary",
       "match": {
         "source_contains": ["revised-chamorro-dictionary", "revised_and_updated_chamorro_dictionary"]
       },

@@ -1,8 +1,9 @@
 import type { SourceInfo } from '../types/source';
 const HAFAGPT_LIST = 'HåfaGPT vocabulary list';
+const REVISED_DICTIONARY = 'Revised Chamorro dictionary';
 const names: Record<string, string> = {
   hafagpt_canonical_evaluation: HAFAGPT_LIST,
-  local_revised_dictionary_snapshot: 'Revised Chamorro dictionary',
+  local_revised_dictionary_snapshot: REVISED_DICTIONARY,
   chamoru_info_dictionary: 'Chamoru.info dictionary',
   topping_ogo_dungca_1975: 'Topping, Ogo, and Dungca dictionary',
 };
@@ -15,10 +16,13 @@ const descriptions: Record<string, string> = {
   unreviewed: 'Not yet reviewed', reviewed: 'Reviewed',
 };
 const OWN_LIST_NAME = /^(?:HåfaGPT )?canonical (?:vocabulary|evaluation)(?: (?:ledger|index|list))?$/i;
+// Names the API has used for the Revised Chamorro dictionary; saved replies still carry them.
+const REVISED_DICTIONARY_NAME = /^(?:local revised chamorro dictionary snapshot|revised and updated chamorro dictionary)$/i;
 
-/** A citation name changes only when it is exactly HåfaGPT's own list; other titles stay as cited. */
+/** A citation name changes only when it is exactly one of our own sources' earlier names; other titles stay as cited. */
 export function plainSourceName(name: string): string {
-  return OWN_LIST_NAME.test(name.trim()) ? HAFAGPT_LIST : name;
+  if (OWN_LIST_NAME.test(name.trim())) return HAFAGPT_LIST;
+  return REVISED_DICTIONARY_NAME.test(name.trim()) ? REVISED_DICTIONARY : name;
 }
 
 /**
@@ -28,6 +32,7 @@ export function plainSourceName(name: string): string {
 export function plainSourceText(text: string): string {
   return text
     .replace(/HåfaGPT canonical (?:vocabulary|evaluation)(?: (?:ledger|index|list))?/gi, HAFAGPT_LIST)
+    .replace(/the local revised chamorro dictionary snapshot/gi, `the ${REVISED_DICTIONARY}`)
     .replace(/\bcanonical (?:vocabulary )?(?:ledger|index)\b/gi, 'vocabulary list')
     .replace(/\bcanonical (entry|entries)\b/gi, 'vocabulary list $1');
 }

@@ -239,7 +239,7 @@ def test_examples_are_only_the_pairs_the_validated_parser_shows():
     assert examples
     from api.canonical_context import _exact_dictionary_data
 
-    revised = dict(_exact_dictionary_data())["Revised and updated Chamorro dictionary"]
+    revised = dict(_exact_dictionary_data())["Revised Chamorro dictionary"]
     shown = DictionaryService._parse_examples(revised["kulót chukulåti"]["Other"], "kulót chukulåti")[0]
     assert examples == [f"{pair['chamorro']} — {pair['english']}" for pair in shown[:2]]
 

@@ -1,6 +1,6 @@
 import pytest
 
-from api.canonical_context import get_canonical_tutor_context
+from api.canonical_context import CANONICAL_VOCABULARY_PATH, get_canonical_tutor_context
 
 
 def test_exact_english_phrases_prepend_governed_curriculum_context():
@@ -185,7 +185,7 @@ def test_exact_passage_spelling_does_not_hide_conflicting_governed_senses() -> N
     assert "space, room, area" in context
     assert "not synonyms" in context
     assert "flag unresolved conflicts" in context
-    assert ("Revised and updated Chamorro dictionary", None) in sources
+    assert ("Revised Chamorro dictionary", None) in sources
 
 
 def test_passage_retains_each_governed_dictionary_definition_for_headword() -> None:
@@ -195,7 +195,7 @@ def test_passage_retains_each_governed_dictionary_definition_for_headword() -> N
     basket_matches = [match for match in matches if match[2].casefold() == "guagua'"]
     assert {match[1] for match in basket_matches} == {
         "Chamoru.info dictionary", "Topping, Ogo, and Dungca dictionary",
-        "Revised and updated Chamorro dictionary",
+        "Revised Chamorro dictionary",
     }
     assert all(not match[4] for match in basket_matches)
     assert any(match[2] == "åcho'" for match in matches)
@@ -358,3 +358,69 @@ def test_abbreviated_letter_notation_is_a_letter_name():
     letter_blocks = [b for b in blocks if "Chamorro headword: se" in b]
     assert letter_blocks and all("name of a letter" in b for b in letter_blocks)
     assert not any("direct dictionary evidence" in b for b in letter_blocks)
+
+
+@pytest.mark.parametrize("request_text", [
+    "Review Chamorro colors",
+    "Help me describe the colors of a picture in Chamorro.",
+    "Teach me the colours",
+])
+def test_a_request_to_review_a_topic_gets_that_topics_vocabulary_list_entries(request_text: str) -> None:
+    import json
+
+    context, sources = get_canonical_tutor_context(request_text)
+    canonical = json.loads(CANONICAL_VOCABULARY_PATH.read_text(encoding="utf-8"))
+    colors = [entry for entry in canonical["entries"] if entry["category"] == "colors"]
+
+    assert colors
+    for entry in colors:
+        assert f"[Canonical {entry['id']}]" in context
+        assert entry["recommended_teaching_term"] in context
+    assert ("HåfaGPT vocabulary list", None) in sources
+
+
+def test_topic_entries_are_capped_and_never_include_entries_held_for_review() -> None:
+    context, _sources = get_canonical_tutor_context("List the verbs I should study")
+
+    assert context.count("[Canonical ") <= 12
+    # The three verb phrases the canonical layer holds for review stay out of tutor context.
+    for held in ("Hu hånao", "Hu kånno'", "Hu maigo'"):
+        assert held not in context
+
+
+@pytest.mark.parametrize("request_text", [
+    "Review my essay about colors in painting",
+    "What colors are on the Guam flag?",
+    "Thanks, that was helpful",
+])
+def test_topic_entries_need_a_request_to_study_the_topic(request_text: str) -> None:
+    context, _sources = get_canonical_tutor_context(request_text)
+
+    assert "[Canonical colors." not in context
+
+
+@pytest.mark.parametrize('query', [
+    'Review Chamorro colors', 'Teach me family words', 'List the numbers in Chamorro',
+    'What are the names of the colors?', 'What are the words for colors?', 'Review family in Chamorro',
+])
+def test_a_request_for_a_whole_topic_gets_its_entries(query):
+    from api.canonical_context import _normalize_for_match, _topic_entries
+    assert _topic_entries(query, _normalize_for_match(query))
+
+
+@pytest.mark.parametrize('query', [
+    'What is the word for family?', 'What is the word for food?', "What's the word for number?",
+    'Is there a word for my family?', 'Translate this word: food', 'How do I say food in Chamorro?',
+    'Words for my family reunion invitation', 'I want to learn how to greet my family',
+    'Write a note to my family about dinner: I will bring food',
+])
+def test_a_lookup_that_mentions_a_topic_does_not_get_the_whole_topic(query):
+    from api.canonical_context import _normalize_for_match, _topic_entries
+    assert _topic_entries(query, _normalize_for_match(query)) == []
+
+
+def test_a_study_request_that_mentions_a_document_keeps_the_topic():
+    from api.canonical_context import _normalize_for_match, _topic_entries
+    query = 'Teach me Chamorro colors so I can write an essay.'
+    assert _topic_entries(query, _normalize_for_match(query))
+

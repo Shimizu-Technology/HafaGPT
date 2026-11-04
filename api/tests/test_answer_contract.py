@@ -72,8 +72,19 @@ def test_contract_keeps_citation_and_consistency_safety() -> None:
 def test_contract_sets_guam_orthography_default_with_labeled_variants() -> None:
     contract = _flat(PROMPTS["ANSWER_CONTRACT"])
 
-    assert "Teach Guam spelling (Kumisión i Fino' CHamoru 2024 orthography) first" in contract
-    assert "CNMI or older spelling, label it as such" in contract
+    assert "Teach the vocabulary list's recommended term first" in contract
+    assert "Give any other spelling as its source writes it, naming that source" in contract
+    assert "Call a spelling Guam, CNMI, or older only if a supplied reference says so" in contract
+    assert "a source's region label describes the source, not each word" in contract
+    assert "The Kumisión i Fino' CHamoru orthography is not supplied, so never say a form follows it" in contract
+    assert "Guam spelling" not in contract
+
+
+def test_contract_has_the_tutor_copy_source_names_exactly() -> None:
+    contract = _flat(PROMPTS["ANSWER_CONTRACT"])
+
+    assert "Copy source names letter for letter (HåfaGPT keeps its å, G, P, and T)" in contract
+    assert "governed" not in contract
 
 
 def test_old_refusal_rules_are_gone_from_every_layer() -> None:
@@ -107,6 +118,15 @@ def test_immersion_mode_stays_in_chamorro() -> None:
     assert "Keep the entire response in Chamorro, including any uncertainty note" in prompt
 
 
+def test_bare_phrase_with_a_many_sense_word_reports_readings_instead_of_choosing() -> None:
+    guidance = _flat(PASSAGE_TRANSLATION_GUIDANCE)
+
+    assert "A short phrase shown with no sentence around it is the exception" in guidance
+    assert "Lay out each reading the references support, with its source" in guidance
+    assert "the sentence it came from decides which applies" in guidance
+    assert "Do not present one reading as the phrase's meaning" in guidance
+
+
 def test_passage_rules_survive() -> None:
     guidance = _flat(PASSAGE_TRANSLATION_GUIDANCE)
 
@@ -122,8 +142,10 @@ def test_typical_english_prompt_is_shorter_than_the_prohibition_stack() -> None:
     english = PROMPTS["MODE_PROMPTS"]["english"]["prompt"]
     assembled = english + PROMPTS["SKILL_LEVEL_MODIFIERS"]["beginner"] + PROMPTS["NO_REFERENCE_GUARD"]
 
-    assert len(english) < 2600
-    assert len(assembled) < 3500
+    # The rules for spelling labels and exact source names added about 280
+    # characters; the prompt stays well under the stack it replaced.
+    assert len(english) < 2900
+    assert len(assembled) < 3800
 
 
 def test_chamorro_draft_rule_applies_only_when_the_answer_is_chamorro() -> None:

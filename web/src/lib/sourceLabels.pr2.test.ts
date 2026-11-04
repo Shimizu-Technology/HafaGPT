@@ -32,6 +32,16 @@ describe('citation names', () => {
     expect(formatSourceLabel({ name } as SourceInfo).label).toBe('HåfaGPT vocabulary list');
   });
 
+  it.each(['Local Revised Chamorro Dictionary snapshot', 'Revised and updated Chamorro dictionary', 'Revised Chamorro dictionary'])('names the Revised Chamorro dictionary plainly: %s', name => {
+    expect(plainSourceName(name)).toBe('Revised Chamorro dictionary');
+    expect(formatSourceLabel({ name } as SourceInfo).label).toBe('Revised Chamorro dictionary');
+  });
+
+  it('shows the plain dictionary name in trust text an older API wrote', () => {
+    expect(plainSourceText('This entry comes from the Local Revised Chamorro Dictionary snapshot. Guåhan spelling may differ.'))
+      .toBe('This entry comes from the Revised Chamorro dictionary. Guåhan spelling may differ.');
+  });
+
   it.each(['Archive: canonical ledger, volume 2', 'The canonical entry for Guam', 'Canonical index of Pacific texts'])('keeps another source\'s title: %s', name => {
     expect(plainSourceName(name)).toBe(name);
     expect(formatSourceLabel({ name } as SourceInfo).label).toBe(name);

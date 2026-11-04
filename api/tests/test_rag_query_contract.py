@@ -441,7 +441,8 @@ def test_rag_context_returns_structured_public_citation_contract() -> None:
 
     context, sources = rag.create_context("What does hånom mean?")
 
-    assert "Local Revised Chamorro Dictionary snapshot" in context
+    assert "Revised Chamorro dictionary" in context
+    assert "snapshot" not in context.lower()
     assert sources[0]["source_id"] == "local_revised_dictionary_snapshot"
     assert sources[0]["page"] == 42
     assert sources[0]["locator"] == "Page 42"

@@ -21,12 +21,31 @@ LEGACY_HAFAGPT_LIST_NAMES = frozenset(
         "HåfaGPT canonical evaluation index",
     }
 )
+REVISED_DICTIONARY_SOURCE_ID = "local_revised_dictionary_snapshot"
+# The learner-facing name of the Revised Chamorro dictionary, matching the
+# registry and web/src/lib/sourceLabels.ts. The source id keeps its historical
+# spelling because saved conversations store it. Earlier names stay readable
+# for the same reason.
+REVISED_DICTIONARY_NAME = "Revised Chamorro dictionary"
+LEGACY_REVISED_DICTIONARY_NAMES = frozenset(
+    {
+        "Local Revised Chamorro Dictionary snapshot",
+        "Revised and updated Chamorro dictionary",
+    }
+)
 LEGACY_SOURCE_IDS = {
     HAFAGPT_LIST_NAME: HAFAGPT_LIST_SOURCE_ID,
     **{name: HAFAGPT_LIST_SOURCE_ID for name in LEGACY_HAFAGPT_LIST_NAMES},
     "Chamoru.info dictionary": "chamoru_info_dictionary",
     "Topping, Ogo, and Dungca dictionary": "topping_ogo_dungca_1975",
-    "Revised and updated Chamorro dictionary": "local_revised_dictionary_snapshot",
+    REVISED_DICTIONARY_NAME: REVISED_DICTIONARY_SOURCE_ID,
+    **{name: REVISED_DICTIONARY_SOURCE_ID for name in LEGACY_REVISED_DICTIONARY_NAMES},
+}
+# A saved conversation can carry a citation dictionary written under an earlier
+# name. It is shown under the current name; its source id never changes.
+CURRENT_NAME_FOR_LEGACY_NAME = {
+    **{name: HAFAGPT_LIST_NAME for name in LEGACY_HAFAGPT_LIST_NAMES},
+    **{name: REVISED_DICTIONARY_NAME for name in LEGACY_REVISED_DICTIONARY_NAMES},
 }
 PUBLIC_CITATION_FIELDS = {
     "source_id",
@@ -72,6 +91,9 @@ def format_source_citations(sources: Iterable[object]) -> list[dict[str, Any]]:
             }
             if not isinstance(citation.get("name"), str) or not citation["name"].strip():
                 continue
+            current_name = CURRENT_NAME_FOR_LEGACY_NAME.get(citation["name"].strip())
+            if current_name and citation.get("source_id") in (None, LEGACY_SOURCE_IDS[current_name]):
+                citation["name"] = current_name
             url = citation.get("url")
             registered = get_registered_source(citation.get("source_id"))
             if (registered and registered.get("citation_url_allowed") is False) or not is_public_http_url(url):

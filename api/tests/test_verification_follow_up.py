@@ -559,7 +559,12 @@ def test_guidance_keeps_supported_terms_without_new_chamorro():
     assert "never as evidence" in guidance
     assert "Keep every supported term" in guidance
     assert "Change a term only when a supplied entry contradicts it" in guidance
-    assert "corrected full answer or draft" in guidance
+    assert "Open with the result in one plain sentence" in guidance
+    assert "the previous answer stands" in guidance
+    assert "do not restate it as a corrected or revised answer" in guidance
+    assert "give the full answer with the change in it" in guidance
+    # The word "corrected" is reserved for the case where an entry contradicts a term.
+    assert "end with the corrected" not in guidance
     assert "Do not apologize for or withdraw a supported term" in guidance
     for phrase in ("say it is not verified", "do not volunteer", "State that no verified entry matched"):
         assert phrase not in guidance

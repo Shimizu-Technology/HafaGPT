@@ -1150,7 +1150,7 @@ class ChamorroRAG:
         context += "When a reference includes Citation locators, cite an underlying locator rather than only the container or index name.\n"
         if passage_translation:
             context += "For this passage translation, identify any unsupported uncertainty precisely; do not refuse the complete translation merely because a reference covers only part of it.\n"
-        context += "If sources disagree, lead with the canonical or Guam form when one is supplied and name the other form with its source; otherwise state the disagreement briefly.\n"
+        context += "If sources disagree, lead with the HåfaGPT vocabulary list form when one is supplied and name the other form with its source; otherwise state the disagreement briefly.\n"
         context += "="*60
         
         return context, source_info

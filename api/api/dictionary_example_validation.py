@@ -8,6 +8,8 @@ import re
 import unicodedata
 from pathlib import Path
 
+from .chamorro_morphology import affix_root_candidates
+
 ENGLISH_MIN_SHARE = 0.60
 CHAMORRO_MAX_ENGLISH_SHARE = 0.25
 REQUIRE_HEADWORD = True
@@ -44,6 +46,28 @@ INCOMPLETE_ENDINGS = frozenset(
 # short ("Japan has many different"); "many responsibilities" is complete.
 QUANTIFIERS = frozenset('many few several some various'.split())
 NOUN_NEEDING_ADJECTIVES = frozenset('different other similar separate such'.split())
+# "because there's no", "we are all": the noun or complement is missing. These
+# end a sentence only after the few words that make them a complete answer.
+DEPENDENT_FINAL_WORDS = {
+    'no': frozenset('say says said saying answer answered answers reply replied yes or and'.split()),
+    'after': frozenset('soon shortly day days week weeks month months year years night nights time long ever '
+                       'happily right just immediately later afternoon evening morning sought'.split()),
+}
+# A bare number after "have", "has", "with" is a count whose noun was cut off.
+CUT_AFTER_NUMBER = frozenset('have has had with only about bought buy ate see saw got get need needs'.split())
+NUMBER_WORDS = frozenset('three four five six seven eight nine ten eleven twelve twenty thirty forty fifty hundred thousand'.split())
+COMPARATIVES = frozenset(
+    'faster slower greener shorter longer cleaner darker stronger weaker sweeter softer harder taller smaller '
+    'bigger older younger wider richer poorer warmer deeper higher lower louder quieter nicer easier happier'.split()
+)
+# Word endings that mark a noun, so "the committee", "a decision", "the
+# visitors" can end a sentence even when the noun is not in TERMINAL_NOUNS.
+# They count only for words outside COMMON_ENGLISH_WORDS: "the other", "a
+# better", and "the bigger" share the endings but need a following noun.
+NOUN_SUFFIX = re.compile(
+    r'(?:[a-z]{3,}(?:tion|sion|ment|ness|ity|ship|hood|ance|ence|ism|ist|ery|ure|dom|ian|eer|age|or|er|ee|ess)'
+    r'|[a-z]{3,}[^sui\W]s)$'
+)
 AUXILIARY_CONTRACTIONS = frozenset(
     ("i'm you're he's she's it's we're they're that's there's who's what's "
      "i've you've we've they've i'll you'll he'll she'll it'll we'll they'll "
@@ -76,7 +100,23 @@ def has_headword(text: str, headword: str) -> bool:
         return False
     if any(words[i:i + len(target)] == target for i in range(len(words) - len(target) + 1)):
         return True
-    return len(target) == 1 and len(target[0]) >= 4 and any(target[0] in word for word in words)
+    if len(target) == 1 and len(target[0]) >= 4 and any(target[0] in word for word in words):
+        return True
+    return len(target) == 1 and len(target[0]) >= 3 and _affixed_form_of(example_tokens(text), target[0])
+
+
+def _affixed_form_of(tokens: list[str], root: str) -> bool:
+    """A token that becomes the headword when one listed affix is removed.
+
+    The affixes come from chamorro_morphology (infixes, prefixes, possessive
+    suffixes, reduplication). This only recognizes the headword's spelling inside
+    an inflected token; it never claims that the form exists.
+    """
+    return any(
+        _identity(candidate) == root
+        for token in tokens
+        for candidate, _note in affix_root_candidates(token)
+    )
 
 
 def _complete_field(text: str, tokens: list[str], *, english: bool) -> bool:
@@ -94,12 +134,25 @@ def _complete_field(text: str, tokens: list[str], *, english: bool) -> bool:
             return False
         if len(tokens) > 1 and tokens[-2] in QUANTIFIERS and tokens[-1] in NOUN_NEEDING_ADJECTIVES:
             return False
+        # A field that stops at a comma, colon, or dash has more to say.
+        if re.search(r'(?:[,;:(\-\u2010-\u2015\u2026]|\.\.)\s*$', text):
+            return False
+        if len(tokens) > 1 and tokens[-1] in DEPENDENT_FINAL_WORDS and tokens[-2] not in DEPENDENT_FINAL_WORDS[tokens[-1]]:
+            return False
+        if len(tokens) > 1 and tokens[-1] in NUMBER_WORDS and tokens[-2] in CUT_AFTER_NUMBER:
+            return False
+        if len(tokens) > 1 and tokens[-1] == 'all' and tokens[-2] in {'are', 'were'}:
+            return False
         # "We say that you are most" is cut short; "the most" can end a sentence.
         if tokens[-1] == 'most' and (len(tokens) < 2 or tokens[-2] != 'the'):
             return False
         if len(tokens) > 1 and tokens[-2] in {'a', 'an', 'the'}:
             original_last = WORD.findall(text)[-1]
-            if tokens[-1] not in TERMINAL_NOUNS and not original_last[0].isupper():
+            # "a tourists" and "a faster" need more; "the elders" and "a joker" don't.
+            singular_plural = tokens[-2] in {'a', 'an'} and tokens[-1].endswith('s') and not tokens[-1].endswith('ss')
+            if (tokens[-1] not in TERMINAL_NOUNS and not original_last[0].isupper()
+                    and (tokens[-1] in COMMON_ENGLISH_WORDS or tokens[-1] in COMPARATIVES or singular_plural
+                         or not NOUN_SUFFIX.search(tokens[-1]))):
                 return False
         # A bare auxiliary at the start needs question punctuation to establish
         # a complete clause. Missing subjects are common extraction gaps.

@@ -9,7 +9,7 @@ import unicodedata
 from functools import lru_cache, wraps
 from pathlib import Path
 
-from .source_citations import HAFAGPT_LIST_NAME
+from .source_citations import HAFAGPT_LIST_NAME, REVISED_DICTIONARY_NAME
 from .dictionary_glosses import definition_gloss_segments as _definition_gloss_segments, is_species_entry
 from src.rag.source_policy import resolve_source
 from src.rag.source_reviews import build_registered_source_citation
@@ -32,10 +32,7 @@ DICTIONARY_DATA_PATH = Path(__file__).resolve().parents[1] / "dictionary_data"
 EXACT_DICTIONARY_FILES = (
     ("chamoru_info_dictionary.json", "Chamoru.info dictionary"),
     ("chamorro_english_dictionary_TOD.json", "Topping, Ogo, and Dungca dictionary"),
-    (
-        "revised_and_updated_chamorro_dictionary.json",
-        "Revised and updated Chamorro dictionary",
-    ),
+    ("revised_and_updated_chamorro_dictionary.json", REVISED_DICTIONARY_NAME),
 )
 # A dictionary entry is evidence of the senses it lists, not proof that a word
 # has no other use (a learner was once told "un" could not mean "a" because the
@@ -46,6 +43,30 @@ SENSE_SCOPE_RULE = (
     "the references show and that they do not cover this use."
 )
 MAX_CANONICAL_MATCHES = 8
+MAX_TOPIC_ENTRIES = 12
+# A learner who asks to review or learn a whole topic ("Review Chamorro colors")
+# names no single word, so no entry matches by its own English or Chamorro.
+# These phrases map the topic nouns to the category the vocabulary list files
+# its entries under; the request must also ask to study or list the topic.
+TOPIC_CATEGORIES = (
+    ("colors", re.compile(r"\bcolou?rs?\b")),
+    ("numbers", re.compile(r"\bnumbers?\b|\bcounting\b")),
+    # Not "my family" or "family reunion", which mention a family rather than the topic.
+    ("family", re.compile(r"\bfamily (?:members|words|terms)\b|\brelatives\b|(?<!my )(?<!our )\bfamily\b(?! \w)|\bfamily in\b")),
+    ("body_parts", re.compile(r"\bbody parts?\b|\bparts of (?:the|my|your) body\b")),
+    ("food", re.compile(r"\bfoods?\b|\bdrinks\b")),
+    ("greetings", re.compile(r"\bgreetings\b")),
+    ("verbs", re.compile(r"\bcommon verbs\b|\bverbs\b")),
+    ("common_phrases", re.compile(r"\b(?:common|everyday|useful) phrases\b")),
+)
+# "The word for family" is a lookup, so only a plural asks for the whole topic.
+TOPIC_REQUEST = re.compile(
+    r"\b(?:review|learn|teach|study|practice|quiz|drill|list|vocab(?:ulary)?|words|terms|names|describe)\b"
+)
+# "Review my essay about colors" asks about an English document, not the topic.
+ENGLISH_DOCUMENT = re.compile(
+    r"\b(?:review|check|edit|proofread|read|fix)\b.*\b(?:essay|paper|report|document|article|resume|email|letter|contract|proposal|thesis|code)s?\b"
+)
 MAX_PASSAGE_DICTIONARY_MATCHES = 24
 MAX_PASSAGE_SPELLING_CANDIDATES = 2
 _PASSAGE_WORD_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ'’\-]+")
@@ -438,6 +459,22 @@ def _format_dictionary_definition(definition: object) -> str:
     return json.dumps(definition, ensure_ascii=False)[:1000]
 
 
+def _topic_entries(user_input: str, normalized_input: str) -> list[dict]:
+    """Vocabulary list entries for a topic the learner asked to review or list."""
+
+    if not TOPIC_REQUEST.search(normalized_input) or ENGLISH_DOCUMENT.search(normalized_input):
+        return []
+    entries: list[dict] = []
+    for category, pattern in TOPIC_CATEGORIES:
+        if pattern.search(normalized_input):
+            entries.extend(
+                entry for entry in _canonical_entries()
+                if entry.get("category") == category
+                and entry.get("review_status") in {"verified", "source_backed", "variant"}
+            )
+    return entries[:MAX_TOPIC_ENTRIES]
+
+
 def _phrase_matches(normalized_input: str, phrase: str | None) -> bool:
     normalized_phrase = _normalize_for_match(phrase or "")
     if len(normalized_phrase) < 4:
@@ -480,6 +517,10 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
             matches.append(entry)
         if len(matches) >= MAX_CANONICAL_MATCHES:
             break
+
+    topic_entries = _topic_entries(user_input, normalized_input)
+    matched_ids = {entry.get("id") for entry in matches}
+    matches.extend(entry for entry in topic_entries if entry.get("id") not in matched_ids)
 
     requested_headword = _extract_requested_headword(user_input)
     dictionary_matches = _lookup_exact_dictionary_entries(requested_headword)

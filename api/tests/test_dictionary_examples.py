@@ -206,3 +206,63 @@ def test_round4_cut_off_english_partners_are_never_shown(headword):
 def test_complete_endings_like_and_more_or_many_nouns_stay_shown(headword, count):
     pairs, _ = DictionaryService._parse_examples(SNAPSHOT[headword]['Other'], headword)
     assert len(pairs) == count
+
+
+@pytest.mark.parametrize('headword,cut_off', [
+    ('antiguåyun', 'The house furnishings are all'),
+    ('buen\r\nbinidu', 'I salute you all,'),
+    ('haguhan manlåksi', "I can't sew, because there's no"),
+    ('muelas', 'I have three'),
+    ('pineddung somnak', 'It is not hot after'),
+    ('tufungun', 'His cows are countable, because he only has eleven'),
+])
+def test_round5_english_partners_that_stop_short_are_never_shown(headword, cut_off):
+    """A trailing comma, a bare "no", "are all", "after", or a count with its
+    noun missing marks a field that was cut off."""
+    pairs, _ = DictionaryService._parse_examples(SNAPSHOT[headword]['Other'], headword)
+    assert all(' '.join(pair['english'].split()) != cut_off for pair in pairs)
+
+
+def test_round5_complete_endings_that_look_like_cut_offs_stay_visible():
+    pairs, _ = DictionaryService._parse_examples(SNAPSHOT["sunin agaga'"]['Other'], "sunin agaga'")
+    assert any(pair['english'].endswith('sought after') for pair in pairs)
+
+
+@pytest.mark.parametrize('headword,index,english', [
+    # The headword is present as an inflected form (an infix or prefix).
+    ('ñagung', 1, 'I sheltered myself from the rain yesterday'),
+    ('tutugák', 0, 'The hen was clucking, because she was  about to lay eggs'),
+    ('dellang', 0, 'I balanced myself across the other side  of the road'),
+    # The English side ends in a noun that is not on the short noun list.
+    ('liheslatura', 0, 'The  power to create laws is in the legislature'),
+    ('paståhi', 0, 'The cattle are in the pasture'),
+])
+def test_round5_inflected_headwords_and_unlisted_nouns_are_no_longer_withheld(headword, index, english):
+    pairs, _ = DictionaryService._parse_examples(SNAPSHOT[headword]['Other'], headword)
+    assert pairs[index]['english'] == english
+
+
+@pytest.mark.parametrize('headword', ['chámbara\'', 'kandålu', 'kångkiri\'', 'pitsona', 'sintensia', 'mådduluk dågan'])
+def test_round5_a_noun_phrase_missing_its_noun_is_still_withheld(headword):
+    """"a long", "a small", "a good", "a nice", "such a big" need a noun after the adjective."""
+    pairs, _ = DictionaryService._parse_examples(SNAPSHOT[headword]['Other'], headword)
+    assert all(pair['english'].split()[-2:] not in (['a', 'long'], ['a', 'small'], ['a', 'good'], ['a', 'nice'], ['a', 'big'], ['a', 'short'])
+               for pair in pairs)
+
+
+def _english_is_complete(text):
+    from api.dictionary_example_validation import _complete_field, example_tokens
+    return _complete_field(text, example_tokens(text), english=True)
+
+
+@pytest.mark.parametrize('english', [
+    'We have a much faster car and a faster', 'He was looking for a tourists', 'This is an unfinished sentence...',
+])
+def test_cut_off_english_is_not_complete(english):
+    assert not _english_is_complete(english)
+
+
+@pytest.mark.parametrize('english', ['That guy is a troublemaker', 'Do not use bad jokes in front of the elders'])
+def test_a_sentence_ending_on_a_noun_is_complete(english):
+    assert _english_is_complete(english)
+
