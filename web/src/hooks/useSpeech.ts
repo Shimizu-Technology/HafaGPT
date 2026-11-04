@@ -88,7 +88,7 @@ function getStaticAudioUrl(text: string): string | null {
  * 
  * Strategy:
  * 1. Check cache for preloaded audio (instant!)
- * 2. Try OpenAI TTS if not cached (best quality)
+ * 2. Try live ElevenLabs audio if not cached
  * 3. If fails (no internet, API error), fallback to Browser TTS
  * 
  * Uses Spanish (es-ES) for browser TTS as closest approximation for Chamorro
@@ -218,13 +218,11 @@ export function useSpeech() {
   };
 
   /**
-   * Speak using OpenAI TTS HD (highest quality, requires internet)
+   * Speak using live ElevenLabs TTS (requires internet)
    * 
-   * @param voice - Voice to use (alloy, echo, fable, onyx, nova, shimmer)
-   *                shimmer = Best for Spanish/Chamorro
-   *                alloy = Also good for multilingual
+   * @param voice - Legacy form field; the server uses its configured ElevenLabs voice.
    */
-  const speakOpenAI = useCallback(async (
+  const speakGenerated = useCallback(async (
     text: string,
     voice: string = 'shimmer',
     isCurrent: () => boolean = playbackStillCurrent,
@@ -316,7 +314,7 @@ export function useSpeech() {
       
       audio.onended = () => {
         if (!isCurrent()) return;
-        console.log('✅ OpenAI TTS playback finished');
+        console.log('✅ Generated TTS playback finished');
         setIsSpeaking(false);
         audioRef.current = null;
         if (audioUrl) {
@@ -331,13 +329,13 @@ export function useSpeech() {
       audio.currentTime = 0;
       if (!isCurrent()) return false;
       await audio.play();
-      console.log('✅ OpenAI TTS playing');
+      console.log('✅ Generated TTS playing');
       
       return true;
       
     } catch (error) {
       if (!isCurrent()) return false;
-      console.warn('⚠️ OpenAI TTS failed:', error);
+      console.warn('⚠️ Generated TTS failed:', error);
       setIsSpeaking(false);
       stopCurrentAudio();
 
@@ -570,8 +568,8 @@ export function useSpeech() {
   }, [stopCurrentAudio, waitForAudioReady]);
 
   /**
-   * Main speak function - checks static audio, cache, then OpenAI
-   * Priority: Pre-generated S3 → Cache → OpenAI API → Browser fallback
+   * Main speak function - checks static audio, cache, then generated speech
+   * Priority: Pre-generated S3 → Cache → Live speech API → Browser fallback
    */
   const speak = useCallback(async (text: string) => {
     const isCurrent = claimPlayback();
@@ -594,16 +592,16 @@ export function useSpeech() {
     if (!isCurrent()) return;
     if (cachedSuccess) return;
     
-    // 4. Try OpenAI TTS (preload failed or wasn't started)
-    const success = await speakOpenAI(text, 'shimmer', isCurrent);
+    // 4. Try generated audio (preload failed or wasn't started)
+    const success = await speakGenerated(text, 'shimmer', isCurrent);
     if (!isCurrent()) return;
     
     // 5. If failed, fallback to browser TTS
     if (!success) {
-      console.log('⚠️ OpenAI TTS unavailable, using browser TTS fallback');
+      console.log('⚠️ Generated TTS unavailable, using browser TTS fallback');
       speakBrowser(text, isCurrent);
     }
-  }, [claimPlayback, playFromStatic, playFromCache, speakOpenAI, speakBrowser]);
+  }, [claimPlayback, playFromStatic, playFromCache, speakGenerated, speakBrowser]);
 
   /**
    * Stop any ongoing speech
@@ -641,13 +639,13 @@ export function useSpeech() {
     const isCurrent = claimPlayback();
     setSpeechError(null);
     clearCache(text);
-    const success = await speakOpenAI(text, 'shimmer', isCurrent);
+    const success = await speakGenerated(text, 'shimmer', isCurrent);
     if (!isCurrent()) return;
     if (!success) {
       console.log('⚠️ Fresh TTS failed, using browser fallback');
       speakBrowser(text, isCurrent);
     }
-  }, [claimPlayback, clearCache, speakOpenAI, speakBrowser]);
+  }, [claimPlayback, clearCache, speakGenerated, speakBrowser]);
 
   /**
    * Extract Chamorro text from mixed content

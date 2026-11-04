@@ -1,3 +1,5 @@
+# Historical standalone chatbot experiment; not imported by the API or pytest.
+# Model names below are legacy benchmark configuration, not production routing.
 from dotenv import load_dotenv
 from openai import OpenAI
 import os

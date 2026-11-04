@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """
-Model Comparison Script for HafaGPT
+Historical Model Comparison Script for HafaGPT
+
+Model aliases and example commands below are benchmark history, not approved
+production routes. Check availability before running any paid comparison.
 
 Compares multiple LLM models against the Chamorro language test suite.
 Generates detailed comparison reports with accuracy, speed, and cost metrics.

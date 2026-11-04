@@ -34,7 +34,6 @@ MANIFEST_PATH = Path(__file__).parents[1] / "audio_generation" / "manifest.json"
 MODELS = [
     {"id": "eleven_v4", "label": "ElevenLabs v4", "provider": "elevenlabs"},
     {"id": "eleven_multilingual_v2", "label": "ElevenLabs Multilingual v2", "provider": "elevenlabs"},
-    {"id": "tts-1", "label": "OpenAI TTS", "provider": "openai"},
 ]
 CANDIDATE_FIELDS = "id, word, provider, model, voice_id, input_mode, input_text, settings, created_at, status, reviewer_name, reviewed_by, reviewed_at, dialect, notes, consent_reference, native_review_confirmed, pronunciation_score, naturalness_score, publication_error"
 
@@ -44,8 +43,8 @@ class ReviewConflict(Exception):
 
 
 class GenerateRequest(BaseModel):
-    provider: Literal["elevenlabs", "openai"] = "elevenlabs"
-    model: Literal["eleven_v4", "eleven_multilingual_v2", "tts-1"] = "eleven_v4"
+    provider: Literal["elevenlabs"] = "elevenlabs"
+    model: Literal["eleven_v4", "eleven_multilingual_v2"] = "eleven_v4"
     input_mode: Literal["original", "ipa", "respelling"] = "original"
     pronunciation: str | None = Field(default=None, max_length=4096)
 
@@ -372,7 +371,7 @@ def create_audio_review_router(verify_admin: Callable, *, store_factory: Callabl
         def normalized(text):
             return text.lower().replace("å", "a").replace("ñ", "n").replace("'", "").replace("-", " ")
         filtered = [word for word in words if (not status_filter or word["status"] == status_filter or (status_filter == "needs_review" and word["status"] == "needs_native_review")) and (not tier_filter or word["tier"] == tier_filter) and (not search or normalized(search) in normalized(word["chamorro"]) or normalized(search) in normalized(word["english"]))]
-        return {"words": filtered, "total": len(filtered), "stats": stats, "config": {"manifest_sync_pending": sync["pending"], "default_model": "eleven_v4", "voice_id": os.getenv("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL"), "models": MODELS, "can_record": bool(ffmpeg_executable()), "elevenlabs_configured": bool(os.getenv("ELEVENLABS_API_KEY")), "openai_configured": bool(os.getenv("OPENAI_API_KEY"))}}
+        return {"words": filtered, "total": len(filtered), "stats": stats, "config": {"manifest_sync_pending": sync["pending"], "default_model": "eleven_v4", "voice_id": os.getenv("ELEVENLABS_VOICE_ID", "EXAVITQu4vr4xnSDxMaL"), "models": MODELS, "can_record": bool(ffmpeg_executable()), "elevenlabs_configured": bool(os.getenv("ELEVENLABS_API_KEY"))}}
 
     @router.post("/api/admin/audio/sync-manifest")
     async def synchronize_manifest(authorization: str | None = Header(None)):
