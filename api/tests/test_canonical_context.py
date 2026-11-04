@@ -1,6 +1,6 @@
 import pytest
 
-from api.canonical_context import get_canonical_tutor_context
+from api.canonical_context import CANONICAL_VOCABULARY_PATH, get_canonical_tutor_context
 
 
 def test_exact_english_phrases_prepend_governed_curriculum_context():
@@ -358,3 +358,42 @@ def test_abbreviated_letter_notation_is_a_letter_name():
     letter_blocks = [b for b in blocks if "Chamorro headword: se" in b]
     assert letter_blocks and all("name of a letter" in b for b in letter_blocks)
     assert not any("direct dictionary evidence" in b for b in letter_blocks)
+
+
+@pytest.mark.parametrize("request_text", [
+    "Review Chamorro colors",
+    "Help me describe the colors of a picture in Chamorro.",
+    "Teach me the colours",
+])
+def test_a_request_to_review_a_topic_gets_that_topics_vocabulary_list_entries(request_text: str) -> None:
+    import json
+
+    context, sources = get_canonical_tutor_context(request_text)
+    canonical = json.loads(CANONICAL_VOCABULARY_PATH.read_text(encoding="utf-8"))
+    colors = [entry for entry in canonical["entries"] if entry["category"] == "colors"]
+
+    assert colors
+    for entry in colors:
+        assert f"[Canonical {entry['id']}]" in context
+        assert entry["recommended_teaching_term"] in context
+    assert ("HåfaGPT vocabulary list", None) in sources
+
+
+def test_topic_entries_are_capped_and_never_include_entries_held_for_review() -> None:
+    context, _sources = get_canonical_tutor_context("List the verbs I should study")
+
+    assert context.count("[Canonical ") <= 12
+    # The three verb phrases the canonical layer holds for review stay out of tutor context.
+    for held in ("Hu hånao", "Hu kånno'", "Hu maigo'"):
+        assert held not in context
+
+
+@pytest.mark.parametrize("request_text", [
+    "Review my essay about colors in painting",
+    "What colors are on the Guam flag?",
+    "Thanks, that was helpful",
+])
+def test_topic_entries_need_a_request_to_study_the_topic(request_text: str) -> None:
+    context, _sources = get_canonical_tutor_context(request_text)
+
+    assert "[Canonical colors." not in context

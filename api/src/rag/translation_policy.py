@@ -25,6 +25,11 @@ TRANSLATION REQUEST (phrase, sentence, or passage):
   and cite it. A match for some words does not verify the whole translation.
 - Mark only a materially uncertain word or construction, inline where it occurs,
   with the most likely reading or a short alternative.
+- A short phrase shown with no sentence around it is the exception when a
+  reference gives one of its words more than one sense (for example a form
+  recorded both as a pronoun and as an article). Lay out each reading the
+  references support, with its source, and say that the sentence it came from
+  decides which applies. Do not present one reading as the phrase's meaning.
 - Preserve names and quoted English terms. In a dialogue, resolve short answers
   and omitted repeated words from the preceding turn, and keep the scope of
   alternatives, negation, recurring schedules, and present-time phrases.
