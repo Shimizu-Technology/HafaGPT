@@ -723,7 +723,7 @@ function QuizViewerSession() {
       />
 
       {/* Question Content - scrollable area */}
-      <main className="learner-reading flex-1 overflow-y-auto">
+      <main className="learner-reading flex-1 overflow-y-auto overscroll-y-contain">
         <div className="max-w-2xl mx-auto w-full px-4 py-4 sm:py-6 pb-safe">
         <p role="status" className="mb-3 text-xs text-brown-600 dark:text-brown-300">{storageAvailable ? savedQuiz ? 'Resumed your quiz on this browser.' : 'Your quiz resumes on this browser if you leave.' : 'Browser storage is unavailable. Keep this quiz open to retain your progress.'}</p>
         <ContentTrustNote trust={contentTrust} className="mb-4" compact />

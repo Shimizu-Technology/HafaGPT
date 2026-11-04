@@ -89,7 +89,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
           aria-pressed={isFlipped}
           aria-label={isFlipped ? `Show the Chamorro side for ${currentCard.back}` : `Show the meaning of ${currentCard.front}`}
           onClick={handleFlip}
-          className="group w-full cursor-pointer perspective-1000 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-4"
+          className="selectable group w-full cursor-pointer perspective-1000 rounded-3xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-4"
         >
           <div
             className={`grid w-full min-h-64 transition-transform duration-200 motion-reduce:transition-none group-focus-visible:transition-none transform-style-3d ${

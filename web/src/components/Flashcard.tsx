@@ -74,14 +74,14 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
         aria-describedby={isFlipped ? `${backContentId} ${readingHintId}` : readingHintId}
         aria-pressed={isFlipped}
         aria-label={isFlipped ? `Show the Chamorro side for ${back}` : `Show the meaning of ${front}`}
-        className={`relative w-full h-full transition-transform duration-300 ease-in-out transform-style-3d ${
+        className={`selectable relative w-full h-full transition-transform duration-300 ease-in-out transform-style-3d ${
           isFlipped ? 'rotate-y-180' : ''
         } focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-4 rounded-2xl`}
       >
         {/* Front of card */}
         <div className="absolute inset-0 backface-hidden" aria-hidden={isFlipped}>
           <div className="w-full h-full bg-white dark:bg-brown-900 rounded-2xl border border-cream-300 dark:border-brown-700 flex flex-col p-6">
-            <div ref={frontContent} data-testid="flashcard-front-content" className="min-h-0 flex-1 overflow-y-auto">
+            <div ref={frontContent} data-testid="flashcard-front-content" className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
               <div className="flex min-h-full items-center justify-center">
                 <p className="w-full break-words font-chamorro text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-cream-100 text-center">
                   {front}
@@ -98,7 +98,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
         {/* Back of card */}
         <div className="absolute inset-0 backface-hidden rotate-y-180" aria-hidden={!isFlipped}>
           <div className="w-full h-full bg-action rounded-2xl border border-coral-800 flex flex-col p-6 text-white">
-            <div ref={backContent} id={backContentId} data-testid="flashcard-back-content" className="min-h-0 flex-1 overflow-y-auto">
+            <div ref={backContent} id={backContentId} data-testid="flashcard-back-content" className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain">
               <div className="flex min-h-full flex-col items-center justify-center gap-3">
                 <p className="w-full break-words text-2xl sm:text-3xl font-semibold text-center">
                   {back}

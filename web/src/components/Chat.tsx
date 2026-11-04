@@ -33,6 +33,7 @@ import { Toast } from './Toast';
 import { ImageModal } from './ImageModal';
 import { BrandMark } from './BrandMark';
 import { UpgradePrompt } from './UpgradePrompt';
+import { ResponsiveSheet } from './ResponsiveSheet';
 import { useShareConversation, ShareInfo } from '../hooks/useShareConversation';
 import { forgetConversationIntent, getChatIntentPlaceholder, normalizeChatIntent, rememberConversationIntent, rememberedConversationIntent, type ChatIntent } from '../lib/chatIntent';
 import { useChatAutoScroll } from '../hooks/useChatAutoScroll';
@@ -274,9 +275,6 @@ function ChatSession() {
     dialogRef: shareDialogRef,
     initialFocusRef: shareCloseRef,
   });
-  const optionsDialogRef = useRef<HTMLDivElement>(null);
-  const optionsCloseRef = useRef<HTMLButtonElement>(null);
-  useModalAccessibility({ isOpen: showOptions, onClose: () => setShowOptions(false), dialogRef: optionsDialogRef, initialFocusRef: optionsCloseRef });
   const [failedAttempt, setFailedAttempt] = useState<SendAttempt | null>(null);
   const [failureTitle, setFailureTitle] = useState('Message not sent');
   // A dropped connection on a sent message: check the server before calling it lost.
@@ -1587,7 +1585,7 @@ End of Export
           data-testid="chat-messages"
           tabIndex={0}
           aria-label="Conversation messages"
-          className="h-full min-h-0 overflow-y-auto overflow-x-hidden px-4 pb-3 sm:pb-5 custom-scrollbar"
+          className="h-full min-h-0 overflow-y-auto overscroll-y-contain overflow-x-hidden px-4 pb-3 sm:pb-5 custom-scrollbar"
         >
           <div className="w-full max-w-4xl mx-auto">
           {/* Loading skeleton while initializing */}
@@ -1765,41 +1763,30 @@ End of Export
         />
       </div>
 
-      {showOptions && (
-        <div className="fixed left-0 right-0 z-[60] flex items-center justify-center bg-black/40 p-4"
-          style={{ top: viewport.top, height: viewport.height }} onClick={() => setShowOptions(false)} role="presentation">
-          <div ref={optionsDialogRef} role="dialog" aria-modal="true" aria-labelledby="tutor-options-title" tabIndex={-1}
-            style={{ maxHeight: Math.max(0, viewport.height - 32) }}
-            className="w-full max-w-sm overflow-y-auto rounded-2xl border border-cream-300 bg-cream-50 p-4 shadow-xl dark:border-brown-700 dark:bg-brown-950" onClick={event => event.stopPropagation()}>
-            <div className="mb-4 flex items-center justify-between">
-              <h2 id="tutor-options-title" className="text-lg font-semibold text-brown-900 dark:text-cream-100">Tutor options</h2>
-              <button ref={optionsCloseRef} type="button" onClick={() => setShowOptions(false)} aria-label="Close tutor options"
-                className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-brown-100 dark:hover:bg-brown-900"><X className="h-5 w-5" /></button>
-            </div>
-            <label className="block text-sm font-semibold text-brown-800 dark:text-cream-200" htmlFor="tutor-answer-language">Answer language</label>
-            <select id="tutor-answer-language" value={mode} disabled={loading || preparingSend}
-              onChange={event => setMode(event.target.value as SendAttempt['mode'])}
-              className="mt-2 min-h-11 w-full rounded-xl border border-cream-300 bg-white px-3 text-base text-brown-800 dark:border-brown-700 dark:bg-brown-900 dark:text-cream-100">
-              <option value="english">English</option><option value="learn">Both languages</option><option value="chamorro">Chamorro</option>
-            </select>
-            <p className="mb-4 mt-2 text-xs leading-relaxed text-brown-600 dark:text-brown-300">For replies in this chat. You can type in either language.</p>
-            <div className="grid gap-1 text-sm text-brown-800 dark:text-cream-200">
-              <button type="button" onClick={toggleTheme} className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 dark:hover:bg-brown-900">
-                {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}Use {theme === 'light' ? 'dark' : 'light'} theme
-              </button>
-              {isSignedIn && <button type="button" onClick={() => { setShowOptions(false); void handleNewConversation(); }}
-                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 dark:hover:bg-brown-900"><Plus className="h-4 w-4" />New chat</button>}
-              <button type="button" disabled={!isSignedIn || !activeConversationId || messages.length === 0}
-                onClick={() => { setShowOptions(false); if (activeConversationId) void handleShareConversation(activeConversationId); }}
-                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-brown-900"><Share2 className="h-4 w-4" />Share conversation</button>
-              <button type="button" disabled={messages.length === 0} onClick={() => { setShowOptions(false); setShowExportModal(true); }}
-                className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-brown-900"><Download className="h-4 w-4" />Export chat</button>
-              {isSignedIn && <Link to="/settings" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-brown-900"><Settings className="h-4 w-4" />Settings</Link>}
-              <Link to="/" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-brown-900"><ArrowLeft className="h-4 w-4" />Back to Today</Link>
-            </div>
-          </div>
+      <ResponsiveSheet open={showOptions} onClose={() => setShowOptions(false)} title="Tutor options" titleId="tutor-options-title"
+        closeLabel="Close tutor options" viewport={viewport}>
+        <label className="block text-sm font-semibold text-brown-800 dark:text-cream-200" htmlFor="tutor-answer-language">Answer language</label>
+        <select id="tutor-answer-language" value={mode} disabled={loading || preparingSend}
+          onChange={event => setMode(event.target.value as SendAttempt['mode'])}
+          className="mt-2 min-h-11 w-full rounded-xl border border-cream-300 bg-white px-3 text-base text-brown-800 dark:border-brown-700 dark:bg-brown-900 dark:text-cream-100">
+          <option value="english">English</option><option value="learn">Both languages</option><option value="chamorro">Chamorro</option>
+        </select>
+        <p className="mb-4 mt-2 text-xs leading-relaxed text-brown-600 dark:text-brown-300">For replies in this chat. You can type in either language.</p>
+        <div className="grid gap-1 text-sm text-brown-800 dark:text-cream-200">
+          <button type="button" onClick={toggleTheme} className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 dark:hover:bg-brown-900">
+            {theme === 'light' ? <Moon className="h-4 w-4" /> : <Sun className="h-4 w-4" />}Use {theme === 'light' ? 'dark' : 'light'} theme
+          </button>
+          {isSignedIn && <button type="button" onClick={() => { setShowOptions(false); void handleNewConversation(); }}
+            className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 dark:hover:bg-brown-900"><Plus className="h-4 w-4" />New chat</button>}
+          <button type="button" disabled={!isSignedIn || !activeConversationId || messages.length === 0}
+            onClick={() => { setShowOptions(false); if (activeConversationId) void handleShareConversation(activeConversationId); }}
+            className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-brown-900"><Share2 className="h-4 w-4" />Share conversation</button>
+          <button type="button" disabled={messages.length === 0} onClick={() => { setShowOptions(false); setShowExportModal(true); }}
+            className="flex min-h-11 items-center gap-3 rounded-xl px-3 text-left hover:bg-cream-200 disabled:opacity-40 dark:hover:bg-brown-900"><Download className="h-4 w-4" />Export chat</button>
+          {isSignedIn && <Link to="/settings" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-brown-900"><Settings className="h-4 w-4" />Settings</Link>}
+          <Link to="/" onClick={() => setShowOptions(false)} className="flex min-h-11 items-center gap-3 rounded-xl px-3 hover:bg-cream-200 dark:hover:bg-brown-900"><ArrowLeft className="h-4 w-4" />Back to Today</Link>
         </div>
-      )}
+      </ResponsiveSheet>
 
       {/* Export Modal */}
       {showExportModal && (
@@ -1811,7 +1798,7 @@ End of Export
             aria-labelledby="export-chat-title"
             tabIndex={-1}
             style={{ maxHeight: Math.max(0, viewport.height - 32) }}
-            className="overflow-y-auto bg-cream-50 dark:bg-brown-950 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-brown-900"
+            className="overflow-y-auto overscroll-y-contain bg-cream-50 dark:bg-brown-950 rounded-2xl p-6 max-w-sm w-full shadow-2xl border border-cream-300 dark:border-brown-900"
           >
             <h2 id="export-chat-title" className="text-lg font-bold text-brown-800 dark:text-cream-100 mb-2">Export chat history</h2>
             <p className="text-sm text-brown-600 dark:text-brown-300 mb-5">
@@ -1860,7 +1847,7 @@ End of Export
             aria-labelledby="share-chat-title"
             tabIndex={-1}
             style={{ maxHeight: Math.max(0, viewport.height - 32) }}
-            className="overflow-y-auto bg-cream-50 dark:bg-brown-950 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-cream-300 dark:border-brown-900"
+            className="overflow-y-auto overscroll-y-contain bg-cream-50 dark:bg-brown-950 rounded-2xl p-6 max-w-md w-full shadow-2xl border border-cream-300 dark:border-brown-900"
             onClick={e => e.stopPropagation()}
           >
             <div className="flex items-center justify-between mb-4">

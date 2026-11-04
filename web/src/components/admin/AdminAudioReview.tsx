@@ -265,13 +265,13 @@ export function AdminAudioReview() {
             {library.data?.words.length === 0 && (
               <p className="py-6 text-sm">No matching audio. Try another word or add a pilot phrase.</p>
             )}
-            <ul className="mt-4 max-h-[55vh] space-y-1 overflow-y-auto" aria-label="Words and phrases">
+            <ul className="mt-4 max-h-[55vh] space-y-1 overflow-y-auto overscroll-y-contain" aria-label="Words and phrases">
               {library.data?.words.slice(0, limit).map((word) => (
                 <li key={word.chamorro}>
                   <button
                     aria-pressed={selected?.chamorro === word.chamorro}
                     onClick={() => setSelected(word)}
-                    className={`min-h-14 w-full rounded-xl px-3 py-3 text-left [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-brown-700 ${selected?.chamorro === word.chamorro ? "bg-cream-100 dark:bg-brown-700" : ""}`}
+                    className={`selectable min-h-14 w-full rounded-xl px-3 py-3 text-left [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-brown-700 ${selected?.chamorro === word.chamorro ? "bg-cream-100 dark:bg-brown-700" : ""}`}
                   >
                     <span className="block font-chamorro font-semibold">{word.chamorro}</span>
                     <span className="block text-sm text-brown-600 dark:text-brown-100">{word.english}</span>

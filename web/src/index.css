@@ -93,6 +93,25 @@
     scale: 0.97;
   }
 
+  /* Controls feel like controls on a phone: no double-tap-zoom delay, and a
+     long press does not select the label or open the link callout. Content
+     is never listed here. Chamorro words, tutor answers and anything a learner
+     may copy must stay selectable, so a control that also carries content
+     (an inline story word, a flashcard face) opts back in with .selectable. */
+  :where(button, a, [role="button"], summary, label, select) {
+    touch-action: manipulation;
+  }
+  :where(button, [role="button"], summary, [role="tab"], nav a, .action-button, .pressable) {
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-touch-callout: none;
+  }
+  :where(button, [role="button"], summary, [role="tab"], nav a, .action-button, .pressable).selectable {
+    -webkit-user-select: text;
+    user-select: text;
+    -webkit-touch-callout: default;
+  }
+
   /* Headings and regions that receive focus programmatically after
      navigation are not controls; announcing them is enough. */
   :where(h1, h2, h3, main, section, article, div, p)[tabindex="-1"]:focus-visible {
@@ -321,6 +340,32 @@
   .thinking-dot:nth-child(3) {
     animation-delay: 320ms;
   }
+
+  /* Overlays. Phone: a bottom sheet that slides in over 240ms and leaves
+     faster (160ms). Wider screens: a centred dialog that fades and scales
+     from .97 (180ms in, 120ms out). Only transform and opacity animate. The
+     enter keyframes fill backwards only, so the inline transform a swipe sets
+     is not overridden once the sheet has settled; the exit keyframes have no
+     "from", so they continue from wherever a swipe left the sheet. */
+  @keyframes overlay-fade-in { from { opacity: 0; } }
+  @keyframes overlay-fade-out { to { opacity: 0; } }
+  @keyframes sheet-in { from { transform: translateY(100%); } }
+  @keyframes sheet-out { to { transform: translateY(100%); } }
+  @keyframes dialog-in { from { opacity: 0; transform: scale(0.97); } }
+  @keyframes dialog-out { to { opacity: 0; transform: scale(0.98); } }
+  @keyframes popover-in { from { opacity: 0; transform: translateY(4px); } }
+
+  .overlay-backdrop[data-variant="sheet"] { animation: overlay-fade-in 240ms var(--ease-drawer) backwards; }
+  .overlay-backdrop[data-variant="dialog"] { animation: overlay-fade-in 180ms var(--ease-out) backwards; }
+  .overlay-backdrop[data-state="closed"] { animation: overlay-fade-out 120ms var(--ease-out) forwards; }
+  .overlay-backdrop[data-variant="sheet"][data-state="closed"] { animation-duration: 160ms; animation-timing-function: var(--ease-drawer); }
+  .overlay-panel[data-variant="sheet"] { animation: sheet-in 240ms var(--ease-drawer) backwards; }
+  .overlay-panel[data-variant="sheet"][data-state="closed"] { animation: sheet-out 160ms var(--ease-drawer) forwards; }
+  .overlay-panel[data-variant="dialog"] { animation: dialog-in 180ms var(--ease-out) backwards; }
+  .overlay-panel[data-variant="dialog"][data-state="closed"] { animation: dialog-out 120ms var(--ease-out) forwards; }
+
+  /* The gloss that opens under a tapped story word. */
+  .story-word-popover { animation: popover-in 150ms var(--ease-out) backwards; }
 
   /* 3D Flip Animation for Flashcards */
   .perspective-1000 {
@@ -734,6 +779,19 @@
   .animate-slide-down {
     animation-name: fade-in !important;
     animation-duration: 150ms !important;
+  }
+
+  /* Overlays and the story gloss fade only: no sliding, scaling or rising. */
+  .overlay-backdrop[data-state="open"],
+  .overlay-panel[data-state="open"],
+  .story-word-popover {
+    animation-name: overlay-fade-in !important;
+    animation-duration: 150ms !important;
+  }
+  .overlay-backdrop[data-state="closed"],
+  .overlay-panel[data-state="closed"] {
+    animation-name: overlay-fade-out !important;
+    animation-duration: 100ms !important;
   }
 
   /* No press scaling. */

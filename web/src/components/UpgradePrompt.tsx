@@ -70,7 +70,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
         aria-modal="true"
         aria-labelledby="upgrade-prompt-title"
         tabIndex={-1}
-        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-cream-300 bg-cream-50 shadow-xl animate-scale-in dark:border-brown-700 dark:bg-brown-950"
+        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto overscroll-y-contain rounded-2xl border border-cream-300 bg-cream-50 shadow-xl animate-scale-in dark:border-brown-700 dark:bg-brown-950"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
