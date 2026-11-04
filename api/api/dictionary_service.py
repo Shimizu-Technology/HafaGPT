@@ -10,6 +10,7 @@ import json
 import logging
 import re
 import unicodedata
+from datetime import datetime, timezone
 from functools import lru_cache
 from typing import Optional
 from pathlib import Path
@@ -1187,6 +1188,7 @@ class DictionaryService:
                 },
                 "category": "Greetings & Basics",
                 "date": today.isoformat(),
+                "server_time": datetime.now(timezone.utc).isoformat(),
                 "trust": DEVELOPING_CORPUS_TRUST,
                 "audio_review_status": "unknown",
             }
@@ -1218,6 +1220,7 @@ class DictionaryService:
             "example": None,  # Manifest words don't have examples
             "category": word.get("category", "Vocabulary"),
             "date": today.isoformat(),
+            "server_time": datetime.now(timezone.utc).isoformat(),
             "trust": word["trust"],
             "audio_review_status": word["audio_review_status"],
         }

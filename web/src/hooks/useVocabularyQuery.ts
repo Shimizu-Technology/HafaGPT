@@ -1,4 +1,4 @@
-import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery } from '@tanstack/react-query';
+import { keepPreviousData, queryOptions, useInfiniteQuery, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useState } from 'react';
 import type { ContentTrust } from '../data/contentTrust';
 
@@ -161,6 +161,8 @@ export interface WordOfTheDay {
   } | null;
   category: string;
   date: string;
+  /** The API's clock (UTC, ISO 8601), which lets a device whose clock is off still follow the Guam date. */
+  server_time?: string;
   trust?: ContentTrust;
 }
 
@@ -170,12 +172,40 @@ const GUAM_UTC_OFFSET_MS = 10 * 60 * 60 * 1000; // Guam has no daylight saving t
 
 class WordOfTheDayTimeout extends Error {}
 
+// The API picks the word by the Guam date on its own clock. A device clock a few
+// minutes fast or slow would turn the date over at the wrong moment, so the
+// offset between the two is learned from each response and applied here.
+let serverClockOffsetMs = 0;
+const serverClockListeners = new Set<() => void>();
+const SERVER_CLOCK_JITTER_MS = 1_000;
+// With an API that does not report its time, a device that is ahead keeps asking until the API turns over.
+const STALE_WORD_RETRY_MS = [30_000, 60_000, 2 * 60_000, 5 * 60_000];
+
+function serverNow(): number {
+  return Date.now() + serverClockOffsetMs;
+}
+
+function learnServerClock(serverTime: string | undefined, sentAt: number, receivedAt: number): void {
+  const server = Date.parse(serverTime ?? '');
+  if (!Number.isFinite(server)) return;
+  // The reply was written about halfway through the round trip.
+  const offset = server - (sentAt + receivedAt) / 2;
+  if (Math.abs(offset - serverClockOffsetMs) < SERVER_CLOCK_JITTER_MS) return;
+  serverClockOffsetMs = offset;
+  serverClockListeners.forEach((listener) => listener());
+}
+
+/** Test hook: forget what a previous response taught about the device clock. */
+export function resetServerClockOffset(): void {
+  serverClockOffsetMs = 0;
+}
+
 /** The Guam calendar date ("2026-11-04"), which is how the API picks the word. */
-export function guamDateKey(now: number = Date.now()): string {
+export function guamDateKey(now: number = serverNow()): string {
   return new Date(now + GUAM_UTC_OFFSET_MS).toISOString().slice(0, 10);
 }
 
-export function msUntilGuamMidnight(now: number = Date.now()): number {
+export function msUntilGuamMidnight(now: number = serverNow()): number {
   return DAY_MS - ((now + GUAM_UTC_OFFSET_MS) % DAY_MS);
 }
 
@@ -185,12 +215,15 @@ async function fetchWordOfTheDay({ signal }: { signal?: AbortSignal } = {}): Pro
   const timer = setTimeout(() => { timedOut = true; controller.abort(); }, WORD_OF_THE_DAY_TIMEOUT_MS);
   const cancel = () => controller.abort();
   signal?.addEventListener('abort', cancel, { once: true });
+  const sentAt = Date.now();
   try {
     const response = await fetch(`${API_URL}/api/vocabulary/word-of-the-day`, { signal: controller.signal });
     if (!response.ok) {
       throw new Error('Failed to fetch word of the day');
     }
-    return await response.json();
+    const word: WordOfTheDay = await response.json();
+    learnServerClock(word.server_time, sentAt, Date.now());
+    return word;
   } catch (error) {
     if (timedOut) throw new WordOfTheDayTimeout('Word of the day timed out');
     throw error;
@@ -208,7 +241,8 @@ export function wordOfTheDayQueryOptions(date: string = guamDateKey()) {
   return queryOptions({
     queryKey: ['vocabulary', 'word-of-the-day', date],
     queryFn: fetchWordOfTheDay,
-    staleTime: 1000 * 60 * 60, // 1 hour - word changes daily
+    // A reply for another day (the device asked for a date the API had not reached) is not this key's word.
+    staleTime: (query) => (query.state.data && query.state.data.date !== date ? 0 : 1000 * 60 * 60), // word changes daily
     gcTime: 1000 * 60 * 60 * 24, // 24 hours
     // A stalled request already waited the full timeout; show the unavailable state instead of waiting again.
     retry: (failureCount, error) => !(error instanceof WordOfTheDayTimeout) && failureCount < 1,
@@ -228,10 +262,12 @@ function useGuamDate(): string {
     };
     const onResume = () => { if (document.visibilityState === 'visible') sync(); };
     sync();
+    serverClockListeners.add(sync);
     document.addEventListener('visibilitychange', onResume);
     window.addEventListener('pageshow', onResume);
     return () => {
       clearTimeout(timer);
+      serverClockListeners.delete(sync);
       document.removeEventListener('visibilitychange', onResume);
       window.removeEventListener('pageshow', onResume);
     };
@@ -240,7 +276,36 @@ function useGuamDate(): string {
 }
 
 export function useWordOfTheDay() {
-  return useQuery(wordOfTheDayQueryOptions(useGuamDate()));
+  const queryClient = useQueryClient();
+  const date = useGuamDate();
+  // Keep showing the word on screen while the next day's loads, so midnight never blanks the card.
+  const query = useQuery({ ...wordOfTheDayQueryOptions(date), placeholderData: keepPreviousData });
+  const { data, refetch } = query;
+  const servedDate = data?.date;
+
+  // The word the API sent belongs to the date the API says, whatever date the device asked for.
+  useEffect(() => {
+    if (data && servedDate && servedDate !== date) {
+      queryClient.setQueryData(wordOfTheDayQueryOptions(servedDate).queryKey, data);
+    }
+  }, [data, servedDate, date, queryClient]);
+
+  // The device says it is a later day than the API does and the API did not say what time it is:
+  // ask again until the API turns over rather than leaving yesterday's word up.
+  const deviceAhead = Boolean(servedDate && servedDate < date && !data?.server_time);
+  useEffect(() => {
+    if (!deviceAhead) return undefined;
+    let attempt = 0;
+    let timer: ReturnType<typeof setTimeout>;
+    const retry = () => {
+      void refetch();
+      timer = setTimeout(retry, STALE_WORD_RETRY_MS[Math.min(++attempt, STALE_WORD_RETRY_MS.length - 1)]);
+    };
+    timer = setTimeout(retry, STALE_WORD_RETRY_MS[0]);
+    return () => clearTimeout(timer);
+  }, [deviceAhead, refetch]);
+
+  return query;
 }
 
 // Dictionary Quiz types and hook
