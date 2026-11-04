@@ -95,9 +95,11 @@ from .models import (
 from .chatbot_service import (
     get_chatbot_response, get_chatbot_response_stream, cancel_pending_message,
     is_message_cancelled, cleanup_cancelled_message, conversation_rows_to_history,
+    flashcard_llm, FLASHCARD_MODEL_ID, practice_llm, PRACTICE_MODEL_ID,
 )
 from .atomic_regeneration import atomic_regeneration_events
 from .provider_errors import TurnFailed, report_if_provider_error
+from .feature_generation import feature_json, strip_card_citations
 from . import chat_requests
 from . import tutor_reservations
 from . import conversations
@@ -820,10 +822,13 @@ def upload_file_to_s3_background(
 # Rate limiting storage (in-memory - use Redis in production for multiple workers/servers)
 rate_limit_storage = defaultdict(list)
 tts_rate_limit_storage = defaultdict(list)
+practice_rate_limit_storage = defaultdict(list)
 RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))  # requests
 RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))  # seconds
 TTS_RATE_LIMIT_REQUESTS = int(os.getenv("TTS_RATE_LIMIT_REQUESTS", "20"))
 TTS_RATE_LIMIT_WINDOW = int(os.getenv("TTS_RATE_LIMIT_WINDOW", "60"))
+PRACTICE_RATE_LIMIT_REQUESTS = int(os.getenv("PRACTICE_RATE_LIMIT_REQUESTS", "12"))
+PRACTICE_RATE_LIMIT_WINDOW = int(os.getenv("PRACTICE_RATE_LIMIT_WINDOW", "60"))
 
 def _check_window_rate_limit(storage, client_key: str, max_requests: int, window_seconds: int) -> bool:
     now = datetime.now()
@@ -847,6 +852,16 @@ def check_rate_limit(client_ip: str) -> bool:
         client_ip,
         RATE_LIMIT_REQUESTS,
         RATE_LIMIT_WINDOW,
+    )
+
+
+def check_practice_rate_limit(user_id: str) -> bool:
+    """Per-account limit on practice turns, which spend shared provider credit."""
+    return _check_window_rate_limit(
+        practice_rate_limit_storage,
+        user_id,
+        PRACTICE_RATE_LIMIT_REQUESTS,
+        PRACTICE_RATE_LIMIT_WINDOW,
     )
 
 
@@ -1111,7 +1126,7 @@ async def chat(
                 file_type = file_result['file_type']
                 
                 if file_type == 'image':
-                    # Image: Use GPT-4o-mini Vision
+                    # Image: Use the configured vision model
                     image_base64 = file_result['image_base64']
                     logger.info(f"✅ Image processed: {len(image_base64)} chars base64")
                 else:
@@ -1153,7 +1168,7 @@ async def chat(
         # If document text was extracted, append it to the message
         final_message = message
         if document_text:
-            # Truncate very long documents (GPT-4o has 128k context, but let's be reasonable)
+            # Truncate very long documents to bound input size
             max_doc_chars = 50000  # ~12k tokens
             if len(document_text) > max_doc_chars:
                 document_text = document_text[:max_doc_chars] + "\n\n[Document truncated - showing first 50,000 characters]"
@@ -1430,7 +1445,7 @@ async def chat_stream(
         set_request_context(
             conversation_id=conversation_id,
             mode=mode,
-            model=os.getenv("CHAT_MODEL", "deepseek-v3")
+            model=os.getenv("CHAT_MODEL", "gpt-5.6-luna")
         )
         
         # Process files if present
@@ -2708,121 +2723,43 @@ def get_pronunciation(word: str) -> str:
 async def text_to_speech(
     request: Request,
     text: str = Form(...),
-    voice: str = Form(default="shimmer"),  # Shimmer works best for Chamorro/Spanish
-    phonetic: bool = Form(default=True),  # Apply Chamorro phonetic preprocessing
-    provider: str = Form(default="elevenlabs")  # "elevenlabs" or "openai"
+    voice: str = Form(default="shimmer"),  # Retained for older clients; ElevenLabs selects its configured voice.
+    phonetic: bool = Form(default=True),
+    provider: str = Form(default="elevenlabs"),
 ):
-    """
-    Convert text to speech using OpenAI or ElevenLabs TTS.
-    
-    Returns base64-encoded MP3 audio that can be played in browser.
-    
-    Chamorro Pronunciation Enhancement:
-    - When phonetic=True (default), text is preprocessed using:
-      1. Pronunciation dictionary (exact word matches)
-      2. Automatic phonetic conversion (Y→DZ, CH→TS, Å→AW, etc.)
-    
-    Providers:
-    - openai: Fast, affordable, uses phonetic conversion
-    - elevenlabs: Higher quality, better for non-English (requires ELEVENLABS_API_KEY)
-    """
+    """Generate live ElevenLabs audio; existing static audio remains independent."""
     try:
         client_ip = request.client.host if request.client else "unknown"
         if not check_tts_rate_limit(client_ip):
             raise HTTPException(
                 status_code=429,
-                detail=f"TTS rate limit exceeded. Maximum {TTS_RATE_LIMIT_REQUESTS} requests per {TTS_RATE_LIMIT_WINDOW} seconds."
+                detail=f"TTS rate limit exceeded. Maximum {TTS_RATE_LIMIT_REQUESTS} requests per {TTS_RATE_LIMIT_WINDOW} seconds.",
             )
-
+        if provider != "elevenlabs":
+            raise HTTPException(status_code=422, detail="Choose ElevenLabs for generated speech.")
         from .audio_synthesis import generate_speech, SpeechGenerationError
-        from openai import APITimeoutError, OpenAI
 
-        total_timeout_budget_seconds = 14.0
-        minimum_openai_budget_seconds = 1.0
-        provider_connect_timeout_seconds = 3.0
-        elevenlabs_read_timeout_seconds = 8.0
-        openai_timeout_seconds = 10.0
-        tts_started_at = time.monotonic()
-        
-        # Limit text length
         text_to_speak = text[:4096]
-        original_text = text_to_speak
-        
-        # Apply Chamorro phonetic preprocessing if enabled
         live_model = os.getenv("ELEVENLABS_LIVE_MODEL") or os.getenv("ELEVENLABS_MODEL") or "eleven_multilingual_v2"
-        if phonetic and not (provider == "elevenlabs" and live_model == "eleven_v4"):
+        if phonetic and live_model != "eleven_v4":
             text_to_speak = get_pronunciation(text_to_speak)
-            if text_to_speak != original_text:
-                logger.info(f"🔤 Phonetic: '{original_text}' → '{text_to_speak}'")
-        
-        logger.info(f"🔊 TTS request: {len(text_to_speak)} chars, voice={voice}, phonetic={phonetic}, provider={provider}")
-        
-        audio_bytes = None
-        
-        if provider == "elevenlabs":
-            # Use ElevenLabs TTS
-            elevenlabs_api_key = os.getenv("ELEVENLABS_API_KEY")
-            if not elevenlabs_api_key:
-                logger.warning("ElevenLabs key not set, falling back to OpenAI")
-                provider = "openai"
-                text_to_speak = get_pronunciation(original_text) if phonetic else original_text
-            else:
-                try:
-                    audio_bytes, _ = await asyncio.to_thread(
-                        generate_speech, text_to_speak, provider="elevenlabs", model=live_model,
-                        timeout=(provider_connect_timeout_seconds, elevenlabs_read_timeout_seconds),
-                    )
-                except (SpeechGenerationError, ValueError):
-                    logger.warning("ElevenLabs generation failed; using OpenAI fallback")
-                    provider = "openai"
-                    text_to_speak = get_pronunciation(original_text) if phonetic else original_text
-
-        if provider == "openai" or audio_bytes is None:
-            # Use OpenAI TTS
-            api_key = os.getenv("OPENAI_API_KEY")
-            if not api_key:
-                raise HTTPException(status_code=500, detail="OpenAI API key not configured")
-
-            elapsed_seconds = time.monotonic() - tts_started_at
-            remaining_budget_seconds = total_timeout_budget_seconds - elapsed_seconds
-            if remaining_budget_seconds < minimum_openai_budget_seconds:
-                raise HTTPException(status_code=504, detail="TTS provider timed out")
-            
-            client = OpenAI(
-                api_key=api_key,
-                timeout=min(openai_timeout_seconds, remaining_budget_seconds),
+        try:
+            audio_bytes, _ = await asyncio.to_thread(
+                generate_speech, text_to_speak, provider="elevenlabs", model=live_model,
+                timeout=(3.0, 8.0),
             )
-            
-            try:
-                response = await asyncio.to_thread(
-                    client.audio.speech.create,
-                    model="tts-1",  # Standard quality (2x faster, $0.015/1K chars)
-                    voice=voice,
-                    input=text_to_speak,
-                )
-            except APITimeoutError as exc:
-                logger.warning(f"OpenAI TTS timed out: {exc}")
-                raise HTTPException(status_code=504, detail="TTS provider timed out") from exc
-            audio_bytes = response.content
-        
-        # Convert to base64 for easy transport
-        audio_base64 = base64.b64encode(audio_bytes).decode('utf-8')
-        
-        logger.info(f"✅ TTS successful: {len(audio_bytes)} bytes via {provider}")
-        
-        return {
-            "audio": audio_base64,
-            "format": "mp3"
-        }
-        
-    except ImportError:
-        logger.error("❌ OpenAI library not installed")
-        raise HTTPException(status_code=500, detail="OpenAI library not available")
+        except (SpeechGenerationError, ValueError):
+            logger.warning("Live speech unavailable; client may use device speech")
+            raise HTTPException(
+                status_code=503,
+                detail="Pronunciation audio is unavailable right now. Please try again shortly.",
+            ) from None
+        return {"audio": base64.b64encode(audio_bytes).decode("utf-8"), "format": "mp3"}
     except HTTPException:
         raise
-    except Exception as e:
-        logger.error(f"❌ TTS failed: {e}")
-        raise HTTPException(status_code=500, detail=f"TTS generation failed: {str(e)}")
+    except Exception as error:
+        logger.error("Live speech failed: %s", type(error).__name__)
+        raise HTTPException(status_code=503, detail="Pronunciation audio is unavailable right now. Please try again shortly.") from None
 
 
 # --- Flashcard Generation Endpoint ---
@@ -2885,16 +2822,8 @@ async def generate_flashcards(
         logger.info(f"🎴 [FLASHCARDS] Starting RAG search...")
         rag_start = time.time()
         
-        # Import RAG and OpenAI
         from src.rag.chamorro_rag import rag
-        from openai import OpenAI
-        
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            raise HTTPException(status_code=500, detail="OpenAI API key not configured")
-        
-        client = OpenAI(api_key=api_key)
-        
+
         # Use RAG to get relevant content for the topic
         topic_queries = {
             "greetings": "Chamorro greetings, hello, good morning, good night, how are you",
@@ -3003,6 +2932,7 @@ REQUIREMENTS:
 4. Provide accurate pronunciation guides
 5. Keep examples simple but authentic
 6. Ensure each card is DISTINCT and offers new learning value
+7. Do not cite sources in any card field. Do not include bracketed source names in card text.
 
 Return ONLY a valid JSON array with this exact structure:
 [
@@ -3017,15 +2947,10 @@ Return ONLY a valid JSON array with this exact structure:
 
 Generate exactly {count} flashcards. Return only the JSON array, no other text."""
 
-        # Call GPT-4o-mini
-        logger.info("🎴 [FLASHCARDS] Calling GPT-4o-mini...")
+        logger.info("🎴 [FLASHCARDS] Calling %s...", FLASHCARD_MODEL_ID)
         gpt_start = time.time()
-        
-        # Run the blocking provider call off the event loop so this worker's
-        # streaming chat replies keep flowing while flashcards generate.
-        response = await asyncio.to_thread(
-            client.chat.completions.create,
-            model="gpt-4o",  # Premium model: 96% accuracy, perfect grammar, faster than 4o-mini
+        flashcards_data = await feature_json(
+            flashcard_llm, FLASHCARD_MODEL_ID,
             messages=[
                 {
                     "role": "system",
@@ -3036,31 +2961,16 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
                     "content": prompt
                 }
             ],
-            temperature=0.7,  # Some creativity for variety
-            max_tokens=1500  # Reduced from 3000 - sufficient for 3 cards
+            max_tokens=6000, source="flashcards",
         )
-        
         gpt_end = time.time()
-        logger.info(f"🎴 [FLASHCARDS] GPT call took: {(gpt_end - gpt_start):.2f}s")
-        
-        # Parse GPT response
-        logger.info(f"🎴 [FLASHCARDS] Parsing GPT response...")
+        logger.info("🎴 [FLASHCARDS] Provider call took: %.2fs", gpt_end - gpt_start)
         parse_start = time.time()
-        
-        response_text = response.choices[0].message.content.strip()
-        
-        # Clean up response (remove markdown code blocks if present)
-        if response_text.startswith("```"):
-            # Remove ```json and ``` markers
-            response_text = response_text.split("```")[1]
-            if response_text.startswith("json"):
-                response_text = response_text[4:]
-        
-        response_text = response_text.strip()
-        
-        # Parse JSON
-        flashcards_data = json.loads(response_text)
-        
+        for card in flashcards_data:
+            for field in ("front", "back", "pronunciation", "example", "category"):
+                if field in card:
+                    card[field] = strip_card_citations(card[field], rag_sources)
+
         # Deduplicate flashcards (safety net)
         # Pre-populate with previous cards to check against ALL cards (not just current batch)
         seen_fronts = set()
@@ -3068,8 +2978,8 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
         
         # Add previous cards to seen sets
         for prev_card in previous_cards_list:
-            prev_front = prev_card.get('front', '').lower().strip()
-            prev_back = prev_card.get('back', '').lower().strip()
+            prev_front = strip_card_citations(prev_card.get('front', ''), rag_sources).lower().strip()
+            prev_back = strip_card_citations(prev_card.get('back', ''), rag_sources).lower().strip()
             if prev_front:
                 seen_fronts.add(prev_front)
             if prev_back:
@@ -3081,8 +2991,8 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
         duplicates_found = 0
         
         for card_data in flashcards_data:
-            front_lower = card_data.get('front', '').lower().strip()
-            back_lower = card_data.get('back', '').lower().strip()
+            front_lower = (card_data.get('front') or '').lower().strip()
+            back_lower = (card_data.get('back') or '').lower().strip()
             
             # Check if we've seen this card before (in previous batches OR current batch)
             if front_lower and back_lower and front_lower not in seen_fronts and back_lower not in seen_backs:
@@ -3103,7 +3013,7 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
                 back=card_data.get("back", ""),
                 pronunciation=card_data.get("pronunciation"),
                 example=card_data.get("example"),
-                category=card_data.get("category", topic)
+                category=card_data.get("category") or topic
             )
             flashcards.append(flashcard)
         
@@ -3122,13 +3032,6 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
         
     except HTTPException:
         raise
-    except json.JSONDecodeError as e:
-        logger.error(f"❌ Failed to parse GPT response as JSON: {e}")
-        logger.error(f"Response was: {response_text[:500]}")
-        raise HTTPException(
-            status_code=500,
-            detail="Failed to generate flashcards: Invalid response format"
-        )
     except Exception as e:
         provider_failure = report_if_provider_error(e, source="flashcards")
         if provider_failure is not None:
@@ -6510,20 +6413,25 @@ class ConversationPracticeResponse(BaseModel):
     practice_notice: str = "AI-generated practice; suggestions and scores are not authoritative language review."
 
 @app.post("/api/conversation-practice", response_model=ConversationPracticeResponse, tags=["Learning"])
-async def conversation_practice(request: ConversationPracticeRequest):
+async def conversation_practice(
+    request: ConversationPracticeRequest,
+    authorization: Optional[str] = Header(None),
+):
     """
     AI-powered conversation practice endpoint.
     
     The AI plays a character in a scenario and responds to user input in Chamorro,
     providing gentle feedback on the user's Chamorro usage.
     """
+    # Each turn spends shared provider credit, so it needs an account and a per-account limit.
+    user_id = await verify_user(authorization)
+    if not check_practice_rate_limit(user_id):
+        raise HTTPException(status_code=429, detail="You're sending messages quickly. Please wait a moment and try again.")
     try:
-        import openai
         from api.canonical_context import get_canonical_tutor_context
         from api.conversation_practice_models import validated_objective_evidence
         from api.tutor_intent import curriculum_tutor_context
         
-        client = openai.OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
         
         # Build the system prompt for the character
         context = request.scenario_context
@@ -6555,20 +6463,11 @@ async def conversation_practice(request: ConversationPracticeRequest):
         # Add the new user message
         messages.append({"role": "user", "content": request.user_message})
         
-        # Call OpenAI
-        response = await asyncio.to_thread(
-            client.chat.completions.create,
-            model="gpt-4o-mini",
-            messages=messages,
-            temperature=0.3,
-            max_tokens=500,
-            response_format={"type": "json_object"}
+        response_data = await feature_json(
+            practice_llm, PRACTICE_MODEL_ID, messages,
+            max_tokens=2000, source="conversation_practice", json_object=True,
         )
-        
-        # Parse the response
-        response_text = response.choices[0].message.content
-        response_data = json.loads(response_text)
-        
+
         evidence = validated_objective_evidence(response_data, request)
         return ConversationPracticeResponse(
             chamorro_response=response_data.get("chamorro_response", ""),

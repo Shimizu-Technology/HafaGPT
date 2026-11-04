@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
-import { useUser } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 import { getScenarioById, ConversationScenario, UsefulPhrase } from '../data/conversationScenarios';
 import { PronunciationButton } from './PronunciationButton';
 import { BookOpenCheck, Check, Circle, Languages, Lightbulb, MessageCircle, Play, RotateCcw, Send, Sparkles, Target, UserRound } from 'lucide-react';
@@ -19,6 +19,7 @@ export function ConversationPractice() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { isSignedIn, user } = useUser();
+  const { getToken } = useAuth();
   const [scenario, setScenario] = useState<ConversationScenario | null>(null);
   const [showIntro, setShowIntro] = useState(true);
   const [showPhrases, setShowPhrases] = useState(false);
@@ -125,11 +126,13 @@ export function ConversationPractice() {
     try {
       const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
       
+      const token = await getToken();
       const response = await fetch(`${API_URL}/api/conversation-practice`, {
         method: 'POST',
         signal: controller.signal,
         headers: {
           'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
         body: JSON.stringify({
           scenario_id: scenario.id,

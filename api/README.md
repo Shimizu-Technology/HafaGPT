@@ -68,7 +68,7 @@ curl http://localhost:8000/api/health
 |-------|------------|
 | **Backend** | FastAPI + Python 3.12 |
 | **Database** | Neon PostgreSQL + PGVector |
-| **LLM** | DeepSeek V3 (via OpenRouter) |
+| **LLM** | GPT-5.6 Luna tutor; GPT-6 Luna flashcards; GPT-6.1 Terra practice (OpenRouter) |
 | **Embeddings** | OpenAI text-embedding-3-small |
 | **Auth** | Clerk |
 | **Storage** | AWS S3 |
@@ -116,21 +116,48 @@ api/
 # Required
 DATABASE_URL=postgresql://...
 OPENAI_API_KEY=sk-...           # For embeddings
-OPENROUTER_API_KEY=sk-or-...    # For DeepSeek
+OPENROUTER_API_KEY=sk-or-...    # For tutor, flashcards, practice, and summaries
 CLERK_SECRET_KEY=sk_...         # For auth
 
 # Optional
 AWS_ACCESS_KEY_ID=...           # For file uploads
 AWS_SECRET_ACCESS_KEY=...
 AWS_S3_BUCKET=...
-CHAT_MODEL=gpt-5.6-luna         # Main tutor; deepseek-v3 is the rollback control
+CHAT_MODEL=gpt-5.6-luna         # Tutor and photos; unchanged production value
+FLASHCARD_MODEL=gpt-6-luna      # Optional alias; default shown
+PRACTICE_MODEL=gpt-6.1-terra     # Optional alias; default shown
 ```
 
-The API refuses to start when `CHAT_MODEL` is not a configured alias or the key
-for its provider is missing (`OPENROUTER_API_KEY` for `gpt-5.6-luna`), rather
-than switching to another model. On Render a failed start fails the deploy's
-health check, so the previous deploy keeps serving. Image requests on a model
-without vision support, such as `deepseek-v3`, still use the vision fallback.
+`CHAT_MODEL`, `FLASHCARD_MODEL`, and `PRACTICE_MODEL` must name an alias in
+`MODEL_CONFIG`: `gpt-5.6-luna`, `gpt-6-luna`, or `gpt-6.1-terra`. Unknown aliases,
+empty values, and missing provider keys fail startup with `ModelConfigurationError`.
+No production environment change is needed: `CHAT_MODEL=gpt-5.6-luna` stays valid.
+
+Flashcards use reasoning `none`, a 6,000-token output cap, and no temperature;
+practice uses reasoning `none`, a 2,000-token cap, JSON object output, and no
+temperature. Both have a 45-second provider timeout with no automatic SDK retries.
+Failures return a friendly retry message and use the shared provider alerts.
+
+**Rollback:** set either feature alias to `gpt-5.6-luna` and restart. This retains
+the new parsing, caps, and error handling. Leave `CHAT_MODEL=gpt-5.6-luna` for the
+established tutor/photo route. The old DeepSeek rollback is removed. A text-only
+chat model routes images explicitly to `gpt-5.6-luna`, or fails clearly if that
+route is unavailable; vision-capable chat models keep their existing image path.
+
+The `summarize_text` helper uses `openai/gpt-6-luna` with reasoning `none` and keeps
+its truncation fallback. Live chat doesn't call it; it compacts history by truncating. `gpt-4o` in token-manager defaults selects only
+a local tiktoken encoding; it makes no provider call.
+
+Live and newly generated admin speech use ElevenLabs only. If it is unavailable,
+`/api/tts` returns 503; the web hook clears its generated-audio state and attempts
+device speech (a Spanish approximation), or reports audio unavailable. Static
+MP3s and their manifests are unchanged. Historical OpenAI candidates remain
+reviewable/playable. `OPENAI_API_KEY` is still required for `text-embedding-3-small`.
+
+OpenAI has no supported Speech API drop-in beyond the January 6, 2027 shutdown:
+[`gpt-realtime-2.1-mini` requires Realtime](https://developers.openai.com/api/docs/guides/text-to-speech),
+and [all listed Speech API models retire together](https://developers.openai.com/api/docs/deprecations).
+No realtime integration is included.
 
 ---
 
@@ -165,11 +192,11 @@ without vision support, such as `deepseek-v3`, still use the vision fallback.
 |---------|------|
 | Render Standard (API) | $25 |
 | Neon PostgreSQL | $0 (free tier) |
-| DeepSeek V3 | $0.50-2 |
+| OpenRouter generation | Usage-dependent |
 | OpenAI Embeddings | $0.30 |
-| OpenAI TTS | $0.50-2 |
+| ElevenLabs speech | Usage-dependent |
 | AWS S3 | $0.05 |
-| **Total** | **~$26-30** |
+| **Total** | **Fixed hosting plus usage** |
 
 ---
 

@@ -58,25 +58,38 @@ def test_oversized_response_stops_reading_and_unknown_model_never_calls_provider
     with pytest.raises(ValueError): speech.generate_speech("test", model="invented")
 
 
-def test_live_v4_missing_key_fallback_restores_the_requested_hint(monkeypatch):
-    import ast, asyncio, base64, logging, os, time
+@pytest.mark.parametrize("failure", ["missing_key", "timeout", "provider_error"])
+def test_live_speech_failure_is_safe_and_does_not_call_openai(monkeypatch, failure):
+    import ast, asyncio, base64, logging, os
     from pathlib import Path
     from types import SimpleNamespace
     from fastapi import HTTPException
     import openai
-    source = Path(__file__).parents[1] / 'api/main.py'
-    node = next(node for node in ast.parse(source.read_text()).body if isinstance(node, ast.AsyncFunctionDef) and node.name=='text_to_speech')
-    node.decorator_list=[]
-    namespace={'__package__':'api','Request':object,'Form':lambda *args,**kwargs:kwargs.get('default'),
-        'HTTPException':HTTPException,'logger':logging.getLogger('audio-test'),'check_tts_rate_limit':lambda ip:True,
-        'get_pronunciation':lambda text:'explicit-test-hint','asyncio':asyncio,'base64':base64,'os':os,'time':time}
-    exec(compile(ast.Module(body=[node],type_ignores=[]),str(source),'exec'),namespace)
-    captured=[]
-    def create(**kwargs): captured.append(kwargs); return SimpleNamespace(content=b'ID3audio')
-    monkeypatch.setattr(openai,'OpenAI',lambda **kwargs:SimpleNamespace(audio=SimpleNamespace(speech=SimpleNamespace(create=create))))
-    monkeypatch.setenv('ELEVENLABS_LIVE_MODEL','eleven_v4');monkeypatch.delenv('ELEVENLABS_API_KEY',raising=False);monkeypatch.setenv('OPENAI_API_KEY','test-only')
-    asyncio.run(namespace['text_to_speech'](SimpleNamespace(client=SimpleNamespace(host='127.0.0.1')),text='test',voice='shimmer',phonetic=True,provider='elevenlabs'))
-    assert captured[0]['input']=='explicit-test-hint'
+    source = Path(__file__).parents[1] / "api/main.py"
+    node = next(n for n in ast.parse(source.read_text()).body if isinstance(n, ast.AsyncFunctionDef) and n.name == "text_to_speech")
+    node.decorator_list = []
+    namespace = {"__package__": "api", "Request": object, "Form": lambda *a, **k: k.get("default"),
+                 "HTTPException": HTTPException, "logger": logging.getLogger("audio-test"),
+                 "check_tts_rate_limit": lambda ip: True, "get_pronunciation": lambda text: text,
+                 "asyncio": asyncio, "base64": base64, "os": os}
+    exec(compile(ast.Module(body=[node], type_ignores=[]), str(source), "exec"), namespace)
+    monkeypatch.setattr(openai, "OpenAI", lambda **k: pytest.fail("OpenAI speech must never run"))
+    monkeypatch.delenv("ELEVENLABS_API_KEY", raising=False)
+    if failure != "missing_key":
+        def fail(*a, **k):
+            raise speech.SpeechGenerationError("private provider text")
+        monkeypatch.setattr(speech, "generate_speech", fail)
+    with pytest.raises(HTTPException) as raised:
+        asyncio.run(namespace["text_to_speech"](SimpleNamespace(client=SimpleNamespace(host="127.0.0.1")),
+                    text="test", voice="shimmer", phonetic=True, provider="elevenlabs"))
+    assert raised.value.status_code == 503
+    assert raised.value.detail == "Pronunciation audio is unavailable right now. Please try again shortly."
+
+
+def test_retired_speech_provider_cannot_generate_new_candidates(monkeypatch):
+    monkeypatch.setattr(speech.requests, "post", lambda *a, **k: pytest.fail("must not call provider"))
+    with pytest.raises(ValueError, match="ElevenLabs"):
+        speech.generate_speech("test", provider="openai")
 
 
 def test_batch_direct_execution_can_import_the_shared_adapter(monkeypatch):

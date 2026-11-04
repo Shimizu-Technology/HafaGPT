@@ -13,6 +13,7 @@ Token Budget Allocation (24,000 tokens total for safety):
 - Response Buffer:   3,000 tokens reserved for generation
 """
 
+import asyncio
 import os
 import logging
 import re
@@ -51,6 +52,7 @@ class TokenBudget:
 DEFAULT_BUDGET = TokenBudget()
 
 
+# gpt-4o below names a local tiktoken encoding only; it never selects an API model.
 def get_tokenizer(model: str = "gpt-4o"):
     """
     Get the appropriate tokenizer for a model.
@@ -437,7 +439,7 @@ async def summarize_text(
     context: str = "conversation history"
 ) -> str:
     """
-    Summarize text using a fast, cheap model (Gemini 2.0 Flash).
+    Summarize text using GPT-6 Luna with reasoning disabled.
     
     Used for:
     - Summarizing old conversation history
@@ -455,7 +457,7 @@ async def summarize_text(
         return text  # Not worth summarizing
     
     try:
-        # Use Gemini 2.0 Flash via OpenRouter - very fast and cheap
+        # Use the same inexpensive reasoning-off model as flashcard generation.
         openrouter_key = os.getenv("OPENROUTER_API_KEY")
         if not openrouter_key:
             logger.warning("OPENROUTER_API_KEY not set, skipping summarization")
@@ -463,13 +465,14 @@ async def summarize_text(
         
         client = OpenAI(
             api_key=openrouter_key,
-            base_url="https://openrouter.ai/api/v1"
+            base_url="https://openrouter.ai/api/v1", timeout=45.0, max_retries=0,
         )
         
-        response = client.chat.completions.create(
-            model="google/gemini-2.0-flash-001",
+        response = await asyncio.to_thread(
+            client.chat.completions.create,
+            model="openai/gpt-6-luna",
             max_tokens=max_output_tokens,
-            temperature=0.3,  # Lower temperature for factual summary
+            extra_body={"reasoning": {"effort": "none"}},
             messages=[
                 {
                     "role": "system",
@@ -483,11 +486,13 @@ async def summarize_text(
         )
         
         summary = response.choices[0].message.content
+        if not summary or not summary.strip():
+            raise ValueError("Empty summary")
         logger.info(f"Summarized {len(text)} chars to {len(summary)} chars")
         return summary
         
     except Exception as e:
-        logger.error(f"Summarization failed: {e}")
+        logger.error("Summarization failed: %s", type(e).__name__)
         # Fallback to simple truncation
         return truncate_text(text, max_output_tokens * 4)
 

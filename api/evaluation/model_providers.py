@@ -1,5 +1,8 @@
 """
-Model Providers for LLM Comparison
+Historical Model Providers for LLM Comparison
+
+This benchmark registry is not MODEL_CONFIG. Old IDs/prices are retained for
+reproducibility; availability is not guaranteed. Do not use it for runtime routing.
 
 Provides a unified interface for testing multiple LLM providers:
 - OpenAI (direct)

@@ -10,7 +10,7 @@ Usage:
     python generate_audio.py --tier 1 --dry-run    # Preview without generating
     python generate_audio.py --word "Håfa Adai"    # Generate single word
     # Publish reviewed candidates through /admin/audio; direct upload is disabled.
-    python generate_audio.py --provider elevenlabs # Use ElevenLabs instead of OpenAI
+    python generate_audio.py --provider elevenlabs # Use ElevenLabs
 """
 
 import argparse
@@ -23,7 +23,6 @@ from pathlib import Path
 
 import requests
 from dotenv import load_dotenv
-from openai import OpenAI
 
 # Load environment variables
 load_dotenv()
@@ -45,11 +44,7 @@ S3_REGION = os.getenv("AWS_REGION", "ap-southeast-2")
 S3_BASE_URL = f"https://{S3_BUCKET}.s3.{S3_REGION}.amazonaws.com/audio"
 
 # TTS Provider settings
-TTS_PROVIDER = os.getenv("TTS_PROVIDER", "elevenlabs")  # "elevenlabs" or "openai"
-
-# OpenAI TTS settings
-OPENAI_TTS_MODEL = "tts-1"
-OPENAI_TTS_VOICE = "shimmer"  # Best for Chamorro/Spanish sounds
+TTS_PROVIDER = os.getenv("TTS_PROVIDER", "elevenlabs")
 
 # ElevenLabs TTS settings
 ELEVENLABS_API_KEY = os.getenv("ELEVENLABS_API_KEY")
@@ -78,7 +73,7 @@ def get_pronunciation(word: str, phonetic_hint: str = None) -> str:
     if word in pron_dict:
         return pron_dict[word]
     
-    # Fall back to automatic conversion (for OpenAI)
+    # Fall back to automatic conversion
     return chamorro_to_phonetic(word)
 
 
@@ -237,20 +232,6 @@ def load_flashcard_words() -> list:
     return words
 
 
-def generate_audio_openai(client: OpenAI, text: str, phonetic_hint: str = None) -> bytes:
-    """Generate audio using OpenAI TTS."""
-    # Use get_pronunciation which checks: 1) hint, 2) dictionary, 3) auto-conversion
-    text_to_speak = get_pronunciation(text, phonetic_hint)
-    
-    response = client.audio.speech.create(
-        model=OPENAI_TTS_MODEL,
-        voice=OPENAI_TTS_VOICE,
-        input=text_to_speak,
-    )
-    
-    return response.content
-
-
 def generate_audio_elevenlabs(text: str, phonetic_hint: str = None) -> bytes:
     """Generate audio using ElevenLabs TTS."""
     from api.audio_synthesis import generate_speech
@@ -264,17 +245,11 @@ def generate_audio_elevenlabs(text: str, phonetic_hint: str = None) -> bytes:
     return audio
 
 
-def generate_audio(text: str, phonetic_hint: str = None, provider: str = None, openai_client: OpenAI = None) -> bytes:
-    """Generate audio using the configured TTS provider."""
-    provider = provider or TTS_PROVIDER
-    
-    if provider == "elevenlabs":
-        return generate_audio_elevenlabs(text, phonetic_hint)
-    else:
-        # OpenAI (default)
-        if openai_client is None:
-            openai_client = OpenAI()
-        return generate_audio_openai(openai_client, text, phonetic_hint)
+def generate_audio(text: str, phonetic_hint: str = None, provider: str = None) -> bytes:
+    """Generate only with ElevenLabs; reject retired providers explicitly."""
+    if (provider or TTS_PROVIDER) != "elevenlabs":
+        raise ValueError("Choose ElevenLabs for generated speech.")
+    return generate_audio_elevenlabs(text, phonetic_hint)
 
 
 def generate_tier1(dry_run: bool = False, force: bool = False, provider: str = None):
@@ -314,17 +289,9 @@ def generate_tier1(dry_run: bool = False, force: bool = False, provider: str = N
         return
     
     # Validate API keys
-    if provider == "elevenlabs":
-        if not ELEVENLABS_API_KEY:
-            print("❌ ELEVENLABS_API_KEY not found in environment")
-            sys.exit(1)
-        openai_client = None
-    else:
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            print("❌ OPENAI_API_KEY not found in environment")
-            sys.exit(1)
-        openai_client = OpenAI(api_key=api_key)
+    if provider != "elevenlabs" or not ELEVENLABS_API_KEY:
+        print("❌ ElevenLabs and ELEVENLABS_API_KEY are required")
+        sys.exit(1)
     
     # Generate audio for each word
     success_count = 0
@@ -341,7 +308,7 @@ def generate_tier1(dry_run: bool = False, force: bool = False, provider: str = N
         print(f"[{i}/{len(words)}] Generating: {chamorro} ({english})...", end=" ")
         
         try:
-            audio_data = generate_audio(chamorro, phonetic, provider, openai_client)
+            audio_data = generate_audio(chamorro, phonetic, provider)
             
             # Validate audio (check minimum size)
             if len(audio_data) < 1000:  # Less than 1KB is suspicious
@@ -426,17 +393,9 @@ def generate_tier2(dry_run: bool = False, force: bool = False, provider: str = N
         return
     
     # Validate API keys
-    if provider == "elevenlabs":
-        if not ELEVENLABS_API_KEY:
-            print("❌ ELEVENLABS_API_KEY not found in environment")
-            sys.exit(1)
-        openai_client = None
-    else:
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            print("❌ OPENAI_API_KEY not found in environment")
-            sys.exit(1)
-        openai_client = OpenAI(api_key=api_key)
+    if provider != "elevenlabs" or not ELEVENLABS_API_KEY:
+        print("❌ ElevenLabs and ELEVENLABS_API_KEY are required")
+        sys.exit(1)
     
     # Generate audio for each word
     success_count = 0
@@ -453,7 +412,7 @@ def generate_tier2(dry_run: bool = False, force: bool = False, provider: str = N
         print(f"[{i}/{len(words)}] Generating: {chamorro} ({english})...", end=" ", flush=True)
         
         try:
-            audio_data = generate_audio(chamorro, phonetic, provider, openai_client)
+            audio_data = generate_audio(chamorro, phonetic, provider)
             
             # Validate audio (check minimum size)
             if len(audio_data) < 1000:  # Less than 1KB is suspicious
@@ -543,17 +502,9 @@ def generate_flashcards(dry_run: bool = False, force: bool = False, provider: st
         return
     
     # Validate API keys
-    if provider == "elevenlabs":
-        if not ELEVENLABS_API_KEY:
-            print("❌ ELEVENLABS_API_KEY not found in environment")
-            sys.exit(1)
-        openai_client = None
-    else:
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            print("❌ OPENAI_API_KEY not found in environment")
-            sys.exit(1)
-        openai_client = OpenAI(api_key=api_key)
+    if provider != "elevenlabs" or not ELEVENLABS_API_KEY:
+        print("❌ ElevenLabs and ELEVENLABS_API_KEY are required")
+        sys.exit(1)
     
     # Generate audio for each word
     success_count = 0
@@ -570,7 +521,7 @@ def generate_flashcards(dry_run: bool = False, force: bool = False, provider: st
         print(f"[{i}/{len(words)}] Generating: {chamorro} ({english})...", end=" ", flush=True)
         
         try:
-            audio_data = generate_audio(chamorro, phonetic, provider, openai_client)
+            audio_data = generate_audio(chamorro, phonetic, provider)
             
             # Validate audio
             if len(audio_data) < 1000:
@@ -626,17 +577,9 @@ def generate_single_word(word: str, phonetic: str = None, provider: str = None):
     AUDIO_DIR.mkdir(exist_ok=True)
     
     # Validate API key based on provider
-    if provider == "elevenlabs":
-        if not ELEVENLABS_API_KEY:
-            print("❌ ELEVENLABS_API_KEY not found in environment")
-            sys.exit(1)
-        openai_client = None
-    else:
-        api_key = os.getenv("OPENAI_API_KEY")
-        if not api_key:
-            print("❌ OPENAI_API_KEY not found in environment")
-            sys.exit(1)
-        openai_client = OpenAI(api_key=api_key)
+    if provider != "elevenlabs" or not ELEVENLABS_API_KEY:
+        print("❌ ElevenLabs and ELEVENLABS_API_KEY are required")
+        sys.exit(1)
     
     manifest = load_manifest()
     
@@ -644,7 +587,7 @@ def generate_single_word(word: str, phonetic: str = None, provider: str = None):
     filepath = AUDIO_DIR / filename
     
     try:
-        audio_data = generate_audio(word, phonetic, provider, openai_client)
+        audio_data = generate_audio(word, phonetic, provider)
         
         with open(filepath, 'wb') as f:
             f.write(audio_data)
@@ -690,10 +633,12 @@ def main():
     parser.add_argument("--force", action="store_true", help="Regenerate all (ignore manifest)")
     parser.add_argument("--upload", action="store_true", help="Upload to S3 after generation")
     parser.add_argument("--list", action="store_true", help="List all generated words")
-    parser.add_argument("--provider", type=str, choices=["openai", "elevenlabs"], 
+    parser.add_argument("--provider", type=str, choices=["elevenlabs"],
                         default=TTS_PROVIDER, help="TTS provider to use")
     
     args = parser.parse_args()
+    if args.provider != "elevenlabs":
+        parser.error("Only ElevenLabs can generate audio. Unset TTS_PROVIDER or set it to elevenlabs.")
     
     if args.list:
         manifest = load_manifest()

@@ -580,17 +580,8 @@ def _get_db_connection_with_retry(max_retries: int = 3, retry_delay: float = 0.5
 #   CHAT_MODEL=gpt-5.6-luna
 # ============================================================================
 
-OPENROUTER_GEMINI_FLASH_MODEL_ID = "google/gemini-2.5-flash"
-
-# Model to provider/ID mapping
-# supports_vision: whether the model can process image inputs
+# Only deployed routes and the measured rollback are registered here.
 MODEL_CONFIG = {
-    # OpenAI models (direct) - GPT-4o series supports vision
-    "gpt-4o": {"provider": "openai", "model_id": "gpt-4o", "supports_vision": True},
-    "gpt-4o-mini": {"provider": "openai", "model_id": "gpt-4o-mini", "supports_vision": True},
-    "gpt-4-turbo": {"provider": "openai", "model_id": "gpt-4-turbo", "supports_vision": True},
-    
-    # OpenRouter models (via OpenRouter API)
     "gpt-5.6-luna": {
         "provider": "openrouter",
         "model_id": "openai/gpt-5.6-luna",
@@ -601,18 +592,16 @@ MODEL_CONFIG = {
         "image_detail": "original",
         "supports_reasoning_effort": True,
     },
-    "gemini-2.5-flash": {"provider": "openrouter", "model_id": OPENROUTER_GEMINI_FLASH_MODEL_ID, "supports_vision": True},
-    "gemini-2.5-pro": {"provider": "openrouter", "model_id": "google/gemini-2.5-pro-preview", "supports_vision": True},
-    "deepseek-v3": {"provider": "openrouter", "model_id": "deepseek/deepseek-chat", "supports_vision": False},  # No vision support
-    "deepseek-v3.1-terminus": {"provider": "openrouter", "model_id": "deepseek/deepseek-v3.1-terminus", "supports_vision": False},  # Translation #9
-    "deepseek-v3.2": {"provider": "openrouter", "model_id": "deepseek/deepseek-v3.2", "supports_vision": False},
-    "deepseek-r1": {"provider": "openrouter", "model_id": "deepseek/deepseek-r1", "supports_vision": False},  # No vision support
-    "claude-sonnet-4.5": {"provider": "openrouter", "model_id": "anthropic/claude-sonnet-4.5", "supports_vision": True},
-    "claude-sonnet-4": {"provider": "openrouter", "model_id": "anthropic/claude-sonnet-4", "supports_vision": True},
-    "claude-haiku-4.5": {"provider": "openrouter", "model_id": "anthropic/claude-haiku-4.5", "supports_vision": True},
-    "llama-4-maverick": {"provider": "openrouter", "model_id": "meta-llama/llama-4-maverick", "supports_vision": False},
-    "qwen3-vl-8b": {"provider": "openrouter", "model_id": "qwen/qwen3-vl-8b-instruct", "supports_vision": True},  # Vision model, cheap
-    "qwen3-vl-30b": {"provider": "openrouter", "model_id": "qwen/qwen3-vl-30b-a3b-instruct", "supports_vision": True},  # Vision model, larger
+    "gpt-6-luna": {
+        "provider": "openrouter", "model_id": "openai/gpt-6-luna",
+        "supports_vision": True, "supports_temperature": False,
+        "supports_reasoning_effort": True,
+    },
+    "gpt-6.1-terra": {
+        "provider": "openrouter", "model_id": "openai/gpt-6.1-terra",
+        "supports_vision": True, "supports_temperature": False,
+        "supports_reasoning_effort": True,
+    },
 }
 
 def model_supports_vision() -> bool:
@@ -657,11 +646,11 @@ def optional_chat_completion_kwargs(model_id: str) -> dict:
     return {}
 
 # GPT-5.6 Luna is the owner-approved default for high-volume tutoring. The
-# previous DeepSeek V3 route remains registered for immediate env-only rollback.
+# gpt-5.6-luna remains the tutor/photo default and feature rollback.
 CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-5.6-luna")
 
 class ModelConfigurationError(RuntimeError):
-    """The tutor model is misconfigured; refuse to start rather than reroute."""
+    """A model setting is invalid; refuse to start rather than reroute."""
 
 
 def get_llm_client():
@@ -713,24 +702,32 @@ def get_llm_client():
 llm, LLM_MODEL_ID = get_llm_client()
 print(f"🤖 Chat model: {CHAT_MODEL} → {LLM_MODEL_ID}")
 
+def get_model_client(setting: str, alias: str) -> tuple[OpenAI, str]:
+    """Resolve a feature alias at startup; bounded calls do not retry silently."""
+    config = MODEL_CONFIG.get(alias)
+    if not config or config["provider"] != "openrouter":
+        raise ModelConfigurationError(
+            f"{setting}={alias!r} is not a configured OpenRouter model. "
+            f"Choose from: {', '.join(sorted(MODEL_CONFIG))}."
+        )
+    key = os.getenv("OPENROUTER_API_KEY")
+    if not key:
+        raise ModelConfigurationError(f"OPENROUTER_API_KEY is required for {setting}={alias!r}.")
+    return OpenAI(api_key=key, base_url="https://openrouter.ai/api/v1",
+                  timeout=45.0, max_retries=0), config["model_id"]
+
+
+FLASHCARD_MODEL = os.getenv("FLASHCARD_MODEL", "gpt-6-luna")
+PRACTICE_MODEL = os.getenv("PRACTICE_MODEL", "gpt-6.1-terra")
+flashcard_llm, FLASHCARD_MODEL_ID = get_model_client("FLASHCARD_MODEL", FLASHCARD_MODEL)
+practice_llm, PRACTICE_MODEL_ID = get_model_client("PRACTICE_MODEL", PRACTICE_MODEL)
+
+
 def get_vision_client():
-    """
-    Get a vision-capable LLM client for processing images.
-    Uses Gemini 2.5 Flash via OpenRouter - fast, cheap, and supports vision.
-    
-    Returns:
-        tuple: (client, model_id)
-    """
-    # Use Gemini 2.5 Flash for vision - fast, cheap, and supports image input
-    openrouter_key = os.getenv("OPENROUTER_API_KEY")
-    if openrouter_key:
-        return OpenAI(
-            api_key=openrouter_key,
-            base_url="https://openrouter.ai/api/v1"
-        ), OPENROUTER_GEMINI_FLASH_MODEL_ID
-    
-    # Fallback to GPT-4o if OpenRouter not configured
-    return OpenAI(api_key=os.getenv("OPENAI_API_KEY")), "gpt-4o"
+    """Text-only chat configurations send images explicitly to 5.6 Luna."""
+    if not MODEL_CONFIG.get("gpt-5.6-luna", {}).get("supports_vision"):
+        raise ModelConfigurationError("The gpt-5.6-luna vision fallback is unavailable.")
+    return get_model_client("vision fallback", "gpt-5.6-luna")
 
 # Cache the vision client for reuse
 _vision_client = None
@@ -742,7 +739,7 @@ def get_client_for_request(has_image: bool):
     
     For image requests:
     - If current model supports vision, use it
-    - Otherwise, fall back to Gemini 2.5 Flash (fast & cheap vision model)
+    - Otherwise, use the explicit gpt-5.6-luna vision fallback
     
     For text-only requests:
     - Use the configured model
@@ -753,10 +750,10 @@ def get_client_for_request(has_image: bool):
     global _vision_client, _vision_model_id
     
     if has_image and not model_supports_vision():
-        # Current model doesn't support vision, use Gemini 2.5 Flash
+        # Keep photos on the established 5.6 Luna route.
         if _vision_client is None:
             _vision_client, _vision_model_id = get_vision_client()
-            print(f"🖼️  Vision fallback: {CHAT_MODEL} → gemini-2.5-flash (image detected)")
+            print(f"🖼️  Vision fallback: {CHAT_MODEL} → gpt-5.6-luna (image detected)")
         return _vision_client, _vision_model_id
     
     # Use the default configured model
