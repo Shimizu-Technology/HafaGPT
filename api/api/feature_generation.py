@@ -2,14 +2,21 @@
 import asyncio
 import json
 import re
+from typing import Any
 
 from fastapi import HTTPException
 
 from .provider_errors import MalformedProviderResponse, report_provider_failure
+from .source_citations import CURRENT_NAME_FOR_LEGACY_NAME, LEGACY_SOURCE_IDS
+
+CARD_FIELDS = ('front', 'back', 'pronunciation', 'example', 'category')
+KNOWN_SOURCE_NAMES = frozenset(
+    name.casefold() for name in (*LEGACY_SOURCE_IDS, *CURRENT_NAME_FOR_LEGACY_NAME)
+)
 
 
-async def feature_json(client, model: str, messages: list, *, max_tokens: int,
-                       source: str, json_object: bool = False):
+async def feature_json(client: Any, model: str, messages: list, *, max_tokens: int,
+                       source: str, json_object: bool = False) -> Any:
     """Reasoning-off generation; keep provider text out of responses and alerts."""
     try:
         options = {'response_format': {'type': 'json_object'}} if json_object else {}
@@ -24,22 +31,21 @@ async def feature_json(client, model: str, messages: list, *, max_tokens: int,
         text = text.strip()
         if text.startswith('```'):
             text = text.split('```')[1]
-            if text.startswith('json'):
-                text = text[4:]
+            text = re.sub(r'^json\b', '', text.strip(), flags=re.I)
         data = json.loads(text.strip())
         if not isinstance(data, dict if json_object else list):
             raise MalformedProviderResponse('Unexpected feature JSON shape')
         if json_object:
             # Keep malformed provider fields out of Pydantic's error text in the
             # endpoint logs. Empty strings remain valid practice replies.
-            for field, expected in (('chamorro_response', str), ('english_translation', str),
-                                    ('is_complete', bool)):
-                if field in data and not isinstance(data[field], expected):
-                    raise MalformedProviderResponse('Unexpected practice fields')
+            if not all(isinstance(data.get(field), str) for field in ('chamorro_response', 'english_translation')):
+                raise MalformedProviderResponse('Missing practice fields')
+            if 'is_complete' in data and not isinstance(data['is_complete'], bool):
+                raise MalformedProviderResponse('Unexpected practice fields')
             if data.get('feedback') is not None and not isinstance(data['feedback'], dict):
                 raise MalformedProviderResponse('Unexpected practice feedback')
         if not json_object and any(not isinstance(card, dict) or any(
-                value is not None and not isinstance(value, str) for value in card.values()
+                card.get(field) is not None and not isinstance(card[field], str) for field in CARD_FIELDS
         ) for card in data):
             raise MalformedProviderResponse('Unexpected card fields')
         return data
@@ -53,19 +59,18 @@ async def feature_json(client, model: str, messages: list, *, max_tokens: int,
 
 
 def strip_card_citations(text: str | None, sources: list[dict]) -> str | None:
-    """Remove source labels only; preserve ordinary brackets and language bytes."""
+    """Remove labels that name a known source; preserve other brackets and language bytes."""
     if text is None:
         return None
-    names = {source['name'].casefold() for source in sources if source.get('name')}
-    names.update({'chamoru.info dictionary', 'håfagpt vocabulary list'})
+    names = KNOWN_SOURCE_NAMES | {source['name'].casefold() for source in sources if source.get('name')}
 
-    def citation(match):
-        label = match.group(1).strip()
-        label = re.sub(r',?\s+(?:p(?:age)?\.?\s*\d+.*)$', '', label, flags=re.I)
-        is_source = label.casefold() in names or bool(re.search(
-            r'\b(?:dictionary|vocabulary list)\b', label, re.I))
-        return '' if is_source else match.group(0)
+    def citation(match: re.Match[str]) -> str:
+        labels = [
+            re.sub(r',?\s+(?:p(?:age)?\.?\s*\d+.*)$', '', label.strip(), flags=re.I).casefold()
+            for label in match.group(1).split(';')
+        ]
+        return '' if all(label in names for label in labels) else match.group(0)
 
     # Consume only horizontal whitespace immediately before a removed citation.
     # Do not normalize spelling, punctuation, apostrophes, or interior whitespace.
-    return re.sub(r'[ \t]*\[([^\[\]\n]+)\]', citation, text).strip()
+    return re.sub(r'[ \t]*[\[(]([^\[\]()\n]+)[\])]', citation, text).strip()

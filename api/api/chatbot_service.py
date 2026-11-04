@@ -702,7 +702,7 @@ def get_llm_client():
 llm, LLM_MODEL_ID = get_llm_client()
 print(f"🤖 Chat model: {CHAT_MODEL} → {LLM_MODEL_ID}")
 
-def get_model_client(setting: str, alias: str):
+def get_model_client(setting: str, alias: str) -> tuple[OpenAI, str]:
     """Resolve a feature alias at startup; bounded calls do not retry silently."""
     config = MODEL_CONFIG.get(alias)
     if not config or config["provider"] != "openrouter":

@@ -89,11 +89,8 @@ or audible pronunciation quality.
 
 ## Remaining names and rollback
 
-[Full inventory](MODEL_NAME_INVENTORY_2026-11-05.json) maps every remaining model
-spelling to its files across api/ and web/src/, including scripts, tests,
-benchmarks, admin code, historical docs and manifest metadata. Generic family
-words and dictionary false positives are excluded. Historical catalogs/prices
-remain historical.
+Historical catalogs and prices in older documents and evaluation scripts remain
+historical.
 
 | Active name | Purpose |
 | --- | --- |

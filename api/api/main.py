@@ -2978,8 +2978,8 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
         
         # Add previous cards to seen sets
         for prev_card in previous_cards_list:
-            prev_front = prev_card.get('front', '').lower().strip()
-            prev_back = prev_card.get('back', '').lower().strip()
+            prev_front = strip_card_citations(prev_card.get('front', ''), rag_sources).lower().strip()
+            prev_back = strip_card_citations(prev_card.get('back', ''), rag_sources).lower().strip()
             if prev_front:
                 seen_fronts.add(prev_front)
             if prev_back:

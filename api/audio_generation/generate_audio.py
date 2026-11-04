@@ -637,6 +637,8 @@ def main():
                         default=TTS_PROVIDER, help="TTS provider to use")
     
     args = parser.parse_args()
+    if args.provider != "elevenlabs":
+        parser.error("Only ElevenLabs can generate audio. Unset TTS_PROVIDER or set it to elevenlabs.")
     
     if args.list:
         manifest = load_manifest()

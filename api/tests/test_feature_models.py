@@ -63,6 +63,11 @@ def test_bad_feature_setting_fails_at_module_initialization(monkeypatch, setting
     ('a [optional] word [1, 2]', 'a [optional] word [1, 2]'),
     ('English [local source, Page 4]', 'English'),
     ('[brackets] and å', '[brackets] and å'),
+    ('a word [dictionary form]', 'a word [dictionary form]'),
+    ('a word [see dictionary]', 'a word [see dictionary]'),
+    ('Håfa Adai (Chamoru.info dictionary)', 'Håfa Adai'),
+    ('Håfa Adai [Chamoru.info dictionary; Revised Chamorro dictionary]', 'Håfa Adai'),
+    ('Do you like it? (Do you really like this candy?)', 'Do you like it? (Do you really like this candy?)'),
 ])
 def test_strip_only_source_citations_without_rewriting_words(value, expected):
     assert strip_card_citations(value, [{'name': 'local source'}]) == expected
@@ -290,3 +295,36 @@ def test_practice_stops_a_fast_account_before_spending(monkeypatch):
 def test_a_null_category_falls_back_to_the_topic():
     source = (ROOT / 'api/main.py').read_text()
     assert 'category=card_data.get("category") or topic' in source
+
+
+def _feature_reply(text):
+    message = SimpleNamespace(content=text)
+    create = Mock(return_value=SimpleNamespace(choices=[SimpleNamespace(message=message, finish_reason='stop')]))
+    return SimpleNamespace(chat=SimpleNamespace(completions=SimpleNamespace(create=create)))
+
+
+def _run_feature(text, *, json_object=False):
+    return asyncio.run(feature_json(_feature_reply(text), 'model', [], max_tokens=10, source='test', json_object=json_object))
+
+
+def test_a_json_fence_is_accepted_in_any_case():
+    assert _run_feature('```JSON\n[{"front": "a"}]\n```') == [{'front': 'a'}]
+
+
+def test_an_extra_card_property_does_not_lose_the_batch():
+    assert _run_feature('[{"front": "a", "confidence": 0.9}]') == [{'front': 'a', 'confidence': 0.9}]
+
+
+@pytest.mark.parametrize('body', ['{"english_translation": "Hi"}', '{"chamorro_response": "Håfa"}'])
+def test_a_practice_reply_missing_a_text_field_is_a_failed_turn(monkeypatch, body):
+    monkeypatch.setattr(provider_errors, 'report_provider_failure', lambda *a, **k: SimpleNamespace(message='retry'))
+    from api import feature_generation
+    monkeypatch.setattr(feature_generation, 'report_provider_failure', lambda *a, **k: SimpleNamespace(message='retry'))
+    with pytest.raises(HTTPException) as caught:
+        _run_feature(body, json_object=True)
+    assert caught.value.status_code == 503
+
+
+def test_an_empty_chamorro_practice_reply_stays_valid():
+    assert _run_feature('{"chamorro_response": "", "english_translation": "Hi"}', json_object=True)['chamorro_response'] == ''
+
