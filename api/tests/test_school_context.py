@@ -1,3 +1,5 @@
+import pytest
+
 from src.rag.school_context import (
     GENERAL_DOCUMENT_ANALYSIS_GUIDANCE,
     IMAGE_TRANSLATION_GUIDANCE,
@@ -284,3 +286,87 @@ def test_resolved_image_translation_keeps_cards_without_verbose_school_format() 
     assert guidance == IMAGE_TRANSLATION_GUIDANCE
     assert school_match is True
     assert card_ids == ("usage.guam.school.msy_greeting",)
+
+
+def test_family_day_acronyms_use_scoped_cards_at_any_position() -> None:
+    for token in ("SYM", "MSY"):
+        for body in (f"🧡 {token}! Family Day is tomorrow.",
+                     f"Family Day is tomorrow. ({token})🧡"):
+            message = f"Hurao Academy: {body}"
+            assert is_school_announcement_context(message)
+            assert school_context_card_ids(message, school_announcement=True) == (
+                f"usage.guam.school.{'sym_signoff' if token == 'SYM' else 'msy_greeting'}",
+            )
+
+
+def test_school_acronyms_do_not_match_inside_words_or_all_caps() -> None:
+    for body in ("ASYMMETRY", "SYMPTOMS", "éSYM", "SYMé", "SYM_code", "FAMILY DAY TOMORROW"):
+        assert school_context_card_ids(body, school_announcement=True) == ()
+    assert not is_school_announcement_context("🧡 SYM! Family Day is tomorrow.")
+
+
+# Same structure as a real pasted notice: no "school message" framing, a request
+# line, the acronym opening a line and closing the message.
+PASTED_NOTICE = (
+    "What does all this say?\n\nHåfa Adai Familia!\nSYM para i pinasensian-miyu.\n\n"
+    "This gathering will help us get to know each other as a community.\n\n"
+    "Things to bring\n- Chairs\n\nImportant\n"
+    "- Students must be accompanied by a parent/guardian\n\nSYM🧡"
+)
+
+
+def test_a_pasted_notice_without_school_framing_resolves_its_acronym() -> None:
+    assert is_school_announcement_context(PASTED_NOTICE)
+    assert school_context_card_ids(PASTED_NOTICE, school_announcement=True) == (
+        "usage.guam.school.sym_signoff",
+    )
+
+
+@pytest.mark.parametrize("message", [
+    "Please remind parents about Friday. Esta, SYM!",
+    "Students should bring chairs.\nsym🧡",
+    "Students should bring chairs.\nSyM",
+    "Students should bring chairs.\nS.Y.M.",
+    "Students should bring chairs.\r\nSYM🧡\r\n",
+    "MSY! Students should bring chairs.",
+    "msy para i famagu'on",
+])
+def test_a_school_message_can_open_or_sign_off_with_its_acronym(message: str) -> None:
+    assert is_school_announcement_context(message)
+
+
+@pytest.mark.parametrize("message", [
+    "SYM: symptom abbreviation for a parent",
+    "SYM stock rose; my parent owns shares.",
+    "My class code:\nSYM = 42",
+    "My class word list:\nSYM\nMSY",
+    "My class word list:\nMSY\nSYM",
+    "Vocabulary for my students:\n- MSY\n- SYM",
+    "My class word list:\nSYM",
+])
+def test_other_uses_of_the_letters_are_not_school_messages(message: str) -> None:
+    assert not is_school_announcement_context(message)
+    assert school_context_card_ids(message, school_announcement=False) == ()
+
+
+def test_a_mention_of_a_student_keeps_a_chat_exchange_in_dialogue_handling() -> None:
+    exchange = (
+        "This exchange mentions a student.\n"
+        "MSY! Kao modan isla pat kulot kåhet na polo på'go?\n"
+        "MSY! Trabiha. Kada uttimo na Betnes. Kulot kåhet på'go.\n"
+        "Esta, SYM!"
+    )
+    assert contextual_school_exchange_card_ids(exchange)
+    assert not is_school_announcement_context(exchange)
+
+
+def test_talking_about_an_acronym_is_not_a_school_message() -> None:
+    for message in (
+        "Why do students say SYM?",
+        "SYM is a club for students.",
+        "SYM means what for my students?",
+        "Our students wrote about SYMMETRY",
+        "My class learned what MSY means",
+        "SYM para i pinasensian-miyu.",
+    ):
+        assert not is_school_announcement_context(message), message

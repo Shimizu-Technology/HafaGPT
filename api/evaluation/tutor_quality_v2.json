@@ -4485,6 +4485,70 @@
       ],
       "notes": "PR #109 polysemy: the month sense of \"may\" stays reachable when the sentence asks for it.",
       "must_not_direct_headwords": []
+    },
+    {
+      "id": "tq5-001",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this Hurao Academy message: 🧡 SYM! Family Day is tomorrow.",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English event notice; no private conversation or authored Chamorro."
+    },
+    {
+      "id": "tq5-002",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this Hurao Academy message: Family Day is tomorrow. (SYM)🧡",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English event notice; no private conversation or authored Chamorro."
+    },
+    {
+      "id": "tq5-003",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this Hurao Academy message: MSY! Family Day is tomorrow.",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English event notice; no private conversation or authored Chamorro."
+    },
+    {
+      "id": "tq5-004",
+      "category": "school_message",
+      "history": [],
+      "user_message": "What does all this say?\n\nHåfa Adai Familia!\nSYM para i pinasensian-miyu.\n\nThis gathering will help us get to know each other as a community.\n\nThings to bring\n- Chairs\n\nImportant\n- Students must be accompanied by a parent/guardian\n\nSYM🧡",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Same structure as a real pasted notice, with no school framing and no private details. Its Chamorro comes from that notice and tq1-021; none is authored."
     }
   ]
 }
