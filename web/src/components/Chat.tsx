@@ -82,8 +82,9 @@ function moveAttemptDraft(attempt: SendAttempt | null): void {
   attempt.draftMoved = true;
 }
 
-// The API saves failed replies with a bracketed marker instead of reply text.
-const FAILED_REPLY = /^\[(?:Error:|Token limit exceeded)/;
+// Older failed replies were saved as a bracketed marker instead of reply text.
+// A real answer can start with the same words, so the whole message must match.
+const FAILED_REPLY = /^\s*\[(?:Error: [\s\S]{0,200}\]|Token limit exceeded: \d+ tokens\])\s*$/;
 
 /**
  * Whether a saved transcript contains this question, asked after the first

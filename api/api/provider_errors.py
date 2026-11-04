@@ -12,6 +12,7 @@ Alerts carry only the failure kind, HTTP status, source, model ID, and counts.
 
 import logging
 import os
+import re
 import threading
 import time
 from collections import deque
@@ -36,14 +37,16 @@ DEFAULT_BURST_THRESHOLD = 5
 DEFAULT_BURST_WINDOW_SECONDS = 300
 
 
-# Earlier versions stored failed turns as bracketed markers in bot_response.
-# Existing rows are never rewritten; readers treat them as failed turns.
-_STORED_FAILURE_PREFIXES = ("[Error:", "[Token limit exceeded")
+# Earlier versions stored failed turns as exactly f"[Error: {str(e)[:200]}]" or
+# f"[Token limit exceeded: {tokens} tokens]" in bot_response. Existing rows are
+# never rewritten; readers treat them as failed turns. A real answer can start
+# with the same words, so the whole message has to match.
+_STORED_FAILURE_MARKER = re.compile(r"\[Error: .{0,200}\]|\[Token limit exceeded: \d+ tokens\]", re.DOTALL)
 STORED_FAILURE_PLACEHOLDER = "[Error: this reply could not be completed]"
 
 
 def is_stored_failure_marker(text: str | None) -> bool:
-    return bool(text) and text.lstrip().startswith(_STORED_FAILURE_PREFIXES)
+    return bool(text) and bool(_STORED_FAILURE_MARKER.fullmatch(text.strip()))
 
 
 class MalformedProviderResponse(RuntimeError):
@@ -73,6 +76,12 @@ def _status_code(error: BaseException) -> int | None:
         if isinstance(status, int):
             return status
     return None
+
+
+def safe_error_label(error: BaseException) -> str:
+    """Name an exception for logs without its text, which can echo the prompt."""
+    status = _status_code(error)
+    return f"{type(error).__name__} status={status}" if status else type(error).__name__
 
 
 def is_credit_error(error: BaseException) -> bool:

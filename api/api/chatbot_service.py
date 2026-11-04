@@ -29,6 +29,7 @@ from .provider_errors import (
     TurnFailed,
     is_stored_failure_marker,
     report_provider_failure,
+    safe_error_label,
 )
 from .image_translation import translate_image_pages
 from .image_translation_legacy import translate_image_pages as translate_image_pages_legacy
@@ -1884,7 +1885,7 @@ def get_chatbot_response(
                     wait_time = _retry_sleep_seconds(attempt)
                     logger.warning(
                         f"Transient LLM error (attempt {attempt + 1}/{max_attempts}) "
-                        f"for model={request_model}; retrying in {wait_time:.2f}s: {retry_error}"
+                        f"for model={request_model}; retrying in {wait_time:.2f}s: {safe_error_label(retry_error)}"
                     )
                     time.sleep(wait_time)
                     continue
@@ -2371,7 +2372,7 @@ def get_chatbot_response_stream(
                     wait_time = _retry_sleep_seconds(attempt)
                     logger.warning(
                         f"Transient streaming LLM error (attempt {attempt + 1}/{max_attempts}) "
-                        f"for model={request_model}; retrying in {wait_time:.2f}s: {retry_error}"
+                        f"for model={request_model}; retrying in {wait_time:.2f}s: {safe_error_label(retry_error)}"
                     )
                     time.sleep(wait_time)
                     continue

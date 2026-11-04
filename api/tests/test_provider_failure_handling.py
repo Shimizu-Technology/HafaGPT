@@ -476,3 +476,31 @@ def test_alert_without_sentry_is_one_error_log_line(caplog, monkeypatch):
     alerts = [r for r in caplog.records if 'PROVIDER_ALERT' in r.getMessage()]
     assert len(alerts) == 1 and alerts[0].levelno == logging.ERROR
     assert 'Insufficient' not in caplog.text
+
+
+@pytest.mark.parametrize('stored', [
+    "[Error: Error code: 402 - {'error': {'message': 'Insufficient credits.'}}]",
+    '[Error: ' + 'x' * 200 + ']',
+    '[Token limit exceeded: 99999 tokens]',
+    '  [Error: this reply could not be completed]\n',
+])
+def test_stored_failure_markers_are_recognized(stored):
+    assert provider_errors.is_stored_failure_marker(stored)
+
+
+@pytest.mark.parametrize('answer', [
+    '[Error: means an error label in this programming example] Here is the translation.',
+    '[Token limit exceeded is an English phrase.] Its meaning is explained below.',
+    '[Error: ' + 'x' * 400 + ']',
+    'The tutor said [Error: this] in passing.',
+])
+def test_a_real_answer_with_the_same_opening_is_kept(answer):
+    assert not provider_errors.is_stored_failure_marker(answer)
+
+
+def test_retry_logs_name_the_error_without_its_text():
+    error = TimeoutError('SECRET_USER_PROMPT provider response body')
+    assert provider_errors.safe_error_label(error) == 'TimeoutError'
+    source = (ROOT / 'chatbot_service.py').read_text()
+    assert source.count('{safe_error_label(retry_error)}') == 2
+    assert '{retry_error}' not in source
