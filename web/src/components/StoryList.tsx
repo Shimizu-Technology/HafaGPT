@@ -54,9 +54,9 @@ const CATEGORY_LABELS: Record<string, string> = {
 
 // Difficulty colors
 const DIFFICULTY_STYLES: Record<string, string> = {
-  beginner: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
-  intermediate: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
-  advanced: 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200',
+  beginner: 'bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-cream-200',
+  intermediate: 'bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-cream-200',
+  advanced: 'bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-cream-200',
 };
 
 export function StoryList() {
@@ -74,20 +74,20 @@ export function StoryList() {
         title="Chamorro stories"
         subtitle={mode === 'curated' ? `${totalCuratedStories} stories · Tap words to translate` : 'Original source access'}
         icon={BookOpen}
-        iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300"
+        iconClassName="bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-brown-100"
       />
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-5 sm:py-8">
         {/* Mode Toggle */}
-        <div className="grid grid-cols-2 gap-1 rounded-xl bg-cream-200/70 p-1 dark:bg-slate-800" aria-label="Story source">
+        <div className="grid grid-cols-2 gap-1 rounded-xl bg-cream-200/70 p-1 dark:bg-brown-900" aria-label="Story source">
           <button
             type="button"
             onClick={() => setMode('curated')}
             aria-pressed={mode === 'curated'}
             className={`flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
               mode === 'curated'
-                ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                : 'text-brown-600 dark:text-gray-400 hover:text-brown-800 dark:hover:text-gray-200'
+                ? 'bg-action text-white'
+                : 'text-brown-600 dark:text-brown-300 hover:text-brown-800 dark:hover:text-cream-200'
             }`}
           >
             <BookOpen className="w-4 h-4" />
@@ -99,8 +99,8 @@ export function StoryList() {
             aria-pressed={mode === 'lengguahita'}
             className={`flex min-h-11 items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ${
               mode === 'lengguahita'
-                ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                : 'text-brown-600 dark:text-gray-400 hover:text-brown-800 dark:hover:text-gray-200'
+                ? 'bg-action text-white'
+                : 'text-brown-600 dark:text-brown-300 hover:text-brown-800 dark:hover:text-cream-200'
             }`}
           >
             <Sparkles className="w-4 h-4" />
@@ -109,27 +109,27 @@ export function StoryList() {
         </div>
 
         {/* Introduction Card */}
-        <div className={`rounded-2xl border bg-white p-5 dark:bg-slate-800 ${
+        <div className={`rounded-2xl border bg-white p-5 dark:bg-brown-900 ${
           mode === 'curated'
             ? 'border-cream-200 dark:border-cream-800'
             : 'border-teal-200 dark:border-teal-800'
         }`}>
           <div className="flex items-start gap-4">
-            <div className={`p-2.5 rounded-xl ${mode === 'curated' ? 'bg-cream-100 dark:bg-slate-700' : 'bg-teal-100 dark:bg-teal-900/30'}`}>
+            <div className={`p-2.5 rounded-xl ${mode === 'curated' ? 'bg-cream-100 dark:bg-brown-700' : 'bg-teal-100 dark:bg-teal-900/30'}`}>
               {mode === 'curated' ? (
-                <BookOpen className="w-6 h-6 text-brown-700 dark:text-gray-300" aria-hidden="true" />
+                <BookOpen className="w-6 h-6 text-brown-700 dark:text-brown-100" aria-hidden="true" />
               ) : (
                 <LockKeyhole className="w-6 h-6 text-teal-700 dark:text-teal-300" aria-hidden="true" />
               )}
             </div>
             <div>
-              <h2 className="font-bold text-brown-800 dark:text-white mb-1">
+              <h2 className="font-bold text-brown-800 dark:text-cream-100 mb-1">
                 {mode === 'curated' ? 'Learn by Reading' : 'Stories from Lengguahi-ta'}
               </h2>
-              <p className="text-sm text-brown-600 dark:text-gray-300">
+              <p className="text-sm text-brown-600 dark:text-brown-100">
                 {mode === 'curated' ? (
                   <>
-                    Read Chamorro stories and <span className="font-semibold text-brown-700 dark:text-gray-300">tap any word</span> to see its translation.
+                    Read Chamorro stories and <span className="font-semibold text-brown-700 dark:text-brown-100">tap any word</span> to see its translation.
                     After each story, test your understanding with comprehension questions!
                   </>
                 ) : (
@@ -150,14 +150,14 @@ export function StoryList() {
               <div key={category.id} className="space-y-3">
                 {/* Category Header */}
                 <div className="flex items-center gap-2 px-1">
-                  <div className="p-2 rounded-lg bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300">
+                  <div className="p-2 rounded-lg bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100">
                     <StoryCategoryIcon category={category.id} />
                   </div>
                   <div>
-                    <h3 className="font-bold text-brown-800 dark:text-white">
+                    <h3 className="font-bold text-brown-800 dark:text-cream-100">
                       {category.title}
                     </h3>
-                    <p className="text-xs text-brown-500 dark:text-gray-400">
+                    <p className="text-xs text-brown-500 dark:text-brown-300">
                       {category.description}
                     </p>
                   </div>
@@ -169,22 +169,22 @@ export function StoryList() {
                     <Link
                       key={story.id}
                       to={`/stories/${story.id}`}
-                      className="group block rounded-2xl border border-cream-200 bg-white p-4 transition-colors hover:border-cream-300 hover:bg-cream-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-slate-700"
+                      className="group block rounded-2xl border border-cream-200 bg-white p-4 transition-colors hover:border-cream-300 hover:bg-cream-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-brown-700 dark:bg-brown-900 dark:hover:border-teal-700 dark:hover:bg-brown-700"
                     >
                       <div className="flex items-start gap-4">
                         {/* Story Icon */}
-                        <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-cream-100 dark:bg-slate-700">
-                          <StoryCategoryIcon category={category.id} className="w-6 h-6 text-brown-700 dark:text-gray-300" />
+                        <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-cream-100 dark:bg-brown-700">
+                          <StoryCategoryIcon category={category.id} className="w-6 h-6 text-brown-700 dark:text-brown-100" />
                         </div>
 
                         {/* Story Info */}
                         <div className="flex-1 min-w-0">
                           <div className="flex items-start justify-between gap-2">
                             <div>
-                              <h4 className="font-bold text-brown-800 dark:text-white group-hover:text-brown-600 dark:group-hover:text-brown-400 transition-colors">
+                              <h4 className="font-bold text-brown-800 dark:text-cream-100 group-hover:text-brown-600 dark:group-hover:text-brown-400 transition-colors">
                                 {story.title}
                               </h4>
-                              <p className="text-xs text-brown-500 dark:text-gray-400 italic">
+                              <p className="text-xs text-brown-500 dark:text-brown-300 italic">
                                 {story.titleEnglish}
                               </p>
                             </div>
@@ -195,12 +195,12 @@ export function StoryList() {
                             </span>
                           </div>
 
-                          <p className="text-sm text-brown-600 dark:text-gray-300 mt-1 line-clamp-2">
+                          <p className="text-sm text-brown-600 dark:text-brown-100 mt-1 line-clamp-2">
                             {story.description}
                           </p>
 
                           {/* Meta Info */}
-                          <div className="flex items-center gap-4 mt-2 text-xs text-brown-500 dark:text-gray-400">
+                          <div className="flex items-center gap-4 mt-2 text-xs text-brown-500 dark:text-brown-300">
                             <span className="flex items-center gap-1">
                               <Clock className="w-3 h-3" />
                               {story.readingTime} min
@@ -230,7 +230,7 @@ export function StoryList() {
             {isLoading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-8 h-8 animate-spin text-teal-500" />
-                <span className="ml-3 text-brown-600 dark:text-gray-400">Loading stories...</span>
+                <span className="ml-3 text-brown-600 dark:text-brown-300">Loading stories...</span>
               </div>
             ) : externalAvailability?.enabled && Object.keys(byCategory).length > 0 ? (
               Object.entries(byCategory).map(([category, stories]) => (
@@ -241,10 +241,10 @@ export function StoryList() {
                       <StoryCategoryIcon category={category} />
                     </div>
                     <div>
-                      <h3 className="font-bold text-brown-800 dark:text-white">
+                      <h3 className="font-bold text-brown-800 dark:text-cream-100">
                         {CATEGORY_LABELS[category] || category}
                       </h3>
-                      <p className="text-xs text-brown-500 dark:text-gray-400">
+                      <p className="text-xs text-brown-500 dark:text-brown-300">
                         {(stories as AvailableStory[]).length} stories
                       </p>
                     </div>
@@ -256,7 +256,7 @@ export function StoryList() {
                       <Link
                         key={story.id}
                         to={`/stories/lengguahita/${story.id}`}
-                        className="group block rounded-2xl border border-cream-200 bg-white p-4 transition-colors hover:border-teal-300 hover:bg-teal-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700 dark:hover:bg-teal-950/10"
+                        className="group block rounded-2xl border border-cream-200 bg-white p-4 transition-colors hover:border-teal-300 hover:bg-teal-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:border-brown-700 dark:bg-brown-900 dark:hover:border-teal-700 dark:hover:bg-teal-950/10"
                       >
                         <div className="flex items-start gap-4">
                           {/* Story Icon */}
@@ -268,11 +268,11 @@ export function StoryList() {
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2">
                               <div>
-                                <h4 className="font-bold text-brown-800 dark:text-white group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
+                                <h4 className="font-bold text-brown-800 dark:text-cream-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
                                   {story.title}
                                 </h4>
                                 {story.titleChamorro && (
-                                  <p className="text-xs text-brown-500 dark:text-gray-400 italic">
+                                  <p className="text-xs text-brown-500 dark:text-brown-300 italic">
                                     {story.titleChamorro}
                                   </p>
                                 )}
@@ -285,13 +285,13 @@ export function StoryList() {
                             </div>
 
                             {story.author && (
-                              <p className="text-xs text-brown-500 dark:text-gray-400 mt-1">
+                              <p className="text-xs text-brown-500 dark:text-brown-300 mt-1">
                                 by {story.author}
                               </p>
                             )}
 
                             {/* Meta Info */}
-                            <div className="flex items-center gap-4 mt-2 text-xs text-brown-500 dark:text-gray-400">
+                            <div className="flex items-center gap-4 mt-2 text-xs text-brown-500 dark:text-brown-300">
                               <span className="flex items-center gap-1">
                                 <FileText className="w-3 h-3" />
                                 {story.paragraphCount} paragraphs
@@ -309,10 +309,10 @@ export function StoryList() {
                 </div>
               ))
             ) : (
-              <div className="bg-white dark:bg-slate-800 rounded-2xl border border-teal-200 dark:border-teal-800 p-6 text-center">
+              <div className="bg-white dark:bg-brown-900 rounded-2xl border border-teal-200 dark:border-teal-800 p-6 text-center">
                 <LockKeyhole className="w-8 h-8 mx-auto mb-3 text-teal-600 dark:text-teal-400" aria-hidden="true" />
-                <h3 className="font-semibold text-brown-800 dark:text-white mb-2">Original stories are available on Lengguahi-ta</h3>
-                <p className="text-sm text-brown-600 dark:text-gray-400 max-w-xl mx-auto mb-4">
+                <h3 className="font-semibold text-brown-800 dark:text-cream-100 mb-2">Original stories are available on Lengguahi-ta</h3>
+                <p className="text-sm text-brown-600 dark:text-brown-300 max-w-xl mx-auto mb-4">
                   {externalAvailability?.message || 'Copied story content is unavailable while HåfaGPT confirms reuse permission and attribution.'}
                 </p>
                 <a
@@ -330,18 +330,18 @@ export function StoryList() {
         )}
 
         {/* Info Card */}
-        {mode === 'curated' && <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+        {mode === 'curated' && <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900">
           <div className="flex items-center gap-3 mb-2">
             {mode === 'curated' ? (
-              <Sparkles className="w-5 h-5 text-brown-700 dark:text-gray-300" aria-hidden="true" />
+              <Sparkles className="w-5 h-5 text-brown-700 dark:text-brown-100" aria-hidden="true" />
             ) : (
               <ShieldCheck className="w-5 h-5 text-teal-600 dark:text-teal-400" aria-hidden="true" />
             )}
-            <h3 className="font-semibold text-brown-800 dark:text-white">
+            <h3 className="font-semibold text-brown-800 dark:text-cream-100">
               {mode === 'curated' ? 'More Stories Coming!' : 'About Lengguahi-ta Stories'}
             </h3>
           </div>
-          <p className="text-sm text-brown-600 dark:text-gray-400">
+          <p className="text-sm text-brown-600 dark:text-brown-300">
             {mode === 'curated' ? (
               'We\'re adding more Chamorro legends, cultural stories, and beginner-friendly tales. Check back soon for new content!'
             ) : (

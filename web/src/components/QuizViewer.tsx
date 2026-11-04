@@ -237,7 +237,7 @@ function QuizViewerSession() {
   // Show upgrade prompt FIRST (before any early returns)
   if (showUpgradePrompt) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-950 flex items-center justify-center">
         <UpgradePrompt
           feature="quiz"
           onClose={() => {
@@ -254,10 +254,10 @@ function QuizViewerSession() {
   // Loading state for dictionary quiz
   if (isDictionaryQuiz && isDictLoading && !savedQuiz) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-950 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400 mx-auto mb-4" />
-          <h1 className="text-brown-600 dark:text-gray-400">Generating quiz questions...</h1>
+          <Loader2 className="w-8 h-8 animate-spin text-coral-700 mx-auto mb-4" />
+          <h1 className="text-brown-600 dark:text-brown-300">Generating quiz questions...</h1>
         </div>
       </div>
     );
@@ -265,25 +265,25 @@ function QuizViewerSession() {
 
   if (isDictionaryQuiz && isDictError && !savedQuiz) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center px-4">
-        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl p-6">
-          <h1 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-950 flex items-center justify-center px-4">
+        <div className="max-w-md text-center bg-white dark:bg-brown-900 rounded-2xl p-6">
+          <h1 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-2">
             We couldn't load this quiz
           </h1>
-          <p className="text-brown-600 dark:text-gray-400 mb-4">
+          <p className="text-brown-600 dark:text-brown-300 mb-4">
             {dictQuizError instanceof Error ? dictQuizError.message : 'Please try again in a moment.'}
           </p>
           <div className="flex flex-col sm:flex-row gap-3">
             <button
               onClick={() => void refetchDictQuiz()}
               disabled={isDictFetching}
-              className="flex-1 px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
+              className="flex-1 px-4 py-3 bg-action text-white rounded-xl font-semibold"
             >
               {isDictFetching ? 'Retrying...' : 'Try Again'}
             </button>
             <Link replace
               to="/quiz"
-              className="flex-1 px-4 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600"
+              className="flex-1 px-4 py-3 bg-white dark:bg-brown-700 text-brown-800 dark:text-cream-100 rounded-xl font-semibold border-2 border-coral-200"
             >
               Back to Quiz List
             </Link>
@@ -296,10 +296,10 @@ function QuizViewerSession() {
   // Not found state
   if (!isDictionaryQuiz && !category) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-950 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-brown-600 dark:text-gray-400 mb-4">Quiz not found</h1>
-          <Link replace to="/quiz" className="text-coral-700 dark:text-ocean-300 hover:underline">
+          <h1 className="text-brown-600 dark:text-brown-300 mb-4">Quiz not found</h1>
+          <Link replace to="/quiz" className="text-coral-700 hover:underline">
             Back to Quiz List
           </Link>
         </div>
@@ -310,10 +310,10 @@ function QuizViewerSession() {
   // No questions yet (but not at limit - show loading)
   if (questions.length === 0 && !usageChecked) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-950 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400 mx-auto mb-4" />
-          <h1 className="text-brown-600 dark:text-gray-400">Loading questions...</h1>
+          <Loader2 className="w-8 h-8 animate-spin text-coral-700 mx-auto mb-4" />
+          <h1 className="text-brown-600 dark:text-brown-300">Loading questions...</h1>
         </div>
       </div>
     );
@@ -321,15 +321,15 @@ function QuizViewerSession() {
 
   if (quizError) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center px-4">
-        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl p-6">
-          <h1 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-950 flex items-center justify-center px-4">
+        <div className="max-w-md text-center bg-white dark:bg-brown-900 rounded-2xl p-6">
+          <h1 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-2">
             Quiz temporarily unavailable
           </h1>
-          <p className="text-brown-600 dark:text-gray-400 mb-4">{quizError}</p>
+          <p className="text-brown-600 dark:text-brown-300 mb-4">{quizError}</p>
           <Link
             to={quizReturnTo}
-            className="pressable inline-flex items-center justify-center px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
+            className="pressable inline-flex items-center justify-center px-4 py-3 bg-action text-white rounded-xl font-semibold"
           >
             {quizReturnLabel}
           </Link>
@@ -340,17 +340,17 @@ function QuizViewerSession() {
 
   if (questions.length === 0) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center px-4">
-        <div className="max-w-md text-center bg-white dark:bg-slate-800 rounded-2xl p-6">
-          <h1 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-950 flex items-center justify-center px-4">
+        <div className="max-w-md text-center bg-white dark:bg-brown-900 rounded-2xl p-6">
+          <h1 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-2">
             No quiz questions available
           </h1>
-          <p className="text-brown-600 dark:text-gray-400 mb-4">
+          <p className="text-brown-600 dark:text-brown-300 mb-4">
             Please try a different quiz or come back in a moment.
           </p>
           <Link replace
             to="/quiz"
-            className="pressable inline-flex items-center justify-center px-4 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-semibold"
+            className="pressable inline-flex items-center justify-center px-4 py-3 bg-action text-white rounded-xl font-semibold"
           >
             Back to Quiz List
           </Link>
@@ -547,7 +547,7 @@ function QuizViewerSession() {
               ? 'border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950/40'
               : scorePercent >= 60
               ? 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/40'
-              : 'border-coral-200 bg-coral-50 dark:border-coral-800 dark:bg-coral-950/40'
+              : 'border-coral-200 bg-coral-50'
           }`}>
             <Trophy className={`w-16 h-16 mx-auto mb-4 ${
               scorePercent >= 80 
@@ -556,13 +556,13 @@ function QuizViewerSession() {
                 ? 'text-amber-700 dark:text-amber-400'
                 : 'text-red-600 dark:text-red-400'
             }`} />
-            <h2 className="text-3xl font-bold text-brown-800 dark:text-white mb-2">
+            <h2 className="text-3xl font-bold text-brown-800 dark:text-cream-100 mb-2">
               {scorePercent}%
             </h2>
-            <p className="text-lg text-brown-700 dark:text-gray-300">
+            <p className="text-lg text-brown-700 dark:text-brown-100">
               {correctCount} out of {questions.length} correct
             </p>
-            <p className="text-sm text-brown-600 dark:text-gray-400 mt-2">
+            <p className="text-sm text-brown-600 dark:text-brown-300 mt-2">
               {scorePercent >= 80 
                 ? 'Excellent work on this set.'
                 : scorePercent >= 60
@@ -572,8 +572,8 @@ function QuizViewerSession() {
           </div>
 
           {/* Review Answers */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-6">
-            <h3 className="font-semibold text-brown-800 dark:text-white mb-4">
+          <div className="bg-white dark:bg-brown-900 rounded-2xl p-4 mb-6">
+            <h3 className="font-semibold text-brown-800 dark:text-cream-100 mb-4">
               Review Your Answers
             </h3>
             <div className="space-y-3">
@@ -593,7 +593,7 @@ function QuizViewerSession() {
                       <X className="w-5 h-5 text-red-600 dark:text-red-400 flex-shrink-0 mt-0.5" />
                     )}
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-brown-800 dark:text-white">
+                      <p className="text-sm font-medium text-brown-800 dark:text-cream-100">
                         {result.question.question}
                       </p>
                       {!result.isCorrect && (
@@ -639,7 +639,7 @@ function QuizViewerSession() {
             <button
               onClick={handleRestart}
               disabled={isRestarting || isSavingResult || Boolean(pendingQuizResult)}
-              className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 py-3 font-semibold text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-action px-6 py-3 font-semibold text-white hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-60"
             >
               <RotateCcw className="w-5 h-5" />
               {isRestarting ? 'Loading...' : isDictionaryQuiz ? 'New Questions' : 'Try Again'}
@@ -648,14 +648,14 @@ function QuizViewerSession() {
               <button
                 type="button"
                 disabled
-                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 transition-colors cursor-not-allowed opacity-60"
+                className="flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-brown-700 text-brown-800 dark:text-cream-100 rounded-xl font-semibold border-2 border-coral-200 transition-colors cursor-not-allowed opacity-60"
               >
                 Other Quizzes
               </button>
             ) : (
               <Link replace
                 to="/quiz"
-                className="pressable flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-slate-700 text-brown-800 dark:text-white rounded-xl font-semibold border-2 border-coral-200 dark:border-ocean-600 hover:bg-coral-50 dark:hover:bg-slate-600 transition-colors"
+                className="pressable flex-1 flex items-center justify-center gap-2 px-6 py-3 bg-white dark:bg-brown-700 text-brown-800 dark:text-cream-100 rounded-xl font-semibold border-2 border-coral-200 hover:bg-coral-50 dark:hover:bg-brown-600 transition-colors"
               >
                 Other Quizzes
               </Link>
@@ -664,7 +664,7 @@ function QuizViewerSession() {
           
           {/* Dictionary mode hint OR Try Dictionary Mode button */}
           {isDictionaryQuiz ? (
-            <p className="text-center text-sm text-brown-600 dark:text-gray-400 mt-4">
+            <p className="text-center text-sm text-brown-600 dark:text-brown-300 mt-4">
               Dictionary quizzes generate new random questions each time!
             </p>
           ) : (
@@ -717,7 +717,7 @@ function QuizViewerSession() {
         below={(
           <div className="flex items-center gap-3">
             <LearnerProgress value={progress} label="Quiz progress" className="flex-1" />
-            <span className="text-xs font-semibold text-brown-500 dark:text-gray-400">{currentIndex + 1} / {questions.length}</span>
+            <span className="text-xs font-semibold text-brown-500 dark:text-brown-300">{currentIndex + 1} / {questions.length}</span>
           </div>
         )}
       />
@@ -725,21 +725,21 @@ function QuizViewerSession() {
       {/* Question Content - scrollable area */}
       <main className="learner-reading flex-1 overflow-y-auto">
         <div className="max-w-2xl mx-auto w-full px-4 py-4 sm:py-6 pb-safe">
-        <p role="status" className="mb-3 text-xs text-brown-600 dark:text-gray-400">{storageAvailable ? savedQuiz ? 'Resumed your quiz on this browser.' : 'Your quiz resumes on this browser if you leave.' : 'Browser storage is unavailable. Keep this quiz open to retain your progress.'}</p>
+        <p role="status" className="mb-3 text-xs text-brown-600 dark:text-brown-300">{storageAvailable ? savedQuiz ? 'Resumed your quiz on this browser.' : 'Your quiz resumes on this browser if you leave.' : 'Browser storage is unavailable. Keep this quiz open to retain your progress.'}</p>
         <ContentTrustNote trust={contentTrust} className="mb-4" compact />
         {currentQuestion && (
           <>
             {/* Question */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-4 sm:p-6 mb-4 sm:mb-6">
               <div className="flex items-center gap-2 mb-2 sm:mb-4">
-                <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-coral-700 dark:text-ocean-400" />
-                <span className="text-sm font-semibold text-brown-500 dark:text-gray-400">
+                <Brain className="w-4 h-4 sm:w-5 sm:h-5 text-coral-700" />
+                <span className="text-sm font-semibold text-brown-500 dark:text-brown-300">
                   {currentQuestion.type === 'multiple_choice' ? 'Multiple choice' :
                    currentQuestion.type === 'type_answer' ? 'Type your answer' : 'Fill in the blank'}
                 </span>
               </div>
               <div className="flex flex-col items-start gap-3">
-                <h2 id="quiz-question" ref={questionRef} tabIndex={-1} className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white leading-snug sm:leading-relaxed flex-1">
+                <h2 id="quiz-question" ref={questionRef} tabIndex={-1} className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-cream-100 leading-snug sm:leading-relaxed flex-1">
                 {currentQuestion.question}
               </h2>
                 <PronunciationButton key={currentQuestion.id} text={currentQuestion.question} label="Hear it" showLabel />
@@ -791,7 +791,7 @@ function QuizViewerSession() {
                     const isSelected = userAnswer === option;
                     const isCorrectOption = option === currentQuestion.correctAnswer;
                     
-                    let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 hover:border-coral-400 dark:hover:border-ocean-500';
+                    let buttonClass = 'bg-white dark:bg-brown-900 border-2 border-cream-200 dark:border-brown-700 hover:border-coral-400';
                     
                     if (answerState !== 'unanswered') {
                       if (isCorrectOption) {
@@ -799,7 +799,7 @@ function QuizViewerSession() {
                       } else if (isSelected && !isCorrectOption) {
                         buttonClass = 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500';
                       } else {
-                        buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 opacity-50';
+                        buttonClass = 'bg-white dark:bg-brown-900 border-2 border-cream-200 dark:border-brown-700 opacity-50';
                       }
                     }
                     
@@ -813,10 +813,10 @@ function QuizViewerSession() {
                           className={`min-h-12 flex-1 rounded-xl p-3 text-left transition-colors sm:p-4 ${buttonClass}`}
                         >
                           <div className="flex items-center gap-2 sm:gap-3">
-                          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 dark:bg-ocean-900/50 flex items-center justify-center text-sm font-bold text-coral-700 dark:text-ocean-300 flex-shrink-0">
+                          <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 flex items-center justify-center text-sm font-bold text-coral-700 flex-shrink-0">
                             {String.fromCharCode(65 + idx)}
                           </span>
-                          <span className="min-w-0 flex-1 text-base font-medium text-brown-800 dark:text-white sm:text-base">
+                          <span className="min-w-0 flex-1 text-base font-medium text-brown-800 dark:text-cream-100 sm:text-base">
                             {option}
                           </span>
                           {answerState !== 'unanswered' && isCorrectOption && (
@@ -853,11 +853,11 @@ function QuizViewerSession() {
                       placeholder="Type your answer..."
                       className={`w-full px-4 py-4 text-lg rounded-xl border-2 transition-colors ${
                         answerState === 'unanswered'
-                          ? 'border-cream-200 dark:border-slate-700 focus:border-coral-400 dark:focus:border-ocean-500 bg-white dark:bg-slate-800'
+                          ? 'border-cream-200 dark:border-brown-700 focus:border-coral-400 bg-white dark:bg-brown-900'
                           : answerState === 'correct'
                           ? 'border-green-500 bg-green-50 dark:bg-green-900/20'
                           : 'border-red-500 bg-red-50 dark:bg-red-900/20'
-                      } text-brown-800 dark:text-white placeholder-brown-600 dark:placeholder-slate-300 outline-none`}
+                      } text-brown-800 dark:text-cream-100 placeholder-brown-600 dark:placeholder-brown-200 outline-none`}
                     />
                     {answerState !== 'unanswered' && (
                       <div className={`absolute right-4 top-1/2 -translate-y-1/2 ${
@@ -873,13 +873,13 @@ function QuizViewerSession() {
                       <button
                         onClick={() => handleAnswer(userAnswer)}
                         disabled={!userAnswer.trim()}
-                        className="min-h-12 flex-1 rounded-xl bg-coral-700 py-3 font-semibold text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
+                        className="min-h-12 flex-1 rounded-xl bg-action py-3 font-semibold text-white hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         Submit Answer
                       </button>
                       <button
                         onClick={handleDontKnow}
-                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-slate-600 transition-colors"
+                        className="flex items-center justify-center gap-2 px-4 py-3 bg-gray-100 dark:bg-brown-700 text-brown-600 dark:text-brown-100 rounded-xl font-medium hover:bg-gray-200 dark:hover:bg-brown-600 transition-colors"
                       >
                         <HelpCircle className="w-5 h-5" />
                         I don't know
@@ -905,7 +905,7 @@ function QuizViewerSession() {
                       ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
                       : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
                   }`}>
-                    <p className="text-sm text-brown-700 dark:text-gray-300">
+                    <p className="text-sm text-brown-700 dark:text-brown-100">
                       {currentQuestion.explanation}
                     </p>
                     <PronunciationButton text={currentQuestion.explanation} label="Hear it" showLabel />
@@ -923,7 +923,7 @@ function QuizViewerSession() {
                         location.hash,
                       ),
                     })}
-                    className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950/30"
+                    className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500"
                   >
                     <BookOpen className="h-4 w-4" aria-hidden="true" />
                     Open dictionary entry
@@ -932,7 +932,7 @@ function QuizViewerSession() {
                 
                 <button
                   onClick={handleNext}
-                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 py-3 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800 sm:py-4"
+                  className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action py-3 font-semibold text-white hover:bg-action-hover sm:py-4"
                 >
                   {currentIndex < questions.length - 1 ? (
                     <>

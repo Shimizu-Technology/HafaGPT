@@ -33,7 +33,7 @@ function applyTheme() {
   // Both media variants must reflect an explicit choice even when it differs
   // from the OS. Before JavaScript, their media queries supply the fallback.
   document.querySelectorAll('meta[name="theme-color"]').forEach(meta => {
-    meta.setAttribute('content', theme === 'dark' ? '#0f172a' : '#FEFDFB');
+    meta.setAttribute('content', theme === 'dark' ? '#1C1512' : '#FEFDFB');
   });
   document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
     ?.setAttribute('content', theme === 'dark' ? 'black' : 'default');

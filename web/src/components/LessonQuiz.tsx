@@ -331,12 +331,12 @@ function LessonQuizSession({
   if (allQuestions.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-brown-600 dark:text-gray-300">
+        <p className="text-brown-600 dark:text-brown-100">
           No quiz questions available for this topic.
         </p>
         <button
           onClick={() => onComplete(100)}
-          className="mt-4 px-6 py-2 bg-coral-700 dark:bg-teal-700 text-white rounded-xl"
+          className="mt-4 px-6 py-2 bg-action text-white rounded-xl"
         >
           Continue anyway
         </button>
@@ -348,16 +348,16 @@ function LessonQuizSession({
   if (showResumePrompt && savedState) {
     return (
       <div className="space-y-6">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200/50 dark:border-slate-700/50 text-center">
-          <div className="w-16 h-16 bg-coral-100 dark:bg-teal-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
-            <ArrowRight className="w-8 h-8 text-coral-700 dark:text-teal-300" />
+        <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 border border-cream-200/50 dark:border-brown-700/50 text-center">
+          <div className="w-16 h-16 bg-coral-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <ArrowRight className="w-8 h-8 text-coral-700" />
           </div>
           
-          <h3 id="lesson-quiz-question" ref={questionRef} tabIndex={-1} className="text-xl font-bold text-brown-800 dark:text-white mb-2">
+          <h3 id="lesson-quiz-question" ref={questionRef} tabIndex={-1} className="text-xl font-bold text-brown-800 dark:text-cream-100 mb-2">
             Continue Quiz?
           </h3>
           
-          <p className="text-brown-600 dark:text-gray-300 mb-6">
+          <p className="text-brown-600 dark:text-brown-100 mb-6">
             You were on question {savedState.currentIndex + 1} of {allQuestions.length} with {savedState.correctCount} correct answer{savedState.correctCount !== 1 ? 's' : ''}.
           </p>
           
@@ -490,7 +490,7 @@ function LessonQuizSession({
   return (
     <div className="space-y-6">
       {/* Progress */}
-      <div className="flex items-center justify-between text-sm text-brown-600 dark:text-gray-300">
+      <div className="flex items-center justify-between text-sm text-brown-600 dark:text-brown-100">
         <span>Question {currentIndex + 1} of {allQuestions.length}</span>
         <span>{correctCount} correct</span>
       </div>
@@ -501,7 +501,7 @@ function LessonQuizSession({
       <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">{isAnswered ? isCorrect ? 'Correct.' : `Incorrect. Correct answer: ${currentQuestion.correctAnswer}` : ''}</p>
 
       {/* Question card */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200/50 dark:border-slate-700/50">
+      <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 border border-cream-200/50 dark:border-brown-700/50">
         {/* Question type badge */}
         <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
           <span className={`px-3 py-1 rounded-full text-xs font-medium ${
@@ -522,7 +522,7 @@ function LessonQuizSession({
               aria-label={showHint ? 'Hide hint' : 'Show hint'}
               aria-expanded={showHint}
               aria-controls="lesson-quiz-hint"
-              className="min-h-11 min-w-11 p-2 rounded-lg text-brown-600 dark:text-gray-300 hover:bg-cream-100 dark:hover:bg-slate-700 transition-colors"
+              className="min-h-11 min-w-11 p-2 rounded-lg text-brown-600 dark:text-brown-100 hover:bg-cream-100 dark:hover:bg-brown-700 transition-colors"
             >
               <HelpCircle className="w-5 h-5" aria-hidden="true" />
             </button>
@@ -530,7 +530,7 @@ function LessonQuizSession({
         </div>
 
         {/* Question */}
-        <h3 id="lesson-quiz-question" ref={questionRef} tabIndex={-1} className="text-xl font-semibold text-brown-800 dark:text-white mb-6">
+        <h3 id="lesson-quiz-question" ref={questionRef} tabIndex={-1} className="text-xl font-semibold text-brown-800 dark:text-cream-100 mb-6">
           {currentQuestion.question}
         </h3>
 
@@ -552,9 +552,9 @@ function LessonQuizSession({
               const isSelected = selectedAnswer === option;
               const isCorrectAnswer = option === currentQuestion.correctAnswer;
               
-              let bgClass = 'bg-cream-50 dark:bg-slate-700/50 hover:bg-cream-100 dark:hover:bg-slate-700';
-              let borderClass = 'border-cream-200 dark:border-slate-600';
-              let textClass = 'text-brown-800 dark:text-white';
+              let bgClass = 'bg-cream-50 dark:bg-brown-700/50 hover:bg-cream-100 dark:hover:bg-brown-700';
+              let borderClass = 'border-cream-200 dark:border-brown-600';
+              let textClass = 'text-brown-800 dark:text-cream-100';
               
               if (isAnswered) {
                 if (isCorrectAnswer) {
@@ -567,9 +567,9 @@ function LessonQuizSession({
                   textClass = 'text-red-700 dark:text-red-300';
                 }
               } else if (isSelected) {
-                bgClass = 'bg-coral-100 dark:bg-ocean-800/50';
-                borderClass = 'border-coral-500 dark:border-ocean-400';
-                textClass = 'text-coral-700 dark:text-ocean-200';
+                bgClass = 'bg-coral-100';
+                borderClass = 'border-coral-500';
+                textClass = 'text-coral-700';
               }
               
               return (
@@ -618,7 +618,7 @@ function LessonQuizSession({
                   ? isCorrect
                     ? 'bg-emerald-50 dark:bg-emerald-900/30 border-emerald-500 text-emerald-700 dark:text-emerald-300'
                     : 'bg-red-50 dark:bg-red-900/30 border-red-500 text-red-700 dark:text-red-300'
-                  : 'bg-cream-50 dark:bg-slate-700 border-cream-200 dark:border-slate-600 text-brown-800 dark:text-white placeholder:text-brown-600 dark:placeholder:text-gray-300'
+                  : 'bg-cream-50 dark:bg-brown-700 border-cream-200 dark:border-brown-600 text-brown-800 dark:text-cream-100 placeholder:text-brown-600 dark:placeholder:text-brown-100'
               }`}
             />
             
@@ -629,8 +629,8 @@ function LessonQuizSession({
                   setTypedAnswer('');
                   checkAnswer(true);
                 }}
-                className="w-full py-3 px-4 bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300
-                         font-medium rounded-xl hover:bg-cream-200 dark:hover:bg-slate-600 
+                className="w-full py-3 px-4 bg-cream-100 dark:bg-brown-700 text-brown-600 dark:text-brown-100
+                         font-medium rounded-xl hover:bg-cream-200 dark:hover:bg-brown-600 
                          transition-colors text-sm"
               >
                 I don't know — show me the answer
@@ -638,7 +638,7 @@ function LessonQuizSession({
             )}
             
             {isAnswered && !isCorrect && (
-              <p className="text-sm text-brown-600 dark:text-gray-300">
+              <p className="text-sm text-brown-600 dark:text-brown-100">
                 Correct answer: <span className="font-semibold text-emerald-700 dark:text-emerald-400">{currentQuestion.correctAnswer}</span>
               </p>
             )}

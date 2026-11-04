@@ -41,19 +41,19 @@ export function useGameRoundGuard(active: boolean, unsaved: boolean, retry?: () 
     },
     dialog: open ? (
       <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 p-4">
-        <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="round-leave-title" aria-describedby="round-leave-description" tabIndex={-1} className="w-full max-w-md rounded-2xl bg-white p-6 text-brown-950 shadow-xl dark:bg-slate-800 dark:text-white">
+        <div ref={dialogRef} role="dialog" aria-modal="true" aria-labelledby="round-leave-title" aria-describedby="round-leave-description" tabIndex={-1} className="w-full max-w-md rounded-2xl bg-white p-6 text-brown-950 shadow-xl dark:bg-brown-900 dark:text-cream-100">
           <h2 id="round-leave-title" className="text-xl font-bold">{unsaved ? 'Keep your result' : 'Leave this round?'}</h2>
           <p id="round-leave-description" className="mt-3">{unsaved ? 'Your result hasn’t saved yet. Keep this page open, then retry the save.' : "Your progress won’t be saved."}</p>
           <div className="mt-5 flex flex-wrap gap-3">
-            <button type="button" onClick={keepPlaying} className="min-h-12 flex-1 rounded-xl bg-coral-700 px-4 font-semibold text-white dark:bg-teal-700">{unsaved ? 'Keep result' : 'Keep playing'}</button>
+            <button type="button" onClick={keepPlaying} className="min-h-12 flex-1 rounded-xl bg-action px-4 font-semibold text-white">{unsaved ? 'Keep result' : 'Keep playing'}</button>
             {unsaved ? (
-              retry && <button type="button" onClick={retry} className="min-h-12 flex-1 rounded-xl border border-brown-400 px-4 font-semibold dark:border-slate-500">Retry save</button>
+              retry && <button type="button" onClick={retry} className="min-h-12 flex-1 rounded-xl border border-brown-400 px-4 font-semibold dark:border-brown-500">Retry save</button>
             ) : (
               <button type="button" onClick={() => {
                 if (blocker.state === 'blocked') blocker.proceed();
                 else localExit?.();
                 setLocalExit(null);
-              }} className="min-h-12 flex-1 rounded-xl border border-brown-400 px-4 font-semibold dark:border-slate-500">Leave</button>
+              }} className="min-h-12 flex-1 rounded-xl border border-brown-400 px-4 font-semibold dark:border-brown-500">Leave</button>
             )}
           </div>
         </div>

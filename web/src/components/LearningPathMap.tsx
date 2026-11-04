@@ -42,7 +42,7 @@ function StarDisplay({ count, size = 'sm' }: { count: number; size?: 'sm' | 'md'
           className={`${sizeClasses} ${
             star <= count
               ? 'text-amber-400 fill-amber-400'
-              : 'text-gray-300 dark:text-gray-600'
+              : 'text-gray-300 dark:text-brown-600'
           }`}
         />
       ))}
@@ -65,27 +65,27 @@ function TopicNode({
   const isLocked = status === 'locked';
   
   const statusColors = {
-    locked: 'bg-gray-100 dark:bg-slate-800 border-gray-200 dark:border-slate-700',
-    available: 'bg-white dark:bg-slate-800 border-cream-200 dark:border-slate-700',
-    in_progress: 'bg-coral-50 dark:bg-teal-900/20 border-coral-400 dark:border-teal-500 ring-1 ring-coral-200 dark:ring-teal-700',
+    locked: 'bg-gray-100 dark:bg-brown-900 border-gray-200 dark:border-brown-700',
+    available: 'bg-white dark:bg-brown-900 border-cream-200 dark:border-brown-700',
+    in_progress: 'bg-coral-50 border-coral-400 ring-1 ring-coral-200',
     completed: 'bg-emerald-50 dark:bg-emerald-900/20 border-emerald-300 dark:border-emerald-700',
   };
 
   const iconColors = {
-    locked: 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-400',
-    available: 'bg-coral-100 dark:bg-ocean-800 text-coral-700 dark:text-ocean-400',
-    in_progress: 'bg-coral-700 dark:bg-ocean-700 text-white',
+    locked: 'bg-gray-200 dark:bg-brown-700 text-gray-400 dark:text-brown-300',
+    available: 'bg-coral-100 text-coral-700',
+    in_progress: 'bg-action text-white',
     completed: 'bg-emerald-500 text-white',
   };
 
   const content = (
     <div
       className={`relative p-3 sm:p-4 rounded-xl border-2 transition-colors ${statusColors[status]} ${
-        isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:border-coral-400 dark:hover:border-teal-500 cursor-pointer'
+        isLocked ? 'opacity-60 cursor-not-allowed' : 'hover:border-coral-400 cursor-pointer'
       }`}
     >
       <div className="flex items-center gap-3">
-        <span className="w-5 flex-shrink-0 text-center text-xs font-semibold tabular-nums text-brown-500 dark:text-gray-400" aria-hidden="true">
+        <span className="w-5 flex-shrink-0 text-center text-xs font-semibold tabular-nums text-brown-500 dark:text-brown-300" aria-hidden="true">
           {index + 1}
         </span>
         {/* Icon */}
@@ -102,13 +102,13 @@ function TopicNode({
         {/* Content */}
         <div className="flex-1 min-w-0">
           <h3 className={`font-semibold text-sm leading-snug ${
-            isLocked ? 'text-gray-400 dark:text-gray-400' : 'text-brown-800 dark:text-white'
+            isLocked ? 'text-gray-400 dark:text-brown-300' : 'text-brown-800 dark:text-cream-100'
           }`}>
             {topic.title}
           </h3>
           
           <p className={`text-xs mt-0.5 truncate hidden sm:block ${
-            isLocked ? 'text-gray-400 dark:text-gray-600' : 'text-brown-500 dark:text-gray-400'
+            isLocked ? 'text-gray-400 dark:text-brown-600' : 'text-brown-500 dark:text-brown-300'
           }`}>
             {topic.description}
           </p>
@@ -126,18 +126,18 @@ function TopicNode({
               </>
             )}
             {status === 'in_progress' && (
-              <span className="text-xs text-coral-700 dark:text-ocean-400 font-medium flex items-center gap-1">
+              <span className="text-xs text-coral-700 font-medium flex items-center gap-1">
                 <Play className="w-3 h-3 fill-current" />
                 In Progress
               </span>
             )}
             {status === 'available' && (
-              <span className="text-xs text-brown-500 dark:text-gray-400 font-medium">
+              <span className="text-xs text-brown-500 dark:text-brown-300 font-medium">
                 Ready to start
               </span>
             )}
             {status === 'locked' && (
-              <span className="text-xs text-gray-400 dark:text-gray-600 hidden sm:inline">
+              <span className="text-xs text-gray-400 dark:text-brown-600 hidden sm:inline">
                 Complete previous first
               </span>
             )}
@@ -149,7 +149,7 @@ function TopicNode({
           <div className={`flex-shrink-0 w-7 h-7 sm:w-8 sm:h-8 rounded-full flex items-center justify-center ${
             status === 'completed' 
               ? 'bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400'
-              : 'bg-coral-100 dark:bg-ocean-800 text-coral-700 dark:text-ocean-400'
+              : 'bg-coral-100 text-coral-700'
           }`}>
             {status === 'completed' ? (
               <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
@@ -198,10 +198,10 @@ function LevelSection({
 }: LevelSectionProps) {
 
   const colors = {
-    bg: 'bg-cream-50 dark:bg-slate-800',
-    border: 'border-cream-200 dark:border-slate-700',
-    text: 'text-brown-800 dark:text-white',
-    progress: 'bg-coral-700 dark:bg-teal-700',
+    bg: 'bg-cream-50 dark:bg-brown-900',
+    border: 'border-cream-200 dark:border-brown-700',
+    text: 'text-brown-800 dark:text-cream-100',
+    progress: 'bg-action',
   };
 
   const isComplete = completedCount === topics.length;
@@ -232,7 +232,7 @@ function LevelSection({
                 <Lock className="w-4 h-4 text-gray-400" />
               )}
             </div>
-            <p className="text-xs text-brown-500 dark:text-gray-400">
+            <p className="text-xs text-brown-500 dark:text-brown-300">
               {isLocked ? 'Complete beginner first' : `${completedCount} of ${topics.length} topics`}
             </p>
           </div>
@@ -241,7 +241,7 @@ function LevelSection({
         <div className="flex items-center gap-2 sm:gap-3">
           {/* Mini progress bar */}
           {!isLocked && (
-            <div className="hidden sm:block w-20 h-1.5 bg-gray-200 dark:bg-slate-700 rounded-full overflow-hidden">
+            <div className="hidden sm:block w-20 h-1.5 bg-gray-200 dark:bg-brown-700 rounded-full overflow-hidden">
               <div
                 className={`h-full ${colors.progress} rounded-full`}
                 style={{ width: `${(completedCount / topics.length) * 100}%` }}
@@ -250,9 +250,9 @@ function LevelSection({
           )}
           {!isLocked && (
             isExpanded ? (
-              <ChevronUp className="w-5 h-5 text-brown-500 dark:text-gray-400" />
+              <ChevronUp className="w-5 h-5 text-brown-500 dark:text-brown-300" />
             ) : (
-              <ChevronDown className="w-5 h-5 text-brown-500 dark:text-gray-400" />
+              <ChevronDown className="w-5 h-5 text-brown-500 dark:text-brown-300" />
             )
           )}
         </div>
@@ -260,7 +260,7 @@ function LevelSection({
 
       {/* Topics List */}
       {isExpanded && !isLocked && (
-        <div id={`learning-topics-${level}`} className="grid gap-3 p-3 sm:gap-4 sm:p-4 bg-white dark:bg-slate-800">
+        <div id={`learning-topics-${level}`} className="grid gap-3 p-3 sm:gap-4 sm:p-4 bg-white dark:bg-brown-900">
           {topics.map((topic, index) => {
             const progress = progressMap.get(topic.id);
             const status = getTopicStatus(progress);
@@ -314,12 +314,12 @@ export function LearningPathMap() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 border border-cream-200 dark:border-brown-700">
         <div className="animate-pulse">
-          <div className="h-6 w-48 bg-gray-200 dark:bg-slate-700 rounded mb-4" />
+          <div className="h-6 w-48 bg-gray-200 dark:bg-brown-700 rounded mb-4" />
           <div className="space-y-4">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="h-24 bg-gray-100 dark:bg-slate-700 rounded-xl" />
+              <div key={i} className="h-24 bg-gray-100 dark:bg-brown-700 rounded-xl" />
             ))}
           </div>
         </div>
@@ -348,14 +348,14 @@ export function LearningPathMap() {
   const totalCompleted = beginnerCompleted + intermediateCompleted + advancedCompleted;
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-cream-200 dark:border-slate-700">
+    <div className="bg-white dark:bg-brown-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-cream-200 dark:border-brown-700">
       {/* Header */}
       <div className="flex items-center justify-between mb-4 sm:mb-6">
         <div>
-          <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white">
+          <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-cream-100">
             Your Learning Journey
           </h2>
-          <p className="text-xs sm:text-sm text-brown-500 dark:text-gray-400">
+          <p className="text-xs sm:text-sm text-brown-500 dark:text-brown-300">
             {totalCompleted} of {totalTopics} topics completed
           </p>
         </div>
@@ -363,9 +363,9 @@ export function LearningPathMap() {
 
       {/* Overall progress bar */}
       <div className="mb-4 sm:mb-6">
-        <div className="h-1.5 sm:h-2 bg-gray-100 dark:bg-slate-700 rounded-full overflow-hidden">
+        <div className="h-1.5 sm:h-2 bg-gray-100 dark:bg-brown-700 rounded-full overflow-hidden">
           <div
-            className="h-full bg-coral-700 dark:bg-teal-700 rounded-full transition-[width,background-color] duration-300"
+            className="h-full bg-action rounded-full transition-[width,background-color] duration-300"
             style={{ width: `${(totalCompleted / totalTopics) * 100}%` }}
           />
         </div>
@@ -411,9 +411,9 @@ export function LearningPathMap() {
       </div>
 
       {/* Legend */}
-      <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-cream-200 dark:border-slate-700">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-brown-600 dark:text-gray-300">
-          <span className="text-brown-500 dark:text-gray-400">Stars:</span>
+      <div className="mt-4 sm:mt-6 pt-3 sm:pt-4 border-t border-cream-200 dark:border-brown-700">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-brown-600 dark:text-brown-100">
+          <span className="text-brown-500 dark:text-brown-300">Stars:</span>
           <div className="flex items-center gap-1">
             <StarDisplay count={1} />
             <span>Done</span>

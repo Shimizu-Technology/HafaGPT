@@ -78,9 +78,9 @@ export function TopicWorkspacePage() {
   if (!localTopic) {
     return (
       <LearnerPageShell className="flex items-center justify-center p-4">
-        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-          <h1 className="text-xl font-bold text-brown-950 dark:text-white">Topic not found</h1>
-          <Link replace className="mt-4 inline-flex min-h-11 items-center text-coral-700 dark:text-ocean-300" to={appRoutes.learning}>Back to learning path</Link>
+        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-900">
+          <h1 className="text-xl font-bold text-brown-950 dark:text-cream-100">Topic not found</h1>
+          <Link replace className="mt-4 inline-flex min-h-11 items-center text-coral-700" to={appRoutes.learning}>Back to learning path</Link>
         </div>
       </LearnerPageShell>
     );
@@ -89,8 +89,8 @@ export function TopicWorkspacePage() {
   if (isLoading) {
     return (
       <LearnerPageShell className="flex items-center justify-center">
-        <div className="text-center text-brown-600 dark:text-gray-300">
-          <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-coral-700 dark:text-ocean-300" aria-hidden="true" />
+        <div className="text-center text-brown-600 dark:text-brown-100">
+          <Loader2 className="mx-auto mb-3 h-8 w-8 animate-spin text-coral-700" aria-hidden="true" />
           Loading topic workspace…
         </div>
       </LearnerPageShell>
@@ -109,12 +109,12 @@ export function TopicWorkspacePage() {
   if (isError || !data || !workspaceMatchesTopic) {
     return (
       <LearnerPageShell className="flex items-center justify-center p-4">
-        <div className="max-w-md rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-          <h1 className="text-xl font-bold text-brown-950 dark:text-white">Topic workspace unavailable</h1>
-          <p className="mt-2 text-sm text-brown-600 dark:text-gray-300">Your lesson and learning path are still available.</p>
+        <div className="max-w-md rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-900">
+          <h1 className="text-xl font-bold text-brown-950 dark:text-cream-100">Topic workspace unavailable</h1>
+          <p className="mt-2 text-sm text-brown-600 dark:text-brown-100">Your lesson and learning path are still available.</p>
           <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:justify-center">
-            <button type="button" onClick={() => void refetch()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
-            <Link to={withLearningContext(appRoutes.lesson(localTopic.id), localTopic, { source: 'topic' })} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-cream-100 px-4 font-semibold text-brown-800 hover:bg-cream-200 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600">Open lesson</Link>
+            <button type="button" onClick={() => void refetch()} className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-action px-4 font-semibold text-white hover:bg-action-hover"><RefreshCw className="h-4 w-4" aria-hidden="true" />Try again</button>
+            <Link to={withLearningContext(appRoutes.lesson(localTopic.id), localTopic, { source: 'topic' })} className="inline-flex min-h-11 items-center justify-center rounded-xl bg-cream-100 px-4 font-semibold text-brown-800 hover:bg-cream-200 dark:bg-brown-700 dark:text-cream-100 dark:hover:bg-brown-600">Open lesson</Link>
           </div>
         </div>
       </LearnerPageShell>
@@ -149,7 +149,7 @@ export function TopicWorkspacePage() {
       />
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-6 sm:py-8">
-        <section className="overflow-hidden rounded-3xl bg-coral-700 p-6 text-white dark:bg-ocean-900 sm:p-8">
+        <section className="overflow-hidden rounded-3xl bg-action p-6 text-white sm:p-8">
           <div className="flex items-start gap-4">
             <span className="flex h-14 w-14 flex-none items-center justify-center rounded-2xl bg-white/15 text-3xl" aria-hidden="true">{localTopic.icon}</span>
             <div className="min-w-0 flex-1">
@@ -161,25 +161,25 @@ export function TopicWorkspacePage() {
               </div>
             </div>
           </div>
-          <Link to={lessonHref} className="pressable mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 font-bold text-coral-700 hover:bg-cream-50 dark:text-ocean-800 sm:w-auto"><BookOpen className="h-5 w-5" aria-hidden="true" />{lessonAction}</Link>
+          <Link to={lessonHref} className="pressable mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-white px-5 font-bold text-coral-700 hover:bg-cream-50 sm:w-auto"><BookOpen className="h-5 w-5" aria-hidden="true" />{lessonAction}</Link>
         </section>
 
         <section aria-labelledby="progress-heading">
           <div className="mb-3 flex items-end justify-between gap-4">
             <div>
-              <h2 id="progress-heading" className="text-xl font-bold text-brown-950 dark:text-white">Topic progress</h2>
+              <h2 id="progress-heading" className="text-xl font-bold text-brown-950 dark:text-cream-100">Topic progress</h2>
             </div>
-            {lastActivity && <p className="text-xs text-brown-500 dark:text-gray-400">Last activity {lastActivity}</p>}
+            {lastActivity && <p className="text-xs text-brown-500 dark:text-brown-300">Last activity {lastActivity}</p>}
           </div>
           <dl className="grid gap-3 sm:grid-cols-3">
-            <div className="border-t border-cream-200 py-4 dark:border-slate-700"><dt className="text-sm font-semibold text-brown-500 dark:text-gray-400">Lesson</dt><dd className="mt-1 font-semibold text-brown-950 dark:text-white">{data.progress.completed_at ? 'Completed' : data.progress.started_at ? 'In progress' : 'Not started'}</dd></div>
-            <div className="border-t border-cream-200 py-4 dark:border-slate-700"><dt className="text-sm font-semibold text-brown-500 dark:text-gray-400">Cards viewed</dt><dd className="mt-1 text-2xl font-semibold text-brown-950 dark:text-white">{data.progress.flashcards_viewed}</dd></div>
-            <div className="border-t border-cream-200 py-4 dark:border-slate-700"><dt className="text-sm font-semibold text-brown-500 dark:text-gray-400">Best lesson quiz</dt><dd className="mt-1 text-2xl font-semibold text-brown-950 dark:text-white">{data.progress.best_quiz_score === null ? '—' : `${data.progress.best_quiz_score}%`}</dd></div>
+            <div className="border-t border-cream-200 py-4 dark:border-brown-700"><dt className="text-sm font-semibold text-brown-500 dark:text-brown-300">Lesson</dt><dd className="mt-1 font-semibold text-brown-950 dark:text-cream-100">{data.progress.completed_at ? 'Completed' : data.progress.started_at ? 'In progress' : 'Not started'}</dd></div>
+            <div className="border-t border-cream-200 py-4 dark:border-brown-700"><dt className="text-sm font-semibold text-brown-500 dark:text-brown-300">Cards viewed</dt><dd className="mt-1 text-2xl font-semibold text-brown-950 dark:text-cream-100">{data.progress.flashcards_viewed}</dd></div>
+            <div className="border-t border-cream-200 py-4 dark:border-brown-700"><dt className="text-sm font-semibold text-brown-500 dark:text-brown-300">Best lesson quiz</dt><dd className="mt-1 text-2xl font-semibold text-brown-950 dark:text-cream-100">{data.progress.best_quiz_score === null ? '—' : `${data.progress.best_quiz_score}%`}</dd></div>
           </dl>
         </section>
 
         <section aria-labelledby="practice-heading">
-          <h2 id="practice-heading" className="text-xl font-bold text-brown-950 dark:text-white">Practice in another way</h2>
+          <h2 id="practice-heading" className="text-xl font-bold text-brown-950 dark:text-cream-100">Practice in another way</h2>
           <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
             <WorkspaceLink icon={Layers3} title="Flashcards" description="Study the guided topic deck." to={withTopicReturn(appRoutes.flashcards(data.flashcard_category), localTopic.id)} />
             <WorkspaceLink icon={Brain} title="Topic quiz" description="Check recall with the matching quiz." to={withTopicReturn(appRoutes.quiz(data.quiz_category), localTopic.id)} />
@@ -192,7 +192,7 @@ export function TopicWorkspacePage() {
 
         {recentConversations.length > 0 && (
           <section aria-labelledby="topic-conversations-heading">
-            <h2 id="topic-conversations-heading" className="text-xl font-bold text-brown-950 dark:text-white">Recent topic chats</h2>
+            <h2 id="topic-conversations-heading" className="text-xl font-bold text-brown-950 dark:text-cream-100">Recent topic chats</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {recentConversations.map((conversation) => (
                 <WorkspaceLink
@@ -211,14 +211,14 @@ export function TopicWorkspacePage() {
         )}
 
         {areRecentResultsUnavailable ? (
-          <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800" aria-labelledby="topic-results-unavailable-heading">
-            <h2 id="topic-results-unavailable-heading" className="font-bold text-brown-950 dark:text-white">Recent topic results are unavailable</h2>
-            <p className="mt-1 text-sm text-brown-600 dark:text-gray-300">The rest of this topic is still ready to use.</p>
-            <button type="button" onClick={() => void refetchRecentResults()} className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cream-300 px-4 text-sm font-semibold text-brown-800 hover:bg-cream-50 dark:border-slate-600 dark:text-white dark:hover:bg-slate-700"><RefreshCw className="h-4 w-4" aria-hidden="true" />Retry recent results</button>
+          <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900" aria-labelledby="topic-results-unavailable-heading">
+            <h2 id="topic-results-unavailable-heading" className="font-bold text-brown-950 dark:text-cream-100">Recent topic results are unavailable</h2>
+            <p className="mt-1 text-sm text-brown-600 dark:text-brown-100">The rest of this topic is still ready to use.</p>
+            <button type="button" onClick={() => void refetchRecentResults()} className="mt-3 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cream-300 px-4 text-sm font-semibold text-brown-800 hover:bg-cream-50 dark:border-brown-600 dark:text-cream-100 dark:hover:bg-brown-700"><RefreshCw className="h-4 w-4" aria-hidden="true" />Retry recent results</button>
           </section>
         ) : recentResults.length > 0 && (
           <section aria-labelledby="topic-results-heading">
-            <h2 id="topic-results-heading" className="text-xl font-bold text-brown-950 dark:text-white">Recent topic results</h2>
+            <h2 id="topic-results-heading" className="text-xl font-bold text-brown-950 dark:text-cream-100">Recent topic results</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {recentResults.map((result) => (
                 <WorkspaceLink
@@ -241,7 +241,7 @@ export function TopicWorkspacePage() {
 
         {(scenarios.length > 0 || stories.length > 0) && (
           <section aria-labelledby="related-heading">
-            <h2 id="related-heading" className="text-xl font-bold text-brown-950 dark:text-white">Use the topic in context</h2>
+            <h2 id="related-heading" className="text-xl font-bold text-brown-950 dark:text-cream-100">Use the topic in context</h2>
             <div className="mt-3 grid gap-3 sm:grid-cols-2">
               {scenarios.map((scenario) => scenario && (
                 <WorkspaceLink key={scenario.id} icon={MessageCircle} title={scenario.title} description={scenario.description} to={withTopicReturn(appRoutes.scenario(scenario.id), localTopic.id)} />
@@ -266,9 +266,9 @@ interface WorkspaceLinkProps {
 
 function WorkspaceLink({ icon: Icon, title, description, to }: WorkspaceLinkProps) {
   return (
-    <Link to={to} className="group flex min-h-28 items-start gap-3 rounded-2xl border border-cream-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-600">
-      <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300"><Icon className="h-5 w-5" aria-hidden="true" /></span>
-      <span><span className="block font-bold text-brown-950 group-hover:text-coral-700 dark:text-white dark:group-hover:text-ocean-300">{title}</span><span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">{description}</span></span>
+    <Link to={to} className="group flex min-h-28 items-start gap-3 rounded-2xl border border-cream-200 bg-white p-4 transition hover:-translate-y-0.5 hover:border-coral-300 dark:border-brown-700 dark:bg-brown-900">
+      <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-coral-100 text-coral-700"><Icon className="h-5 w-5" aria-hidden="true" /></span>
+      <span><span className="block font-bold text-brown-950 group-hover:text-coral-700 dark:text-cream-100">{title}</span><span className="mt-1 block text-sm text-brown-600 dark:text-brown-100">{description}</span></span>
     </Link>
   );
 }

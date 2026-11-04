@@ -210,18 +210,18 @@ export function ColorTouch() {
         {gameState === 'setup' && (
           <div className="animate-fade-in">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Listen first, then choose</h2>
-              <p className="mt-2 text-brown-600 dark:text-gray-300">No reading needed: hear a Chamorro color and tap the matching square.</p>
+              <h2 className="text-2xl font-bold text-brown-950 dark:text-cream-100">Listen first, then choose</h2>
+              <p className="mt-2 text-brown-600 dark:text-brown-100">No reading needed: hear a Chamorro color and tap the matching square.</p>
             </div>
 
             {/* Color Preview */}
-            <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 mb-3">Colors you'll learn:</h3>
+            <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+              <h3 className="text-sm font-semibold text-brown-700 dark:text-brown-100 mb-3">Colors you'll learn:</h3>
               <div className="flex flex-wrap gap-2 justify-center">
                 {COLORS.slice(0, 8).map(color => (
                   <div
                     key={color.chamorro}
-                    className="w-10 h-10 rounded-xl border-2 border-white dark:border-slate-600"
+                    className="w-10 h-10 rounded-xl border-2 border-white dark:border-brown-600"
                     style={{ backgroundColor: color.hex, boxShadow: color.english === 'White' ? 'inset 0 0 0 2px rgba(0,0,0,0.1)' : undefined }}
                     title={`${color.chamorro} (${color.english})`}
                   />
@@ -233,13 +233,13 @@ export function ColorTouch() {
 
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-action px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover"
              disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
             </button>
 
-            <p className="text-center text-sm text-brown-500 dark:text-gray-400 mt-3">
+            <p className="text-center text-sm text-brown-500 dark:text-brown-300 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
           </div>
@@ -287,7 +287,7 @@ export function ColorTouch() {
                 const isCorrectAnswer = option.chamorro === currentColor.chamorro;
                 const showResult = gameState === 'feedback';
 
-                let buttonClass = 'border-4 border-white dark:border-slate-600  ';
+                let buttonClass = 'border-4 border-white dark:border-brown-600  ';
                 let overlayClass = '';
 
                 if (showResult) {
@@ -297,7 +297,7 @@ export function ColorTouch() {
                   } else if (isSelected && !isCorrectAnswer) {
                     buttonClass = 'border-4 border-red-500 opacity-60';
                   } else {
-                    buttonClass = 'border-4 border-white dark:border-slate-600 opacity-40';
+                    buttonClass = 'border-4 border-white dark:border-brown-600 opacity-40';
                   }
                 }
 
@@ -381,7 +381,7 @@ export function ColorTouch() {
           />
         )}
         {gameState === 'feedback' && (
-          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
+          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-action px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover">
             {currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}
           </button>
         )}

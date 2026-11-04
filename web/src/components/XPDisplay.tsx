@@ -15,7 +15,7 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
 
   if (isLoading && !passedXpData) {
     return (
-      <div className={`animate-pulse ${compact ? 'h-8' : 'h-24'} bg-gray-100 dark:bg-slate-700 rounded-lg`} />
+      <div className={`animate-pulse ${compact ? 'h-8' : 'h-24'} bg-gray-100 dark:bg-brown-700 rounded-lg`} />
     );
   }
 
@@ -36,7 +36,7 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
         </span>
         <div className="w-16 h-1.5 bg-amber-200 dark:bg-amber-800 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-coral-700 dark:bg-teal-700 rounded-full origin-left"
+            className="h-full bg-action rounded-full origin-left"
             style={{ transform: `scaleX(${Math.max(0, Math.min(100, xpData.xp_progress)) / 100})` }}
           />
         </div>
@@ -92,7 +92,7 @@ export function XPDisplay({ compact = false, xpData: passedXpData }: XPDisplayPr
         </div>
         <div className="h-2.5 bg-amber-200 dark:bg-amber-800 rounded-full overflow-hidden">
           <div 
-            className="h-full bg-coral-700 dark:bg-teal-700 rounded-full origin-left relative overflow-hidden"
+            className="h-full bg-action rounded-full origin-left relative overflow-hidden"
             style={{ transform: `scaleX(${Math.max(0, Math.min(100, xpData.xp_progress)) / 100})` }}
           />
         </div>

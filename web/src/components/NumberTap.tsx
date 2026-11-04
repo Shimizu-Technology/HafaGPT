@@ -242,13 +242,13 @@ export function NumberTap() {
         {gameState === 'setup' && (
           <div className="animate-fade-in">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Listen, count, and tap</h2>
-              <p className="mt-2 text-brown-600 dark:text-gray-300">No reading needed: hear a Chamorro number and choose how many items you see.</p>
+              <h2 className="text-2xl font-bold text-brown-950 dark:text-cream-100">Listen, count, and tap</h2>
+              <p className="mt-2 text-brown-600 dark:text-brown-100">No reading needed: hear a Chamorro number and choose how many items you see.</p>
             </div>
 
             {/* Numbers Preview */}
-            <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <h3 className="text-sm font-semibold text-brown-700 dark:text-gray-300 mb-3">Numbers you'll learn:</h3>
+            <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+              <h3 className="text-sm font-semibold text-brown-700 dark:text-brown-100 mb-3">Numbers you'll learn:</h3>
               <div className="grid grid-cols-5 gap-2">
                 {NUMBERS.slice(0, 10).map(num => (
                   <div
@@ -256,7 +256,7 @@ export function NumberTap() {
                     className="text-center p-2 bg-teal-50 dark:bg-teal-900/20 rounded-lg"
                   >
                     <span className="text-xl font-bold text-teal-600 dark:text-teal-400">{num.value}</span>
-                    <span className="block text-xs text-brown-500 dark:text-gray-400">{num.chamorro}</span>
+                    <span className="block text-xs text-brown-500 dark:text-brown-300">{num.chamorro}</span>
                   </div>
                 ))}
               </div>
@@ -266,13 +266,13 @@ export function NumberTap() {
 
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-action px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover"
              disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
             </button>
 
-            <p className="text-center text-sm text-brown-500 dark:text-gray-400 mt-3">
+            <p className="text-center text-sm text-brown-500 dark:text-brown-300 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
           </div>
@@ -312,9 +312,9 @@ export function NumberTap() {
             </button>
 
             {/* Counting Grid */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 mb-6 min-h-[120px] flex items-center justify-center border-2 border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-4 mb-6 min-h-[120px] flex items-center justify-center border-2 border-cream-200 dark:border-brown-700">
               <div className="text-center">
-                <p className="text-sm text-brown-500 dark:text-gray-400 mb-2">Count the {currentItem.name === 'fish' ? 'fish' : `${currentItem.name}s`}!</p>
+                <p className="text-sm text-brown-500 dark:text-brown-300 mb-2">Count the {currentItem.name === 'fish' ? 'fish' : `${currentItem.name}s`}!</p>
                 {renderCountingGrid()}
               </div>
             </div>
@@ -328,7 +328,7 @@ export function NumberTap() {
                 const isCorrectAnswer = value === currentNumber.value;
                 const showResult = gameState === 'feedback';
 
-                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-400 ';
+                let buttonClass = 'bg-white dark:bg-brown-900 border-2 border-cream-200 dark:border-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-400 ';
 
                 if (showResult) {
                   if (isCorrectAnswer) {
@@ -336,7 +336,7 @@ export function NumberTap() {
                   } else if (isSelected && !isCorrectAnswer) {
                     buttonClass = 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 opacity-60';
                   } else {
-                    buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 opacity-40';
+                    buttonClass = 'bg-white dark:bg-brown-900 border-2 border-cream-200 dark:border-brown-700 opacity-40';
                   }
                 }
 
@@ -396,7 +396,7 @@ export function NumberTap() {
           />
         )}
         {gameState === 'feedback' && (
-          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
+          <button type="button" onClick={continueRound} className="mt-4 min-h-12 w-full rounded-xl bg-action px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover">
             {currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}
           </button>
         )}

@@ -57,12 +57,12 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
   if (!deck || cards.length === 0) {
     return (
       <div className="text-center py-12">
-        <p className="text-brown-600 dark:text-gray-400">
+        <p className="text-brown-600 dark:text-brown-300">
           No flashcards available for this topic.
         </p>
         <button
           onClick={onSkip}
-          className="mt-4 text-coral-700 dark:text-ocean-400 hover:underline"
+          className="mt-4 text-coral-700 hover:underline"
         >
           Skip to quiz →
         </button>
@@ -74,7 +74,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
     <div className="space-y-6">
       <TTSDisclaimer variant="inline" className="!text-amber-800 dark:!text-amber-200" />
       {/* Progress indicator */}
-      <div className="flex items-center justify-between text-sm text-brown-600 dark:text-gray-400">
+      <div className="flex items-center justify-between text-sm text-brown-600 dark:text-brown-300">
         <span>{viewedCards.size} of {cards.length} cards viewed</span>
         <span>{currentIndex + 1} / {cards.length}</span>
       </div>
@@ -102,30 +102,30 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
           >
             {/* Front */}
             <div
-              className="col-start-1 row-start-1 bg-white dark:bg-slate-800 rounded-3xl border border-cream-200/50 dark:border-slate-700/50 flex flex-col items-center justify-center p-6 backface-hidden"
+              className="col-start-1 row-start-1 bg-white dark:bg-brown-900 rounded-3xl border border-cream-200/50 dark:border-brown-700/50 flex flex-col items-center justify-center p-6 backface-hidden"
               aria-hidden={isFlipped}
               style={{ backfaceVisibility: 'hidden' }}
             >
 
 
-              <p className="font-chamorro text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-white text-center">
+              <p className="font-chamorro text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-cream-100 text-center">
                 {currentCard.front}
               </p>
 
               {currentCard.pronunciation && (
-                <p className="mt-3 text-lg text-brown-500 dark:text-gray-400 italic">
+                <p className="mt-3 text-lg text-brown-500 dark:text-brown-300 italic">
                   ({currentCard.pronunciation})
                 </p>
               )}
 
-              <p className="mt-6 text-sm text-brown-600 dark:text-gray-300">
+              <p className="mt-6 text-sm text-brown-600 dark:text-brown-100">
                 Tap to flip
               </p>
             </div>
 
             {/* Back */}
             <div
-              className="col-start-1 row-start-1 bg-coral-700 dark:bg-teal-700 rounded-3xl flex flex-col items-center justify-center p-6 backface-hidden"
+              className="col-start-1 row-start-1 bg-action rounded-3xl flex flex-col items-center justify-center p-6 backface-hidden"
               aria-hidden={!isFlipped}
               style={{
                 backfaceVisibility: 'hidden',
@@ -159,8 +159,8 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
           aria-label="Previous card"
           onClick={handlePrev}
           disabled={currentIndex === 0}
-          className="w-12 h-12 flex items-center justify-center rounded-full bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300
-                   hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors
+          className="w-12 h-12 flex items-center justify-center rounded-full bg-cream-100 dark:bg-brown-700 text-brown-600 dark:text-brown-100
+                   hover:bg-cream-200 dark:hover:bg-brown-600 transition-colors
                    disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronLeft className="w-6 h-6" />
@@ -168,7 +168,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
 
         {/* Mobile: Show card counter */}
         <div className="sm:hidden flex items-center gap-2">
-          <span className="text-lg font-semibold text-brown-800 dark:text-white">
+          <span className="text-lg font-semibold text-brown-800 dark:text-cream-100">
             {currentIndex + 1} / {cards.length}
           </span>
         </div>
@@ -186,10 +186,10 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
               }}
               className={`w-2.5 h-2.5 rounded-full flex-shrink-0 transition-colors ${
                 idx === currentIndex
-                  ? 'bg-coral-500 dark:bg-ocean-400 w-6'
+                  ? 'bg-coral-500 w-6'
                   : viewedCards.has(idx)
-                  ? 'bg-coral-300 dark:bg-ocean-600'
-                  : 'bg-cream-300 dark:bg-slate-600'
+                  ? 'bg-coral-300'
+                  : 'bg-cream-300 dark:bg-brown-600'
               }`}
             />
           ))}
@@ -199,8 +199,8 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
           aria-label="Next card"
           onClick={handleNext}
           disabled={currentIndex === cards.length - 1}
-          className="w-12 h-12 flex items-center justify-center rounded-full bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300
-                   hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors
+          className="w-12 h-12 flex items-center justify-center rounded-full bg-cream-100 dark:bg-brown-700 text-brown-600 dark:text-brown-100
+                   hover:bg-cream-200 dark:hover:bg-brown-600 transition-colors
                    disabled:opacity-30 disabled:cursor-not-allowed"
         >
           <ChevronRight className="w-6 h-6" />
@@ -211,8 +211,8 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
       <div className="flex flex-col sm:flex-row gap-3">
         <button
           onClick={onSkip}
-          className="flex-1 py-3 px-4 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300
-                   font-medium rounded-xl hover:bg-cream-200 dark:hover:bg-slate-600
+          className="flex-1 py-3 px-4 bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100
+                   font-medium rounded-xl hover:bg-cream-200 dark:hover:bg-brown-600
                    transition-colors flex items-center justify-center gap-2"
         >
           <SkipForward className="w-4 h-4" />
@@ -227,8 +227,8 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
           disabled={!allViewed}
           className={`flex-1 py-3 px-4 font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 ${
             allViewed
-              ? 'bg-coral-700 dark:bg-teal-700 text-white hover:bg-coral-800 dark:hover:bg-teal-800'
-              : 'bg-gray-200 dark:bg-slate-700 text-gray-400 dark:text-gray-400 cursor-not-allowed'
+              ? 'bg-action text-white hover:bg-action-hover'
+              : 'bg-gray-200 dark:bg-brown-700 text-gray-400 dark:text-brown-300 cursor-not-allowed'
           }`}
         >
           {allViewed ? (
@@ -246,7 +246,7 @@ export function LessonFlashcards({ topic, onComplete, onSkip, initialIndex = 0, 
       </div>
 
       {/* Hint */}
-      <p className="text-center text-sm text-brown-600 dark:text-gray-300">
+      <p className="text-center text-sm text-brown-600 dark:text-brown-100">
         Use the arrow buttons to navigate. Tap the card or press Enter to reveal its meaning.
       </p>
     </div>

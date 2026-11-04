@@ -68,9 +68,9 @@ export function AdminAnalytics() {
   
   // Get heatmap color based on intensity
   const getHeatmapColor = (value: number, max: number) => {
-    if (max === 0) return 'bg-cream-100 dark:bg-slate-700';
+    if (max === 0) return 'bg-cream-100 dark:bg-brown-700';
     const intensity = value / max;
-    if (intensity === 0) return 'bg-cream-100 dark:bg-slate-700';
+    if (intensity === 0) return 'bg-cream-100 dark:bg-brown-700';
     if (intensity < 0.25) return 'bg-teal-100 dark:bg-teal-900/30';
     if (intensity < 0.5) return 'bg-teal-300 dark:bg-teal-700/50';
     if (intensity < 0.75) return 'bg-teal-500 dark:bg-teal-600';
@@ -93,11 +93,11 @@ export function AdminAnalytics() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white flex items-center gap-3">
-              <BarChart3 className="w-8 h-8 text-coral-500 dark:text-ocean-400" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-cream-100 flex items-center gap-3">
+              <BarChart3 className="w-8 h-8 text-coral-500" />
               Analytics
             </h1>
-            <p className="text-brown-600 dark:text-gray-400">
+            <p className="text-brown-600 dark:text-brown-300">
               Platform usage and growth metrics
             </p>
           </div>
@@ -111,8 +111,8 @@ export function AdminAnalytics() {
                 aria-pressed={period === p}
                 className={`min-h-11 px-4 py-2 rounded-lg font-medium transition-colors ${
                   period === p
-                    ? 'bg-coral-700 dark:bg-ocean-700 text-white'
-                    : 'bg-white dark:bg-slate-800 text-brown-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 border border-cream-200 dark:border-slate-700'
+                    ? 'bg-action text-white'
+                    : 'bg-white dark:bg-brown-900 text-brown-600 dark:text-brown-300 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-brown-700 border border-cream-200 dark:border-brown-700'
                 }`}
               >
                 {p === '7d' ? '7 days' : p === '30d' ? '30 days' : '90 days'}
@@ -129,65 +129,65 @@ export function AdminAnalytics() {
         
         {isLoading ? (
           <div className="flex items-center justify-center min-h-[400px]">
-            <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400" />
+            <Loader2 className="w-8 h-8 animate-spin text-coral-500" />
           </div>
         ) : (
           <>
             {/* Summary Cards */}
             <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
+              <div className="bg-white dark:bg-brown-900 rounded-xl p-4 border border-cream-200 dark:border-brown-700">
                 <div className="flex items-center gap-3 mb-2">
-                  <MessageSquare className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-                  <span className="text-sm text-brown-600 dark:text-slate-300">Chat messages</span>
+                  <MessageSquare className="w-5 h-5 text-coral-500" />
+                  <span className="text-sm text-brown-600 dark:text-brown-100">Chat messages</span>
                 </div>
-                <p className="text-2xl font-bold text-brown-800 dark:text-white">
+                <p className="text-2xl font-bold text-brown-800 dark:text-cream-100">
                   {usageData?.totals?.chat?.toLocaleString() ?? "—"}
                 </p>
-                <p className="text-xs text-brown-600 dark:text-slate-300">Last {period}</p>
+                <p className="text-xs text-brown-600 dark:text-brown-100">Last {period}</p>
               </div>
               
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
+              <div className="bg-white dark:bg-brown-900 rounded-xl p-4 border border-cream-200 dark:border-brown-700">
                 <div className="flex items-center gap-3 mb-2">
                   <Gamepad2 className="w-5 h-5 text-teal-500" />
-                  <span className="text-sm text-brown-600 dark:text-slate-300">Games played</span>
+                  <span className="text-sm text-brown-600 dark:text-brown-100">Games played</span>
                 </div>
-                <p className="text-2xl font-bold text-brown-800 dark:text-white">
+                <p className="text-2xl font-bold text-brown-800 dark:text-cream-100">
                   {usageData?.totals?.games?.toLocaleString() ?? "—"}
                 </p>
-                <p className="text-xs text-brown-600 dark:text-slate-300">Last {period}</p>
+                <p className="text-xs text-brown-600 dark:text-brown-100">Last {period}</p>
               </div>
               
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
+              <div className="bg-white dark:bg-brown-900 rounded-xl p-4 border border-cream-200 dark:border-brown-700">
                 <div className="flex items-center gap-3 mb-2">
                   <GraduationCap className="w-5 h-5 text-teal-500" />
-                  <span className="text-sm text-brown-600 dark:text-slate-300">Completed quizzes</span>
+                  <span className="text-sm text-brown-600 dark:text-brown-100">Completed quizzes</span>
                 </div>
-                <p className="text-2xl font-bold text-brown-800 dark:text-white">
+                <p className="text-2xl font-bold text-brown-800 dark:text-cream-100">
                   {usageData?.totals?.quizzes?.toLocaleString() ?? "—"}
                 </p>
-                <p className="text-xs text-brown-600 dark:text-slate-300">Last {period}</p>
+                <p className="text-xs text-brown-600 dark:text-brown-100">Last {period}</p>
               </div>
               
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
+              <div className="bg-white dark:bg-brown-900 rounded-xl p-4 border border-cream-200 dark:border-brown-700">
                 <div className="flex items-center gap-3 mb-2">
                   <Users className="w-5 h-5 text-teal-500" />
-                  <span className="text-sm text-brown-600 dark:text-slate-300">Total users</span>
+                  <span className="text-sm text-brown-600 dark:text-brown-100">Total users</span>
                 </div>
-                <p className="text-2xl font-bold text-brown-800 dark:text-white">
+                <p className="text-2xl font-bold text-brown-800 dark:text-cream-100">
                   {growthData?.data?.[growthData.data.length - 1]?.total_users?.toLocaleString() ?? "—"}
                 </p>
-                <p className="text-xs text-brown-600 dark:text-slate-300">Current</p>
+                <p className="text-xs text-brown-600 dark:text-brown-100">Current</p>
               </div>
             </div>
             
             {/* Usage Trends Chart */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 text-brown-600 dark:border-slate-700 dark:text-slate-300">
-              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
-                <TrendingUp className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+            <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 text-brown-600 dark:border-brown-700 dark:text-brown-100">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
+                <TrendingUp className="w-5 h-5 text-coral-500" />
                 Daily usage
               </h2>
               {usageIdle && (
-                <p className="mb-3 text-sm text-brown-600 dark:text-slate-300">No chats, games, or quizzes in this period.</p>
+                <p className="mb-3 text-sm text-brown-600 dark:text-brown-100">No chats, games, or quizzes in this period.</p>
               )}
               {usageSeries.length > 0 ? (
                 <ResponsiveContainer width="100%" height={300}>
@@ -201,7 +201,7 @@ export function AdminAnalytics() {
                     <YAxis allowDecimals={false} domain={[0, 'auto']} tick={{ fontSize: 12, fill: 'currentColor' }} />
                     <Tooltip 
                       labelFormatter={(value) => formatDayKey(String(value), { month: 'long', day: 'numeric', year: 'numeric' })}
-                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
+                      contentStyle={{ backgroundColor: '#2A1F1A', border: 'none', borderRadius: '8px' }}
                       labelStyle={{ color: '#fff' }}
                       itemStyle={{ color: '#f8fafc' }}
                     />
@@ -212,15 +212,15 @@ export function AdminAnalytics() {
                   </LineChart>
                 </ResponsiveContainer>
               ) : usageData ? null : (
-                <div className="h-[300px] flex items-center justify-center text-brown-600 dark:text-slate-300">
+                <div className="h-[300px] flex items-center justify-center text-brown-600 dark:text-brown-100">
                   Usage data couldn't be loaded. Try another period or refresh.
                 </div>
               )}
             </div>
             
             {/* User Growth Chart */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 text-brown-600 dark:border-slate-700 dark:text-slate-300">
-              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 text-brown-600 dark:border-brown-700 dark:text-brown-100">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
                 <Users className="w-5 h-5 text-teal-500" />
                 User growth
               </h2>
@@ -236,7 +236,7 @@ export function AdminAnalytics() {
                     <YAxis tick={{ fontSize: 12, fill: 'currentColor' }} />
                     <Tooltip 
                       labelFormatter={(value) => formatDayKey(String(value), { month: 'long', day: 'numeric', year: 'numeric' })}
-                      contentStyle={{ backgroundColor: '#1e293b', border: 'none', borderRadius: '8px' }}
+                      contentStyle={{ backgroundColor: '#2A1F1A', border: 'none', borderRadius: '8px' }}
                       labelStyle={{ color: '#fff' }}
                       itemStyle={{ color: '#f8fafc' }}
                     />
@@ -245,7 +245,7 @@ export function AdminAnalytics() {
                   </BarChart>
                 </ResponsiveContainer>
               ) : (
-                <div className="h-[300px] flex items-center justify-center text-brown-600 dark:text-slate-300">
+                <div className="h-[300px] flex items-center justify-center text-brown-600 dark:text-brown-100">
                   No growth data available
                 </div>
               )}
@@ -254,8 +254,8 @@ export function AdminAnalytics() {
             {/* Feature Breakdown */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Games Breakdown */}
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
-                <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
+                <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
                   <Gamepad2 className="w-5 h-5 text-teal-500" />
                   Games Breakdown
                 </h2>
@@ -281,7 +281,7 @@ export function AdminAnalytics() {
                     </RechartsPie>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[250px] flex items-center justify-center text-brown-600 dark:text-slate-300">
+                  <div className="h-[250px] flex items-center justify-center text-brown-600 dark:text-brown-100">
                     No game data yet
                   </div>
                 )}
@@ -290,15 +290,15 @@ export function AdminAnalytics() {
                   {gamesPieData.map((entry, index) => (
                     <div key={entry.name} className="flex items-center gap-1.5 text-xs">
                       <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                      <span className="text-brown-600 dark:text-gray-400">{entry.name}: {entry.value}</span>
+                      <span className="text-brown-600 dark:text-brown-300">{entry.name}: {entry.value}</span>
                     </div>
                   ))}
                 </div>
               </div>
               
               {/* Quizzes Breakdown */}
-              <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
-                <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+              <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
+                <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
                   <GraduationCap className="w-5 h-5 text-teal-500" />
                   Quizzes Breakdown
                 </h2>
@@ -324,7 +324,7 @@ export function AdminAnalytics() {
                     </RechartsPie>
                   </ResponsiveContainer>
                 ) : (
-                  <div className="h-[250px] flex items-center justify-center text-brown-600 dark:text-slate-300">
+                  <div className="h-[250px] flex items-center justify-center text-brown-600 dark:text-brown-100">
                     No quiz data yet
                   </div>
                 )}
@@ -333,7 +333,7 @@ export function AdminAnalytics() {
                   {quizzesPieData.map((entry, index) => (
                     <div key={entry.name} className="flex items-center gap-1.5 text-xs">
                       <div className="w-3 h-3 rounded" style={{ backgroundColor: COLORS[index % COLORS.length] }} />
-                      <span className="text-brown-600 dark:text-gray-400">{entry.name}: {entry.value}</span>
+                      <span className="text-brown-600 dark:text-brown-300">{entry.name}: {entry.value}</span>
                     </div>
                   ))}
                 </div>
@@ -341,42 +341,42 @@ export function AdminAnalytics() {
             </div>
             
             {/* All-Time Totals */}
-            <div className="bg-cream-50 dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
-              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
-                <PieChart className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+            <div className="bg-cream-50 dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
+                <PieChart className="w-5 h-5 text-coral-500" />
                 All-time platform totals
               </h2>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <div className="text-center">
-                  <p className="text-3xl font-bold text-coral-600 dark:text-ocean-400">
+                  <p className="text-3xl font-bold text-coral-600">
                     {featureData?.chat_total?.toLocaleString() ?? "—"}
                   </p>
-                  <p className="text-sm text-brown-600 dark:text-gray-400">Chat messages</p>
+                  <p className="text-sm text-brown-600 dark:text-brown-300">Chat messages</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-teal-600">
                     {featureData?.games_total?.toLocaleString() ?? "—"}
                   </p>
-                  <p className="text-sm text-brown-600 dark:text-gray-400">Games played</p>
+                  <p className="text-sm text-brown-600 dark:text-brown-300">Games played</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-teal-600">
                     {featureData?.quizzes_total?.toLocaleString() ?? "—"}
                   </p>
-                  <p className="text-sm text-brown-600 dark:text-gray-400">Completed quizzes</p>
+                  <p className="text-sm text-brown-600 dark:text-brown-300">Completed quizzes</p>
                 </div>
                 <div className="text-center">
                   <p className="text-3xl font-bold text-teal-600">
                     {featureData?.conversations_total?.toLocaleString() ?? "—"}
                   </p>
-                  <p className="text-sm text-brown-600 dark:text-gray-400">Conversations</p>
+                  <p className="text-sm text-brown-600 dark:text-brown-300">Conversations</p>
                 </div>
               </div>
             </div>
             
             {/* Quiz Pass Rates */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
-              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
                 <Target className="w-5 h-5 text-teal-500" />
                 Quiz pass rates
               </h2>
@@ -386,14 +386,14 @@ export function AdminAnalytics() {
                     <div key={quiz.category} className="flex items-center gap-4">
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center justify-between mb-1">
-                          <span className="text-sm font-medium text-brown-700 dark:text-gray-300 truncate">
+                          <span className="text-sm font-medium text-brown-700 dark:text-brown-100 truncate">
                             {quiz.category}
                           </span>
-                          <span className="text-sm font-bold text-brown-800 dark:text-white">
+                          <span className="text-sm font-bold text-brown-800 dark:text-cream-100">
                             {quiz.avg_score}%
                           </span>
                         </div>
-                        <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
+                        <div className="h-2 bg-cream-200 dark:bg-brown-700 rounded-full overflow-hidden">
                           <div 
                             className={`h-full rounded-full transition-[width,background-color] duration-300 ${
                               quiz.avg_score >= 70 ? 'bg-emerald-500' : 
@@ -402,7 +402,7 @@ export function AdminAnalytics() {
                             style={{ width: `${quiz.avg_score}%` }}
                           />
                         </div>
-                        <p className="text-xs text-brown-600 dark:text-slate-300 mt-0.5">
+                        <p className="text-xs text-brown-600 dark:text-brown-100 mt-0.5">
                           {quiz.attempts} attempts · {quiz.pass_rate}% pass rate
                         </p>
                       </div>
@@ -410,15 +410,15 @@ export function AdminAnalytics() {
                   ))}
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-slate-300">
+                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-brown-100">
                   No quiz data yet
                 </div>
               )}
             </div>
             
             {/* Learning Path Progress */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
-              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
                 <BookOpen className="w-5 h-5 text-emerald-500" />
                 Learning path progress
               </h2>
@@ -427,41 +427,41 @@ export function AdminAnalytics() {
                   {advancedData.learning_path_progress.map((topic) => (
                     <div 
                       key={topic.topic_id} 
-                      className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3"
+                      className="bg-cream-50 dark:bg-brown-700/50 rounded-lg p-3"
                     >
-                      <p className="text-sm font-medium text-brown-700 dark:text-gray-300 truncate mb-2">
+                      <p className="text-sm font-medium text-brown-700 dark:text-brown-100 truncate mb-2">
                         {topic.topic_name}
                       </p>
                       <div className="flex items-center gap-2">
-                        <div className="flex-1 h-2 bg-cream-200 dark:bg-slate-600 rounded-full overflow-hidden">
+                        <div className="flex-1 h-2 bg-cream-200 dark:bg-brown-600 rounded-full overflow-hidden">
                           <div 
                             className="h-full bg-teal-600 rounded-full"
                             style={{ width: `${topic.completion_rate}%` }}
                           />
                         </div>
-                        <span className="text-xs font-bold text-brown-800 dark:text-white">
+                        <span className="text-xs font-bold text-brown-800 dark:text-cream-100">
                           {topic.completion_rate}%
                         </span>
                       </div>
-                      <p className="text-xs text-brown-600 dark:text-slate-300 mt-1">
+                      <p className="text-xs text-brown-600 dark:text-brown-100 mt-1">
                         {topic.completed}/{topic.started} completed
                       </p>
                     </div>
                   ))}
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-slate-300">
+                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-brown-100">
                   No learning path data yet
                 </div>
               )}
             </div>
             
             {/* Peak Hours Heatmap */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
-              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
                 <Clock className="w-5 h-5 text-amber-500" />
                 Peak activity hours
-                <span className="text-xs font-normal text-brown-600 dark:text-slate-300 ml-2">
+                <span className="text-xs font-normal text-brown-600 dark:text-brown-100 ml-2">
                   Last {period === '7d' ? '7 days' : period === '90d' ? '90 days' : '30 days'}
                 </span>
               </h2>
@@ -471,7 +471,7 @@ export function AdminAnalytics() {
                     {/* Hour labels */}
                     <div className="flex mb-1 ml-12">
                       {[0, 3, 6, 9, 12, 15, 18, 21].map((hour) => (
-                        <div key={hour} className="flex-1 text-xs text-brown-600 dark:text-slate-300">
+                        <div key={hour} className="flex-1 text-xs text-brown-600 dark:text-brown-100">
                           {hour === 0 ? '12am' : hour === 12 ? '12pm' : hour > 12 ? `${hour-12}pm` : `${hour}am`}
                         </div>
                       ))}
@@ -479,7 +479,7 @@ export function AdminAnalytics() {
                     {/* Heatmap grid */}
                     {advancedData.peak_hours.map((dayData, dayIndex) => (
                       <div key={dayIndex} className="flex items-center gap-1 mb-1">
-                        <span className="w-10 text-xs text-brown-600 dark:text-slate-300 text-right pr-2">
+                        <span className="w-10 text-xs text-brown-600 dark:text-brown-100 text-right pr-2">
                           {DAYS[dayIndex]}
                         </span>
                         <div className="flex-1 flex gap-0.5">
@@ -495,31 +495,31 @@ export function AdminAnalytics() {
                     ))}
                     {/* Legend */}
                     <div className="flex items-center justify-end gap-2 mt-3">
-                      <span className="text-xs text-brown-600 dark:text-slate-300">Less</span>
-                      <div className="w-4 h-4 rounded bg-cream-100 dark:bg-slate-700" />
+                      <span className="text-xs text-brown-600 dark:text-brown-100">Less</span>
+                      <div className="w-4 h-4 rounded bg-cream-100 dark:bg-brown-700" />
                       <div className="w-4 h-4 rounded bg-teal-100 dark:bg-teal-900/30" />
                       <div className="w-4 h-4 rounded bg-teal-300 dark:bg-teal-700/50" />
                       <div className="w-4 h-4 rounded bg-teal-500 dark:bg-teal-600" />
                       <div className="w-4 h-4 rounded bg-teal-700 dark:bg-teal-500" />
-                      <span className="text-xs text-brown-600 dark:text-slate-300">More</span>
+                      <span className="text-xs text-brown-600 dark:text-brown-100">More</span>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-slate-300">
+                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-brown-100">
                   No activity data yet
                 </div>
               )}
             </div>
             
             {/* User Funnel */}
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
-              <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+            <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
+              <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
                 <ArrowRight className="w-5 h-5 text-teal-500" />
                 Learning activity reach
               </h2>
-              <p className="mb-4 text-sm text-brown-600 dark:text-gray-300">Independent activity counts in this period. Learners can use tools in any order; these percentages describe reach, not conversion between steps.</p>
-              <p className="mb-4 text-xs text-brown-600 dark:text-slate-300">Recorded days use Guam time and saved chat, game, and quiz events. Lessons retain their start, completion, and latest activity dates; earlier repeat visits may be missing.</p>
+              <p className="mb-4 text-sm text-brown-600 dark:text-brown-100">Independent activity counts in this period. Learners can use tools in any order; these percentages describe reach, not conversion between steps.</p>
+              <p className="mb-4 text-xs text-brown-600 dark:text-brown-100">Recorded days use Guam time and saved chat, game, and quiz events. Lessons retain their start, completion, and latest activity dates; earlier repeat visits may be missing.</p>
               {funnelData.length > 0 && funnelData[0].value > 0 ? (
                 <div className="flex flex-col lg:flex-row items-center gap-6">
                   {/* Funnel visualization */}
@@ -548,7 +548,7 @@ export function AdminAnalytics() {
                               </span>
                             </div>
                             {index > 0 && (
-                              <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full pl-2 text-xs text-brown-600 dark:text-slate-300">
+                              <span className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-full pl-2 text-xs text-brown-600 dark:text-brown-100">
                                 {conversionRate}%
                               </span>
                             )}
@@ -565,7 +565,7 @@ export function AdminAnalytics() {
                           ? ((funnelData[4].value / funnelData[0].value) * 100).toFixed(0) 
                           : 0}%
                       </p>
-                      <p className="text-xs text-brown-600 dark:text-slate-300">2+ recorded days</p>
+                      <p className="text-xs text-brown-600 dark:text-brown-100">2+ recorded days</p>
                     </div>
                     <div className="text-center lg:text-left">
                       <p className="text-2xl font-bold text-teal-600">
@@ -573,12 +573,12 @@ export function AdminAnalytics() {
                           ? ((funnelData[2].value / funnelData[0].value) * 100).toFixed(0) 
                           : 0}%
                       </p>
-                      <p className="text-xs text-brown-600 dark:text-slate-300">Game adoption</p>
+                      <p className="text-xs text-brown-600 dark:text-brown-100">Game adoption</p>
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-slate-300">
+                <div className="h-[200px] flex items-center justify-center text-brown-600 dark:text-brown-100">
                   No learning activity yet
                 </div>
               )}

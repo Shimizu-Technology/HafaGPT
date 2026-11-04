@@ -55,7 +55,7 @@ describe('theme switching', () => {
     expect(localStorage.getItem('theme')).toBeNull();
     changeSystem(true);
     expect(header.result.current.theme).toBe('dark');
-    expect([...document.querySelectorAll('meta[name="theme-color"]')].map(m => m.getAttribute('content'))).toEqual(['#0f172a', '#0f172a']);
+    expect([...document.querySelectorAll('meta[name="theme-color"]')].map(m => m.getAttribute('content'))).toEqual(['#1C1512', '#1C1512']);
     expect(document.documentElement.style.colorScheme).toBe('dark');
   });
 

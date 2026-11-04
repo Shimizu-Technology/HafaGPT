@@ -32,17 +32,17 @@ function DeckState({
 }) {
   const Icon = tone === 'error' ? AlertCircle : BookOpen;
   return (
-    <section className={`rounded-3xl border bg-white p-6 text-center dark:bg-slate-800 sm:p-8 ${
-      tone === 'error' ? 'border-red-200 dark:border-red-900' : 'border-cream-200 dark:border-slate-700'
+    <section className={`rounded-3xl border bg-white p-6 text-center dark:bg-brown-900 sm:p-8 ${
+      tone === 'error' ? 'border-red-200 dark:border-red-900' : 'border-cream-200 dark:border-brown-700'
     }`}>
-      <Icon className={`mx-auto h-9 w-9 ${tone === 'error' ? 'text-red-600 dark:text-red-300' : 'text-coral-700 dark:text-teal-300'}`} aria-hidden="true" />
-      <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">{title}</h2>
-      <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">{description}</p>
+      <Icon className={`mx-auto h-9 w-9 ${tone === 'error' ? 'text-red-600 dark:text-red-300' : 'text-coral-700'}`} aria-hidden="true" />
+      <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-cream-100">{title}</h2>
+      <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-brown-300">{description}</p>
       {onRetry ? (
         <button
           type="button"
           onClick={onRetry}
-          className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+          className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-action px-6 font-semibold text-white hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
         >
           <RotateCw className="h-4 w-4" aria-hidden="true" />
           {action}
@@ -50,7 +50,7 @@ function DeckState({
       ) : (
         <Link
           to="/flashcards/my-decks" replace
-          className="pressable mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+          className="pressable mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-action px-6 font-semibold text-white hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
         >
           {action}
           <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -161,20 +161,20 @@ function SavedDeckSession({ deckId }: { deckId: string | undefined }) {
         backLabel="Back to saved decks"
         maxWidthClassName="max-w-3xl"
         trailing={cards.length > 0 ? (
-          <span className="rounded-full bg-coral-100 px-2.5 py-1 text-xs font-bold text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">
+          <span className="rounded-full bg-coral-100 px-2.5 py-1 text-xs font-bold text-coral-700">
             {currentIndex + 1} / {cards.length}
           </span>
         ) : undefined}
         below={cards.length > 0 ? (
           <div
-            className="h-1.5 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700"
+            className="h-1.5 overflow-hidden rounded-full bg-cream-200 dark:bg-brown-700"
             role="progressbar"
             aria-label="Deck progress"
             aria-valuemin={1}
             aria-valuemax={cards.length}
             aria-valuenow={currentIndex + 1}
           >
-            <div className="h-full rounded-full bg-coral-700 dark:bg-teal-700" style={{ width: `${progress}%` }} />
+            <div className="h-full rounded-full bg-action" style={{ width: `${progress}%` }} />
           </div>
         ) : undefined}
       />
@@ -188,11 +188,11 @@ function SavedDeckSession({ deckId }: { deckId: string | undefined }) {
           />
         ) : !isLoaded || isLoading ? (
           <section
-            className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800"
+            className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-900"
             aria-live="polite"
           >
-            <Loader2 className="h-8 w-8 animate-spin text-coral-700 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
-            <p className="mt-4 font-medium text-brown-600 dark:text-gray-300">Loading your deck…</p>
+            <Loader2 className="h-8 w-8 animate-spin text-coral-700 motion-reduce:animate-none" aria-hidden="true" />
+            <p className="mt-4 font-medium text-brown-600 dark:text-brown-100">Loading your deck…</p>
           </section>
         ) : isError ? (
           <DeckState
@@ -210,7 +210,7 @@ function SavedDeckSession({ deckId }: { deckId: string | undefined }) {
           />
         ) : currentCard ? (
           <div className="flex flex-col items-center">
-            <p className="mb-4 text-center text-sm font-medium text-brown-600 dark:text-gray-300">
+            <p className="mb-4 text-center text-sm font-medium text-brown-600 dark:text-brown-100">
               Listen, flip the card, then choose how well you remembered.
             </p>
             <div className="w-full max-w-sm">
@@ -228,7 +228,7 @@ function SavedDeckSession({ deckId }: { deckId: string | undefined }) {
             </div>
 
             {currentCard.progress && (
-              <p className="mt-4 text-center text-sm text-brown-500 dark:text-gray-400">
+              <p className="mt-4 text-center text-sm text-brown-500 dark:text-brown-300">
                 Reviewed {currentCard.progress.times_reviewed} {currentCard.progress.times_reviewed === 1 ? 'time' : 'times'}
                 {currentCard.progress.last_reviewed && (
                   <> · Last {new Date(currentCard.progress.last_reviewed).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</>
@@ -263,7 +263,7 @@ function SavedDeckSession({ deckId }: { deckId: string | undefined }) {
                 type="button"
                 onClick={handlePrevious}
                 disabled={currentIndex === 0 || reviewCardMutation.isPending}
-                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-brown-600 dark:bg-brown-900 dark:text-cream-100 dark:hover:bg-brown-700"
               >
                 <ChevronLeft className="h-5 w-5" aria-hidden="true" />
                 Previous
@@ -272,13 +272,13 @@ function SavedDeckSession({ deckId }: { deckId: string | undefined }) {
                 type="button"
                 onClick={handleNext}
                 disabled={currentIndex === cards.length - 1 || reviewCardMutation.isPending}
-                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-slate-600 dark:bg-slate-800 dark:text-white dark:hover:bg-slate-700"
+                className="inline-flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:cursor-not-allowed disabled:opacity-40 dark:border-brown-600 dark:bg-brown-900 dark:text-cream-100 dark:hover:bg-brown-700"
               >
                 Next
                 <ChevronRight className="h-5 w-5" aria-hidden="true" />
               </button>
             </nav>
-            <p className="mt-3 hidden text-sm text-brown-500 dark:text-gray-400 sm:block">
+            <p className="mt-3 hidden text-sm text-brown-500 dark:text-brown-300 sm:block">
               You can also use the left and right arrow keys.
             </p>
           </div>

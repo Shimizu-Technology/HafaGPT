@@ -19,19 +19,19 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
   return (
     <div className="animate-fade-in space-y-6">
       {/* Welcome card */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200/50 dark:border-slate-700/50">
+      <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 border border-cream-200/50 dark:border-brown-700/50">
         <div className="flex items-center gap-3 mb-4">
-          <div className="w-14 h-14 rounded-2xl bg-coral-400 dark:bg-ocean-400 flex items-center justify-center text-3xl">
+          <div className="w-14 h-14 rounded-2xl bg-coral-400 flex items-center justify-center text-3xl">
             {topic.icon}
           </div>
           <div>
-            <p className="text-base font-semibold text-brown-800 dark:text-white">
+            <p className="text-base font-semibold text-brown-800 dark:text-cream-100">
               About {topic.estimatedMinutes} minutes
             </p>
           </div>
         </div>
 
-        <p className="text-brown-700 dark:text-gray-300 leading-relaxed">
+        <p className="text-brown-700 dark:text-brown-100 leading-relaxed">
           {topic.description}
         </p>
       </div>
@@ -54,8 +54,8 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
       </div>
 
       {/* Key phrases preview */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200/50 dark:border-slate-700/50">
-        <h3 className="font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
+      <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 border border-cream-200/50 dark:border-brown-700/50">
+        <h3 className="font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
           Key phrases you'll learn
         </h3>
 
@@ -65,13 +65,13 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
             return (
               <div
                 key={index}
-                className="flex items-center gap-3 p-3 bg-cream-50 dark:bg-slate-700/50 rounded-xl"
+                className="flex items-center gap-3 p-3 bg-cream-50 dark:bg-brown-700/50 rounded-xl"
               >
                 <div className="flex-1 min-w-0">
-                  <p className="font-chamorro text-lg font-semibold text-coral-700 dark:text-ocean-300">
+                  <p className="font-chamorro text-lg font-semibold text-coral-700">
                     {chamorro}
                   </p>
-                  <p className="text-sm text-brown-600 dark:text-gray-400">
+                  <p className="text-sm text-brown-600 dark:text-brown-300">
                     {english}
                   </p>
                 </div>
@@ -112,7 +112,7 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
         onClick={onComplete}
         className="w-full py-4 bg-coral-700 dark:bg-teal-700
                    text-white font-semibold rounded-2xl
-                   hover:bg-coral-800 dark:hover:bg-teal-800
+                   hover:bg-coral-800
                    transition-colors flex items-center justify-center gap-2"
       >
         Start Flashcards

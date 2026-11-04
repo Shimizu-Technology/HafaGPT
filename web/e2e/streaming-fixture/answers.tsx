@@ -14,7 +14,7 @@ const answer = [
 ].join('\n\n');
 
 function AnswersFixture() {
-  return <main style={{ minHeight: '100dvh' }} className="bg-cream-100 px-4 py-5 dark:bg-slate-950">
+  return <main style={{ minHeight: '100dvh' }} className="bg-cream-100 px-4 py-5 dark:bg-brown-950">
     <div className="mx-auto w-full max-w-4xl">
       <Message role="user" content="How do I greet my child’s teacher in a note?" timestamp={now} />
       <Message role="assistant" content={answer} timestamp={now} sources={[

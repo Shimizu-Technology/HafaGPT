@@ -112,29 +112,29 @@ function ClerkWrapper() {
       localization={CLERK_LOCALIZATION}
       appearance={{
         variables: {
-          colorPrimary: isDark ? '#88D5D6' : '#B83730',  // Teal for dark, Coral for light
-          colorBackground: isDark ? '#1e293b' : '#ffffff',  // Lighter slate or white
-          colorInputBackground: isDark ? '#334155' : '#FFF8F0',  // Even lighter slate or cream
-          colorInputText: isDark ? '#ffffff' : '#3A2A1D',  // Pure white or brown
-          colorText: isDark ? '#ffffff' : '#2d2d2d',  // Pure white for dark, dark gray for light
-          colorTextSecondary: isDark ? '#e2e8f0' : '#6B5D52',  // Light gray or brown (secondary)
+          colorPrimary: isDark ? '#CD4841' : '#B83730',  // Coral in both themes (dark is the AA-with-white coral)
+          colorBackground: isDark ? '#2A1F1A' : '#ffffff',  // brown-900 card or white
+          colorInputBackground: isDark ? '#1C1512' : '#FFF8F0',  // brown-950 well or cream
+          colorInputText: isDark ? '#FFF8F0' : '#3A2A1D',  // Cream or brown
+          colorText: isDark ? '#FFF8F0' : '#2d2d2d',  // Cream for dark, dark gray for light
+          colorTextSecondary: isDark ? '#E8DED6' : '#6B5D52',  // Light brown or brown (secondary)
           borderRadius: '0.75rem',
         },
         elements: {
           // Hide "Development mode" badge
           badge: 'hidden',
-          formButtonPrimary: isDark ? '!min-h-11 !bg-ocean-700 !text-white hover:!bg-ocean-800' : '!min-h-11 !bg-coral-700 !text-white hover:!bg-coral-800',
-          socialButtonsBlockButton: isDark ? '!min-h-11 !text-white !border-slate-500 hover:!bg-slate-700' : '!min-h-11',
-          socialButtonsBlockButtonText: isDark ? '!text-white' : '',
+          formButtonPrimary: '!min-h-11 !bg-action !text-white hover:!bg-action-hover',
+          socialButtonsBlockButton: isDark ? '!min-h-11 !text-cream-100 !border-brown-500 hover:!bg-brown-700' : '!min-h-11',
+          socialButtonsBlockButtonText: isDark ? '!text-cream-100' : '',
           formFieldInput: '!min-h-11 !text-base',
           rootBox: '[&_[data-localization-key="badge__development"]]:hidden',
-          // Force white text in dark mode
-          userButtonPopoverCard: isDark ? 'text-white' : '',
-          userButtonPopoverActionButton: isDark ? 'text-white hover:text-white' : '',
-          userButtonPopoverActionButtonText: isDark ? 'text-white' : '',
-          userButtonPopoverActionButtonIcon: isDark ? 'text-white' : '',
-          userPreviewMainIdentifier: isDark ? 'text-white' : '',
-          userPreviewSecondaryIdentifier: isDark ? 'text-white' : '',
+          // Cream text in dark mode
+          userButtonPopoverCard: isDark ? 'text-cream-100' : '',
+          userButtonPopoverActionButton: isDark ? 'text-cream-100 hover:text-cream-100' : '',
+          userButtonPopoverActionButtonText: isDark ? 'text-cream-100' : '',
+          userButtonPopoverActionButtonIcon: isDark ? 'text-cream-100' : '',
+          userPreviewMainIdentifier: isDark ? 'text-cream-100' : '',
+          userPreviewSecondaryIdentifier: isDark ? 'text-cream-100' : '',
         },
       }}
     >

@@ -31,10 +31,10 @@ export function BrandMark({ className = 'h-10 w-10', seasonal = null, tone = 'de
   return (
     <svg viewBox="0 0 48 48" className={`flex-none ${className}`} aria-hidden="true" focusable="false">
       <g transform="translate(23 25)">
-        <g className={inverse ? 'fill-cream-50' : 'fill-coral-700 dark:fill-coral-400'} stroke={gap} strokeWidth="1.4" strokeLinejoin="round">
+        <g className={inverse ? 'fill-cream-50' : 'fill-coral-700 dark:fill-hibiscus-400'} stroke={gap} strokeWidth="1.4" strokeLinejoin="round">
           {[0, 72, 144, 216, 288].map(angle => <path key={angle} d={PETAL} transform={`rotate(${angle})`} />)}
         </g>
-        <circle r="3.6" className={inverse ? 'fill-coral-900 dark:fill-teal-950' : 'fill-coral-900 dark:fill-coral-100'} />
+        <circle r="3.6" className={inverse ? 'fill-coral-900' : 'fill-coral-900'} />
         <path d="M0 0 L 12.5 -15.5" stroke={gap} strokeWidth="3.6" strokeLinecap="round" />
         <path d="M0 0 L 12.5 -15.5" stroke="#F5C443" strokeWidth="1.8" strokeLinecap="round" />
         <circle cx="13.8" cy="-17.4" r="2.3" fill="#F5C443" stroke={gap} strokeWidth="0.8" />

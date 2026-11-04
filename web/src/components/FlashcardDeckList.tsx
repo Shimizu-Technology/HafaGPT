@@ -122,25 +122,25 @@ export function FlashcardDeckList() {
 
       <main className="mx-auto max-w-5xl px-4 py-6 sm:py-8">
         <div className="mb-6 max-w-2xl">
-          <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-3xl">Build recall one card at a time</h2>
-          <p className="mt-2 text-brown-600 dark:text-gray-300">Choose a ready-made beginner deck or practice words from the full dictionary.</p>
-          <Link to="/flashcards/my-decks" className="pressable mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-semibold text-coral-700 hover:bg-coral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950">
+          <h2 className="text-2xl font-bold tracking-tight text-brown-950 dark:text-cream-100 sm:text-3xl">Build recall one card at a time</h2>
+          <p className="mt-2 text-brown-600 dark:text-brown-100">Choose a ready-made beginner deck or practice words from the full dictionary.</p>
+          <Link to="/flashcards/my-decks" className="pressable mt-3 inline-flex min-h-11 items-center gap-2 rounded-xl px-3 font-semibold text-coral-700 hover:bg-coral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500">
             <Library className="h-5 w-5 flex-none" aria-hidden="true" />
             Saved decks
           </Link>
-          <p className="text-base text-brown-600 dark:text-gray-300">Open decks already saved to your account.</p>
+          <p className="text-base text-brown-600 dark:text-brown-100">Open decks already saved to your account.</p>
         </div>
 
         <div className="mb-7">
-          <div className="grid max-w-xl grid-cols-2 gap-1 rounded-2xl border border-cream-200 bg-white p-1 dark:border-slate-700 dark:bg-slate-800" aria-label="Flashcard source">
+          <div className="grid max-w-xl grid-cols-2 gap-1 rounded-2xl border border-cream-200 bg-white p-1 dark:border-brown-700 dark:bg-brown-900" aria-label="Flashcard source">
             <button
               type="button"
               onClick={() => setCardType('curated')}
               aria-pressed={cardType === 'curated'}
               className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${
                 cardType === 'curated'
-                  ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                  : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
+                  ? 'bg-action text-white'
+                  : 'text-brown-600 hover:bg-cream-100 dark:text-brown-100 dark:hover:bg-brown-700'
               }`}
             >
               <Zap className="h-4 w-4" aria-hidden="true" />
@@ -152,15 +152,15 @@ export function FlashcardDeckList() {
               aria-pressed={cardType === 'dictionary'}
               className={`flex min-h-11 items-center justify-center gap-2 rounded-xl px-3 text-sm font-semibold transition-colors ${
                 cardType === 'dictionary'
-                  ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                  : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-700'
+                  ? 'bg-action text-white'
+                  : 'text-brown-600 hover:bg-cream-100 dark:text-brown-100 dark:hover:bg-brown-700'
               }`}
             >
               <Sparkles className="h-4 w-4" aria-hidden="true" />
               Dictionary
             </button>
           </div>
-          <p className="mt-2 text-sm text-brown-500 dark:text-gray-400">
+          <p className="mt-2 text-sm text-brown-500 dark:text-brown-300">
             {cardType === 'curated'
               ? 'Handpicked vocabulary with beginner-friendly pronunciations.'
               : `Random practice from ${dictionaryWordCount} dictionary words.`}
@@ -169,21 +169,21 @@ export function FlashcardDeckList() {
 
         <div className="mb-3 flex items-end justify-between gap-4">
           <div>
-            <h3 className="text-lg font-bold text-brown-950 dark:text-white">{cardType === 'curated' ? 'Choose a guided deck' : 'Choose a dictionary topic'}</h3>
-            <p className="text-sm text-brown-500 dark:text-gray-400">Each session is short enough to finish in a few minutes.</p>
+            <h3 className="text-lg font-bold text-brown-950 dark:text-cream-100">{cardType === 'curated' ? 'Choose a guided deck' : 'Choose a dictionary topic'}</h3>
+            <p className="text-sm text-brown-500 dark:text-brown-300">Each session is short enough to finish in a few minutes.</p>
           </div>
-          <span className="hidden rounded-full bg-cream-200 px-3 py-1 text-xs font-semibold text-brown-600 dark:bg-slate-800 dark:text-gray-300 sm:inline">{decks.length} topics</span>
+          <span className="hidden rounded-full bg-cream-200 px-3 py-1 text-xs font-semibold text-brown-600 dark:bg-brown-900 dark:text-brown-100 sm:inline">{decks.length} topics</span>
         </div>
 
         <div className="grid gap-3 sm:grid-cols-2">
           {cardType === 'curated'
             ? curatedDecks.map((deck) => (
-              <Link key={deck.topic} to={`/flashcards/${deck.topic}?type=curated`} className="group flex min-h-32 items-start gap-4 rounded-2xl border border-cream-200 bg-white p-5 transition-colors hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-600">
-                <span className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300">{deck.icon}</span>
+              <Link key={deck.topic} to={`/flashcards/${deck.topic}?type=curated`} className="group flex min-h-32 items-start gap-4 rounded-2xl border border-cream-200 bg-white p-5 transition-colors hover:border-coral-300 dark:border-brown-700 dark:bg-brown-900">
+                <span className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-coral-100 text-coral-700">{deck.icon}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-lg font-bold text-brown-950 dark:text-white">{deck.title}</span>
-                  <span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">{deck.description}</span>
-                  <span className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-brown-500 dark:text-gray-400">
+                  <span className="block text-lg font-bold text-brown-950 dark:text-cream-100">{deck.title}</span>
+                  <span className="mt-1 block text-sm text-brown-600 dark:text-brown-100">{deck.description}</span>
+                  <span className="mt-3 flex flex-wrap items-center gap-2 text-xs font-semibold text-brown-500 dark:text-brown-300">
                     <span>{deck.cardCount} cards</span><span aria-hidden="true">•</span><span>{deck.difficulty}</span>
                   </span>
                 </span>
@@ -191,12 +191,12 @@ export function FlashcardDeckList() {
               </Link>
             ))
             : dictionaryCategories.map((category) => (
-              <Link key={category.id} to={`/flashcards/${category.id}?type=dictionary`} className="group flex min-h-32 items-start gap-4 rounded-2xl border border-cream-200 bg-white p-5 transition-colors hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-600">
+              <Link key={category.id} to={`/flashcards/${category.id}?type=dictionary`} className="group flex min-h-32 items-start gap-4 rounded-2xl border border-cream-200 bg-white p-5 transition-colors hover:border-coral-300 dark:border-brown-700 dark:bg-brown-900">
                 <span className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-ocean-100 text-ocean-700 dark:bg-ocean-950 dark:text-ocean-300">{categoryIcons[category.id] || <BookOpen className="h-6 w-6" />}</span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-lg font-bold text-brown-950 dark:text-white">{category.title}</span>
-                  <span className="mt-1 block text-sm text-brown-600 dark:text-gray-300">{category.description}</span>
-                  <span className="mt-3 block text-xs font-semibold text-brown-500 dark:text-gray-400">{category.word_count} words • Random practice</span>
+                  <span className="block text-lg font-bold text-brown-950 dark:text-cream-100">{category.title}</span>
+                  <span className="mt-1 block text-sm text-brown-600 dark:text-brown-100">{category.description}</span>
+                  <span className="mt-3 block text-xs font-semibold text-brown-500 dark:text-brown-300">{category.word_count} words • Random practice</span>
                 </span>
                 <ArrowRight className="mt-1 h-5 w-5 flex-none text-brown-500 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
               </Link>

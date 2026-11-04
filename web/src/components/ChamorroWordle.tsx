@@ -513,8 +513,8 @@ export function ChamorroWordle() {
     const stateStyles = {
       correct: 'bg-green-700 text-white border-green-500',
       present: 'bg-yellow-700 text-white border-yellow-500',
-      absent: 'bg-gray-600 dark:bg-slate-600 text-white border-gray-400 dark:border-slate-600',
-      empty: 'bg-white dark:bg-slate-800 border-cream-300 dark:border-slate-600',
+      absent: 'bg-gray-600 dark:bg-brown-600 text-white border-gray-400 dark:border-brown-600',
+      empty: 'bg-white dark:bg-brown-900 border-cream-300 dark:border-brown-600',
     };
 
     return (
@@ -528,7 +528,7 @@ export function ChamorroWordle() {
           flex flex-col items-center justify-center
           font-bold text-xl sm:text-2xl
           ${stateStyles[state]}
-          ${content && state === 'empty' ? 'border-brown-400 dark:border-slate-400' : ''}
+          ${content && state === 'empty' ? 'border-brown-400 dark:border-brown-400' : ''}
           ${shake && isCurrentRow ? 'animate-shake' : ''}
         `}
       >
@@ -561,40 +561,40 @@ export function ChamorroWordle() {
               className={`
                 w-full p-4 rounded-2xl text-left transition-colors
                 ${dailyPlayed
-                  ? 'bg-cream-100 dark:bg-slate-800 opacity-60 cursor-not-allowed'
-                  : 'bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700'
+                  ? 'bg-cream-100 dark:bg-brown-900 opacity-60 cursor-not-allowed'
+                  : 'bg-white dark:bg-brown-900 border border-cream-200 dark:border-brown-700'
                 }
               `}
             >
               <div className="flex items-center gap-4">
-                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-coral-100 dark:bg-teal-950/50">
-                  <Calendar className="h-6 w-6 text-coral-700 dark:text-teal-300" aria-hidden="true" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-coral-100">
+                  <Calendar className="h-6 w-6 text-coral-700" aria-hidden="true" />
                 </div>
                 <div className="flex-1">
-                  <h3 className="font-bold text-brown-800 dark:text-white">Daily Challenge</h3>
-                  <p className="text-sm text-brown-500 dark:text-gray-400">
+                  <h3 className="font-bold text-brown-800 dark:text-cream-100">Daily Challenge</h3>
+                  <p className="text-sm text-brown-500 dark:text-brown-300">
                     {dailyPlayed ? 'Already played today!' : '5-letter word • Same for everyone'}
                   </p>
                 </div>
-                {!dailyPlayed && <Play className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />}
+                {!dailyPlayed && <Play className="h-5 w-5 text-coral-700" aria-hidden="true" />}
               </div>
             </button>
 
             {/* Practice Mode Settings */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-4 border border-cream-200 dark:border-brown-700">
               <div className="flex items-center gap-3 mb-4">
                 <div className="w-10 h-10 rounded-xl bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center">
                   <Shuffle className="w-5 h-5 text-amber-700 dark:text-amber-400" />
                 </div>
                 <div>
-                  <h3 className="font-bold text-brown-800 dark:text-white">Practice Mode</h3>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">Customize your practice</p>
+                  <h3 className="font-bold text-brown-800 dark:text-cream-100">Practice Mode</h3>
+                  <p className="text-xs text-brown-500 dark:text-brown-300">Customize your practice</p>
                 </div>
               </div>
 
               {/* Mode Selection */}
               <div className="mb-4">
-                <h4 className="text-sm font-semibold text-brown-700 dark:text-gray-300 mb-2">Choose Mode</h4>
+                <h4 className="text-sm font-semibold text-brown-700 dark:text-brown-100 mb-2">Choose Mode</h4>
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
@@ -602,13 +602,13 @@ export function ChamorroWordle() {
                     aria-pressed={wordMode === 'beginner'}
                     className={`p-3 rounded-xl text-center transition-colors ${
                       wordMode === 'beginner'
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                        ? 'bg-action text-white'
+                        : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                     }`}
                   >
                     <Sparkles className="w-5 h-5 mx-auto mb-1" />
                     <span className="text-sm font-medium">Beginner</span>
-                    <p className="text-xs opacity-80">Common words</p>
+                    <p className="text-xs">Common words</p>
                   </button>
                   <button
                     type="button"
@@ -616,20 +616,20 @@ export function ChamorroWordle() {
                     aria-pressed={wordMode === 'challenge'}
                     className={`p-3 rounded-xl text-center transition-colors ${
                       wordMode === 'challenge'
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                        ? 'bg-action text-white'
+                        : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                     }`}
                   >
                     <BookOpen className="w-5 h-5 mx-auto mb-1" />
                     <span className="text-sm font-medium">Challenge</span>
-                    <p className="text-xs opacity-80">Full dictionary</p>
+                    <p className="text-xs">Full dictionary</p>
                   </button>
                 </div>
               </div>
 
               {/* Difficulty Selection */}
               <div className="mb-4">
-                <h4 className="text-sm font-semibold text-brown-700 dark:text-gray-300 mb-2">Difficulty</h4>
+                <h4 className="text-sm font-semibold text-brown-700 dark:text-brown-100 mb-2">Difficulty</h4>
                 <div className="grid grid-cols-3 gap-2">
                   {(['easy', 'medium', 'hard'] as Difficulty[]).map((d) => (
                     <button
@@ -639,12 +639,12 @@ export function ChamorroWordle() {
                       aria-pressed={difficulty === d}
                       className={`p-2 rounded-xl text-center transition-colors ${
                         difficulty === d
-                          ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                          : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                          ? 'bg-action text-white'
+                          : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                       }`}
                     >
                       <span className="text-sm font-medium">{DIFFICULTY_CONFIG[d].label}</span>
-                      <p className="text-xs opacity-80">{DIFFICULTY_CONFIG[d].description}</p>
+                      <p className="text-xs">{DIFFICULTY_CONFIG[d].description}</p>
                     </button>
                   ))}
                 </div>
@@ -653,7 +653,7 @@ export function ChamorroWordle() {
               {/* Category Selection (Challenge mode only) */}
               {wordMode === 'challenge' && categories && (
                 <div className="mb-4">
-                  <h4 className="text-sm font-semibold text-brown-700 dark:text-gray-300 mb-2">Category</h4>
+                  <h4 className="text-sm font-semibold text-brown-700 dark:text-brown-100 mb-2">Category</h4>
                   <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a category">
                     {categories.categories.map((cat) => (
                       <button
@@ -663,8 +663,8 @@ export function ChamorroWordle() {
                         aria-pressed={category === cat.id}
                         className={`min-h-11 flex-none rounded-xl px-3 py-2 text-xs font-medium transition-colors ${
                           category === cat.id
-                            ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                            : 'bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                            ? 'bg-action text-white'
+                            : 'bg-cream-100 dark:bg-brown-700 text-brown-600 dark:text-brown-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                         }`}
                       >
                         {cat.title}
@@ -679,26 +679,26 @@ export function ChamorroWordle() {
                 type="button"
                 onClick={() => startGame('practice')}
               disabled={resultUnresolved || startStatus.pending}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover"
               >
                 <Play className="w-5 h-5" />
                 Start Practice
               </button>
             </div>
 
-            <details className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <summary className="cursor-pointer font-bold text-brown-800 dark:text-white">How to play</summary>
-              <ol className="mb-4 mt-4 space-y-2 text-sm text-brown-600 dark:text-gray-400">
+            <details className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+              <summary className="cursor-pointer font-bold text-brown-800 dark:text-cream-100">How to play</summary>
+              <ol className="mb-4 mt-4 space-y-2 text-sm text-brown-600 dark:text-brown-300">
                 <li className="flex items-start gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-coral-100 text-xs font-bold text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">1</span>
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-coral-100 text-xs font-bold text-coral-700">1</span>
                   <span>Type any Chamorro word (same length as the answer)</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-coral-100 text-xs font-bold text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">2</span>
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-coral-100 text-xs font-bold text-coral-700">2</span>
                   <span>Press <strong>Enter ↵</strong> to submit your guess</span>
                 </li>
                 <li className="flex items-start gap-2">
-                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-coral-100 text-xs font-bold text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">3</span>
+                  <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-coral-100 text-xs font-bold text-coral-700">3</span>
                   <span>Marks and colors show how close you are — use them to guess again!</span>
                 </li>
               </ol>
@@ -707,16 +707,16 @@ export function ChamorroWordle() {
               <div className="flex justify-center gap-2 mb-3">
                 <div className="w-10 h-10 bg-green-700 text-white rounded flex items-center justify-center font-bold">H</div>
                 <div className="w-10 h-10 bg-yellow-700 text-white rounded flex items-center justify-center font-bold">Å</div>
-                <div className="w-10 h-10 bg-gray-600 text-white rounded flex items-center justify-center font-bold">F</div>
-                <div className="w-10 h-10 bg-gray-600 text-white rounded flex items-center justify-center font-bold">A</div>
+                <div className="w-10 h-10 bg-gray-600 dark:bg-brown-600 text-white rounded flex items-center justify-center font-bold">F</div>
+                <div className="w-10 h-10 bg-gray-600 dark:bg-brown-600 text-white rounded flex items-center justify-center font-bold">A</div>
               </div>
-              <ul className="space-y-1 text-center text-xs text-brown-500 dark:text-gray-400">
+              <ul className="space-y-1 text-center text-xs text-brown-500 dark:text-brown-300">
                 <li><strong>✓ Green</strong> = Right letter, right spot</li>
                 <li><strong>↔ Yellow</strong> = Right letter, wrong spot</li>
                 <li><strong>× Gray</strong> = Not in word</li>
               </ul>
 
-              <p className="text-xs text-center text-brown-500 dark:text-gray-400 mt-3">
+              <p className="text-xs text-center text-brown-500 dark:text-brown-300 mt-3">
                 You have <strong>6 tries</strong> to guess the word!
               </p>
             </details>
@@ -728,17 +728,17 @@ export function ChamorroWordle() {
           <div className="flex flex-col items-center gap-4 sm:gap-6">
             {/* Message */}
             {message && (
-              <div className="text-center text-brown-600 dark:text-gray-400 font-medium animate-pulse">
+              <div className="text-center text-brown-600 dark:text-brown-300 font-medium animate-pulse">
                 {message}
               </div>
             )}
 
-            <p className="w-full text-center text-sm text-brown-700 dark:text-gray-200">✓ Right spot · ↔ Different spot · × Not in word</p>
+            <p className="w-full text-center text-sm text-brown-700 dark:text-cream-200">✓ Right spot · ↔ Different spot · × Not in word</p>
             <form className="w-full max-w-xl" onSubmit={event => { event.preventDefault(); handleEnter(); }}>
-              <label htmlFor="wordle-device-input" className="block text-base font-semibold text-brown-800 dark:text-white">Type your guess</label>
+              <label htmlFor="wordle-device-input" className="block text-base font-semibold text-brown-800 dark:text-cream-100">Type your guess</label>
               <div className="mt-2 flex gap-2">
-                <input id="wordle-device-input" type="text" autoComplete="off" autoCapitalize="characters" spellCheck={false} value={currentGuess} onChange={event => setCurrentGuess(event.target.value.toUpperCase().replace(/[^A-ZÅÑ']/g, '').slice(0, wordLength))} className="min-h-11 min-w-0 flex-1 rounded-xl border border-brown-400 bg-white px-3 text-base text-brown-950 dark:border-slate-500 dark:bg-slate-800 dark:text-white" />
-                <button type="submit" className="min-h-11 rounded-xl bg-coral-700 px-3 font-semibold text-white dark:bg-teal-700">Enter</button>
+                <input id="wordle-device-input" type="text" autoComplete="off" autoCapitalize="characters" spellCheck={false} value={currentGuess} onChange={event => setCurrentGuess(event.target.value.toUpperCase().replace(/[^A-ZÅÑ']/g, '').slice(0, wordLength))} className="min-h-11 min-w-0 flex-1 rounded-xl border border-brown-400 bg-white px-3 text-base text-brown-950 dark:border-brown-500 dark:bg-brown-900 dark:text-cream-100" />
+                <button type="submit" className="min-h-11 rounded-xl bg-action px-3 font-semibold text-white">Enter</button>
               </div>
             </form>
             {/* Grid */}
@@ -754,7 +754,7 @@ export function ChamorroWordle() {
 
             {/* Enter hint - shows when word is complete */}
             {currentGuess.length === wordLength && (
-              <div className="animate-pulse text-center text-sm font-medium text-coral-700 dark:text-teal-300">
+              <div className="animate-pulse text-center text-sm font-medium text-coral-700">
                 Press Enter ↵ to submit
               </div>
             )}
@@ -774,16 +774,16 @@ export function ChamorroWordle() {
           <div className="text-center space-y-4 sm:space-y-6">
             {/* Result */}
             <div>
-              <div className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl ${gameState === 'won' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-coral-100 text-coral-700 dark:bg-slate-800 dark:text-teal-300'}`}>
+              <div className={`mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-2xl ${gameState === 'won' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-coral-100 text-coral-700 dark:bg-brown-900'}`}>
                 <Trophy className="h-10 w-10" aria-hidden="true" />
               </div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-2">
+              <h2 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-cream-100 mb-2">
                 {gameState === 'won' ? 'Håfa Adai! You got it!' : 'Better luck next time!'}
               </h2>
-              <p className="text-brown-600 dark:text-gray-400">
-                The word was: <strong className="text-coral-700 dark:text-teal-300">{targetWord.word}</strong>
+              <p className="text-brown-600 dark:text-brown-300">
+                The word was: <strong className="text-coral-700">{targetWord.word}</strong>
               </p>
-              <p className="text-sm text-brown-500 dark:text-gray-400">
+              <p className="text-sm text-brown-500 dark:text-brown-300">
                 Meaning: {targetWord.meaning}
               </p>
             </div>
@@ -796,7 +796,7 @@ export function ChamorroWordle() {
                   return (
                     <Star
                       key={i}
-                      className={`h-9 w-9 ${i < stars ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-slate-600'}`}
+                      className={`h-9 w-9 ${i < stars ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-brown-600'}`}
                       aria-hidden="true"
                     />
                   );
@@ -813,7 +813,7 @@ export function ChamorroWordle() {
                       key={cellIndex}
                       className={`
                         w-8 h-8 rounded
-                        ${state === 'correct' ? 'bg-green-700' : state === 'present' ? 'bg-yellow-700' : 'bg-gray-600'}
+                        ${state === 'correct' ? 'bg-green-700' : state === 'present' ? 'bg-yellow-700' : 'bg-gray-600 dark:bg-brown-600'}
                       `}
                     />
                   ))}
@@ -826,7 +826,7 @@ export function ChamorroWordle() {
               <button
                 type="button"
                 onClick={handleShare}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-action px-6 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover"
               >
                 <Share2 className="w-5 h-5" />
                 Share Result
@@ -836,7 +836,7 @@ export function ChamorroWordle() {
                   type="button"
                   onClick={() => startGame('practice')}
               disabled={resultUnresolved || startStatus.pending}
-                  className="px-6 py-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+                  className="px-6 py-3 rounded-xl bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600 transition-colors flex items-center justify-center gap-2"
                 >
                   <RotateCcw className="w-5 h-5" />
                   Play Again
@@ -844,7 +844,7 @@ export function ChamorroWordle() {
               )}
             </div>
 
-            <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="text-sm font-medium text-coral-700 [@media(hover:hover)_and_(pointer:fine)]:hover:underline dark:text-teal-300">
+            <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="text-sm font-medium text-coral-700 [@media(hover:hover)_and_(pointer:fine)]:hover:underline">
               {gameReturn.label}
             </button>
           </div>

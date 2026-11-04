@@ -422,8 +422,8 @@ export function MemoryMatch() {
       <GameTermDialog term={readTerm} onClose={() => setReadTerm(null)} />
         <GamePageHeader title="Memory Match" subtitle="Pair Chamorro words with their meanings." icon={Puzzle} />
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-teal-500 dark:border-t-transparent" />
-          <p className="text-brown-600 dark:text-gray-400">Loading games...</p>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-t-transparent" />
+          <p className="text-brown-600 dark:text-brown-300">Loading games...</p>
         </div>
       </GamePage>
     );
@@ -443,7 +443,7 @@ export function MemoryMatch() {
             onClick={() => {
               guard.requestLeave(resetGame);
             }}
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-brown-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700"
             aria-label="Change game settings"
           >
             <Settings2 className="h-5 w-5" aria-hidden="true" />
@@ -456,17 +456,17 @@ export function MemoryMatch() {
         {gameState === 'setup' && (
           <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
             {learningContext && (
-              <div className="flex items-center gap-3 rounded-xl border border-coral-200 bg-coral-50 p-3 text-left dark:border-teal-700/40 dark:bg-teal-950/20">
-                <BookOpen className="h-5 w-5 flex-none text-coral-700 dark:text-teal-300" aria-hidden="true" />
-                <p className="text-sm text-brown-700 dark:text-gray-200">
+              <div className="flex items-center gap-3 rounded-xl border border-coral-200 bg-coral-50 p-3 text-left">
+                <BookOpen className="h-5 w-5 flex-none text-coral-700" aria-hidden="true" />
+                <p className="text-sm text-brown-700 dark:text-cream-200">
                   Practicing <span className="font-semibold">{learningContext.topicTitle}</span> from {learningContext.source === 'today' ? 'Today' : 'your lesson'}.
                 </p>
               </div>
             )}
 
             {/* Mode Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-3 border border-cream-200 dark:border-brown-700">
+              <h3 className="text-sm font-bold text-brown-800 dark:text-cream-100 mb-2">
                 Choose Mode
               </h3>
               <div className="grid grid-cols-2 gap-2">
@@ -480,8 +480,8 @@ export function MemoryMatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                      ? 'bg-action text-white'
+                      : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                     }
                   `}
                 >
@@ -489,7 +489,7 @@ export function MemoryMatch() {
                     <Sparkles className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>
                     Common phrases
                   </span>
                 </button>
@@ -499,8 +499,8 @@ export function MemoryMatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                      ? 'bg-action text-white'
+                      : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                     }
                   `}
                 >
@@ -508,7 +508,7 @@ export function MemoryMatch() {
                     <BookOpen className={`w-4 h-4 sm:w-5 sm:h-5 ${settings.mode === 'challenge' ? 'text-white' : 'text-teal-700'}`} />
                   </div>
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>
                     Full dictionary
                   </span>
                 </button>
@@ -516,8 +516,8 @@ export function MemoryMatch() {
             </div>
 
             {/* Category Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-3 border border-cream-200 dark:border-brown-700">
+              <h3 className="text-sm font-bold text-brown-800 dark:text-cream-100 mb-2">
                 Choose Topic
               </h3>
               <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a topic">
@@ -529,8 +529,8 @@ export function MemoryMatch() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                        ? 'bg-action text-white'
+                        : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                       }
                     `}
                   >
@@ -548,8 +548,8 @@ export function MemoryMatch() {
             </div>
 
             {/* Difficulty Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-3 border border-cream-200 dark:border-brown-700">
+              <h3 className="text-sm font-bold text-brown-800 dark:text-cream-100 mb-2">
                 Choose Difficulty
               </h3>
               <div className="grid grid-cols-3 gap-1.5">
@@ -568,10 +568,10 @@ export function MemoryMatch() {
                       className={`
                         p-2 rounded-xl text-center transition-colors duration-200
                         ${isDisabled
-                          ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-slate-800'
+                          ? 'opacity-50 cursor-not-allowed bg-gray-100 dark:bg-brown-900'
                           : settings.difficulty === key
-                            ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                            : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                            ? 'bg-action text-white'
+                            : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                         }
                       `}
                     >
@@ -582,7 +582,7 @@ export function MemoryMatch() {
                       </div>
                       <span className="text-xs sm:text-xs font-medium capitalize">{key}</span>
                       <span className={`text-xs sm:text-xs block ${
-                        settings.difficulty === key && !isDisabled ? 'text-white' : 'text-brown-500 dark:text-gray-300'
+                        settings.difficulty === key && !isDisabled ? 'text-white' : 'text-brown-500 dark:text-brown-100'
                       }`}>
                         {config.pairs} pairs
                       </span>
@@ -603,7 +603,7 @@ export function MemoryMatch() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughCards}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -626,18 +626,18 @@ export function MemoryMatch() {
         {gameState === 'playing' && (
           <div className="space-y-2">
             {/* Stats Bar - Compact */}
-            <div className="flex items-center justify-between bg-white dark:bg-slate-800 rounded-xl p-2 border border-cream-200 dark:border-slate-700">
+            <div className="flex items-center justify-between bg-white dark:bg-brown-900 rounded-xl p-2 border border-cream-200 dark:border-brown-700">
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1 text-brown-600 dark:text-gray-300">
+                <div className="flex items-center gap-1 text-brown-600 dark:text-brown-100">
                   <MousePointer2 className="w-3 h-3" />
                   <span className="font-bold text-xs">{moves}</span>
                 </div>
-                <div className="flex items-center gap-1 text-brown-600 dark:text-gray-300">
+                <div className="flex items-center gap-1 text-brown-600 dark:text-brown-100">
                   <Timer className="w-3 h-3" />
                   <span className="font-bold text-xs">{formatTime(elapsedTime)}</span>
                 </div>
               </div>
-              <div className="flex items-center gap-1 text-coral-700 dark:text-teal-400">
+              <div className="flex items-center gap-1 text-coral-700">
                 <Trophy className="w-3 h-3" />
                 <span className="font-bold text-xs">{matchedPairs.length}/{settings.pairsCount}</span>
               </div>
@@ -664,13 +664,13 @@ export function MemoryMatch() {
               const first = cards.find(card => card.id === flippedCards[0]);
               const second = cards.find(card => card.id === flippedCards[1]);
               return first?.pairId !== second?.pairId;
-            })() && <button type="button" onClick={() => { setFlippedCards([]); setIsChecking(false); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white dark:bg-teal-700">Next — hide these cards</button>}
+            })() && <button type="button" onClick={() => { setFlippedCards([]); setIsChecking(false); }} className="mt-4 min-h-12 w-full rounded-xl bg-action px-4 font-bold text-white">Next — hide these cards</button>}
 
             {/* Quick Actions - Compact */}
             <div className="flex justify-center pt-1">
               <button
                 onClick={() => guard.requestLeave(playAgain)}
-                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors text-xs"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-xl bg-cream-100 dark:bg-brown-700 text-brown-600 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600 transition-colors text-xs"
               >
                 <RotateCcw className="w-3 h-3" />
                 Restart
@@ -690,10 +690,10 @@ export function MemoryMatch() {
             </div>
 
             <div>
-              <h2 className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-white mb-1">
+              <h2 className="text-lg sm:text-2xl font-bold text-brown-800 dark:text-cream-100 mb-1">
                 Håfa Adai!
               </h2>
-              <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-400">
+              <p className="text-xs sm:text-sm text-brown-600 dark:text-brown-300">
                 Great job completing the game!
               </p>
             </div>
@@ -701,30 +701,30 @@ export function MemoryMatch() {
             {/* Stars */}
             <div className="flex justify-center gap-1" role="img" aria-label={`${getStars} out of 3 stars`}>
               {[1, 2, 3].map((star) => (
-                <Star key={star} aria-hidden="true" className={`h-7 w-7 sm:h-9 sm:w-9 ${star <= getStars ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-slate-600"}`} />
+                <Star key={star} aria-hidden="true" className={`h-7 w-7 sm:h-9 sm:w-9 ${star <= getStars ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-brown-600"}`} />
               ))}
             </div>
 
             {/* Stats Card */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-3 border border-cream-200 dark:border-brown-700">
               <div className="grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-coral-700 dark:text-teal-400">{moves}</p>
-                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Moves</p>
+                  <p className="text-lg sm:text-2xl font-bold text-coral-700">{moves}</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-brown-300">Moves</p>
                 </div>
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-coral-700 dark:text-teal-400">{formatTime(elapsedTime)}</p>
-                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Time</p>
+                  <p className="text-lg sm:text-2xl font-bold text-coral-700">{formatTime(elapsedTime)}</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-brown-300">Time</p>
                 </div>
                 <div>
-                  <p className="text-lg sm:text-2xl font-bold text-coral-700 dark:text-teal-400">{calculateScore}</p>
-                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-lg sm:text-2xl font-bold text-coral-700">{calculateScore}</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-brown-300">Score</p>
                 </div>
               </div>
             </div>
 
             {/* Encouragement */}
-            <p className="text-xs text-brown-600 dark:text-gray-400">
+            <p className="text-xs text-brown-600 dark:text-brown-300">
               {getStars === 3
                 ? "Perfect! You're a memory master!"
                 : getStars === 2
@@ -733,7 +733,7 @@ export function MemoryMatch() {
               }
             </p>
 
-            {isSignedIn && hasSavedRef.current && !pendingGameResult && <p role="status" className="mt-4 text-sm text-brown-700 dark:text-gray-200">Result saved</p>}
+            {isSignedIn && hasSavedRef.current && !pendingGameResult && <p role="status" className="mt-4 text-sm text-brown-700 dark:text-cream-200">Result saved</p>}
 
             {/* Action Buttons */}
             {pendingGameResult && (
@@ -763,7 +763,7 @@ export function MemoryMatch() {
               <button
                 onClick={() => guard.requestLeave(playAgain)}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-action text-white font-bold transition-colors duration-200 flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <RotateCcw className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Play Again
@@ -771,7 +771,7 @@ export function MemoryMatch() {
               <button
                 onClick={resetGame}
                 disabled={isSavingResult || Boolean(pendingGameResult)}
-                className="flex-1 py-2 px-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm"
+                className="flex-1 py-2 px-3 rounded-xl bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600 transition-colors flex items-center justify-center gap-1.5 text-xs sm:text-sm"
               >
                 <Settings2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                 Settings
@@ -783,7 +783,7 @@ export function MemoryMatch() {
               <button
                 type="button"
                 disabled
-                className="inline-block cursor-not-allowed text-xs font-medium text-coral-700 opacity-60 dark:text-teal-400 sm:text-sm"
+                className="inline-block cursor-not-allowed text-xs font-medium text-coral-700 opacity-60 sm:text-sm"
               >
                 {gameReturn.label}
               </button>
@@ -791,7 +791,7 @@ export function MemoryMatch() {
               <Link
                 to={gameReturn.to}
                 replace
-                className="inline-block text-coral-700 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-xs sm:text-sm"
+                className="inline-block text-coral-700 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-xs sm:text-sm"
               >
                 {gameReturn.label}
               </Link>

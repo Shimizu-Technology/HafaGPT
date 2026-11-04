@@ -51,7 +51,7 @@ export function AuthButton() {
               avatarBox: "w-9 h-9",
               userButtonTrigger: "!min-h-[44px] !min-w-[44px] !p-1",
               userButtonPopoverCard: "rounded-xl ",
-              userButtonPopoverActionButton: isDark ? "hover:bg-gray-800" : "hover:bg-teal-50",
+              userButtonPopoverActionButton: isDark ? "hover:bg-brown-700" : "hover:bg-teal-50",
             }
           }}
           // Center the popover on mobile, default alignment on desktop

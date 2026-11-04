@@ -11,7 +11,7 @@ interface LearnerPageShellProps {
 
 export function LearnerPageShell({ children, className = '' }: LearnerPageShellProps) {
   return (
-    <div className={`min-h-screen bg-cream-50 pb-24 text-brown-950 dark:bg-slate-900 dark:text-white sm:pb-8 ${className}`}>
+    <div className={`min-h-screen bg-cream-50 pb-24 text-brown-950 dark:bg-brown-950 dark:text-cream-100 sm:pb-8 ${className}`}>
       {children}
     </div>
   );
@@ -56,22 +56,22 @@ export function LearnerPageHeader({
   const Title = titleAs;
 
   return (
-    <header className={`${sticky ? 'sticky top-0 z-30' : 'relative z-20'} border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95`}>
+    <header className={`${sticky ? 'sticky top-0 z-30' : 'relative z-20'} border-b border-cream-200/80 bg-cream-50/95 backdrop-blur-xl dark:border-brown-700 dark:bg-brown-950/95`}>
       <div className={`safe-area-top mx-auto px-4 py-3 ${maxWidthClassName}`}>
         <div className="grid grid-cols-[44px_minmax(0,1fr)_44px] items-center gap-2">
           {onBack ? (
-            <button type="button" onClick={onBack} aria-label={backLabel} className="flex h-[44px] w-[44px] flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
+            <button type="button" onClick={onBack} aria-label={backLabel} className="flex h-[44px] w-[44px] flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-brown-100 dark:hover:bg-brown-900">
               <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             </button>
           ) : (
-            <Link to={backTo} replace aria-label={backLabel} className="flex h-[44px] w-[44px] flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800">
+            <Link to={backTo} replace aria-label={backLabel} className="flex h-[44px] w-[44px] flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-brown-100 dark:hover:bg-brown-900">
               <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             </Link>
           )}
 
           <div className="col-span-3 row-start-2 min-w-0 sm:col-span-1 sm:col-start-2 sm:row-start-1">
-            <Title className={`break-words font-bold leading-tight text-brown-950 dark:text-white ${titleAs === 'h1' ? 'text-xl sm:text-2xl' : 'text-base'}`}>{title}</Title>
-            {subtitle && <p className="break-words text-xs text-brown-500 dark:text-gray-400 sm:text-sm">{subtitle}</p>}
+            <Title className={`break-words font-bold leading-tight text-brown-950 dark:text-cream-100 ${titleAs === 'h1' ? 'text-xl sm:text-2xl' : 'text-base'}`}>{title}</Title>
+            {subtitle && <p className="break-words text-xs text-brown-500 dark:text-brown-300 sm:text-sm">{subtitle}</p>}
           </div>
 
           {trailing && <div className="col-span-3 row-start-3 flex min-w-0 flex-wrap justify-start gap-2">{trailing}</div>}
@@ -80,7 +80,7 @@ export function LearnerPageHeader({
               type="button"
               onClick={toggleTheme}
               aria-label="Toggle theme"
-              className={`col-start-3 row-start-1 flex h-[44px] w-[44px] items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800 ${themeToggleClassName}`}
+              className={`col-start-3 row-start-1 flex h-[44px] w-[44px] items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 dark:text-brown-100 dark:hover:bg-brown-900 ${themeToggleClassName}`}
             >
               {theme === 'light' ? <Moon className="h-5 w-5" aria-hidden="true" /> : <Sun className="h-5 w-5" aria-hidden="true" />}
             </button>

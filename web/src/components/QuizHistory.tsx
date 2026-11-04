@@ -77,41 +77,41 @@ export function QuizHistory() {
       <main className="mx-auto max-w-4xl px-4 py-5 sm:py-8">
         {isLoading ? (
           <section
-            className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800"
+            className="flex min-h-64 flex-col items-center justify-center rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-900"
             aria-live="polite"
           >
             <Loader2
-              className="h-8 w-8 animate-spin text-coral-700 motion-reduce:animate-none dark:text-teal-300"
+              className="h-8 w-8 animate-spin text-coral-700 motion-reduce:animate-none"
               aria-hidden="true"
             />
-            <p className="mt-4 font-medium text-brown-600 dark:text-gray-300">Loading your quiz history…</p>
+            <p className="mt-4 font-medium text-brown-600 dark:text-brown-100">Loading your quiz history…</p>
           </section>
         ) : error ? (
-          <section className="rounded-3xl border border-red-200 bg-white p-6 text-center dark:border-red-900 dark:bg-slate-800">
-            <h2 className="text-xl font-bold text-brown-950 dark:text-white">Quiz history is unavailable</h2>
-            <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">
+          <section className="rounded-3xl border border-red-200 bg-white p-6 text-center dark:border-red-900 dark:bg-brown-900">
+            <h2 className="text-xl font-bold text-brown-950 dark:text-cream-100">Quiz history is unavailable</h2>
+            <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-brown-300">
               Your results are still saved. Try loading this page again.
             </p>
             <button
               type="button"
               onClick={() => refetch()}
-              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="mt-5 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-action px-5 font-semibold text-white hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" /> Try again
             </button>
           </section>
         ) : !data || data.results.length === 0 ? (
-          <section className="rounded-3xl border border-teal-200 bg-white p-6 text-center dark:border-teal-900 dark:bg-slate-800">
+          <section className="rounded-3xl border border-teal-200 bg-white p-6 text-center dark:border-teal-900 dark:bg-brown-900">
             <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
               <Trophy className="h-7 w-7" aria-hidden="true" />
             </span>
-            <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">No quizzes yet</h2>
-            <p className="mx-auto mt-2 max-w-sm text-brown-600 dark:text-gray-400">
+            <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-cream-100">No quizzes yet</h2>
+            <p className="mx-auto mt-2 max-w-sm text-brown-600 dark:text-brown-300">
               Take a short quiz and your results will appear here.
             </p>
             <Link
               to="/quiz"
-              className="pressable mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="pressable mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-action px-6 font-semibold text-white hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
             >
               Choose a quiz
             </Link>
@@ -119,10 +119,10 @@ export function QuizHistory() {
         ) : (
           <>
             <section aria-labelledby="quiz-results-title">
-              <h2 id="quiz-results-title" className="mb-4 text-xl font-bold text-brown-950 dark:text-white">
+              <h2 id="quiz-results-title" className="mb-4 text-xl font-bold text-brown-950 dark:text-cream-100">
                 Review your results
               </h2>
-              <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800">
+              <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-brown-700 dark:border-brown-700 dark:bg-brown-900">
                 {data.results.map((result) => {
                   const percentage = Math.round(result.percentage);
                   const isDictionary = result.category_id.startsWith('dict-');
@@ -131,7 +131,7 @@ export function QuizHistory() {
                     <Link
                       key={result.id}
                       to={appRoutes.quizReview(result.id, { returnTo })}
-                      className="group flex min-h-24 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50"
+                      className="group flex min-h-24 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-brown-700/50"
                     >
                       <span className="flex min-w-0 items-center gap-3">
                         <span className="flex h-11 w-11 flex-none items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
@@ -139,7 +139,7 @@ export function QuizHistory() {
                         </span>
                         <span className="min-w-0">
                           <span className="flex items-center gap-2">
-                            <span className="truncate font-bold text-brown-950 dark:text-white">
+                            <span className="truncate font-bold text-brown-950 dark:text-cream-100">
                               {result.category_title || 'Quiz'}
                             </span>
                             {isDictionary && (
@@ -148,7 +148,7 @@ export function QuizHistory() {
                               </span>
                             )}
                           </span>
-                          <span className="mt-1 flex flex-col gap-1 text-xs text-brown-500 dark:text-gray-400 sm:flex-row sm:gap-4">
+                          <span className="mt-1 flex flex-col gap-1 text-xs text-brown-500 dark:text-brown-300 sm:flex-row sm:gap-4">
                             <time className="flex items-center gap-1" dateTime={result.created_at}>
                               <Calendar className="h-3.5 w-3.5" aria-hidden="true" />
                               {formatDate(result.created_at)}
@@ -165,7 +165,7 @@ export function QuizHistory() {
                           {percentage}%
                         </span>
                         <ChevronRight
-                          className="h-5 w-5 text-brown-500 group-hover:text-coral-600 dark:text-gray-400 dark:group-hover:text-teal-300"
+                          className="h-5 w-5 text-brown-500 group-hover:text-coral-600 dark:text-brown-300"
                           aria-hidden="true"
                         />
                       </span>
@@ -177,7 +177,7 @@ export function QuizHistory() {
 
             {pagination.total_pages > 1 && (
               <nav className="mt-6 flex items-center justify-between gap-3" aria-label="Quiz history pages">
-                <p className="text-sm text-brown-600 dark:text-gray-400">
+                <p className="text-sm text-brown-600 dark:text-brown-300">
                   Page {pagination.page} of {pagination.total_pages}
                 </p>
                 <div className="flex items-center gap-2">
@@ -185,7 +185,7 @@ export function QuizHistory() {
                     type="button"
                     onClick={() => setPage(Math.max(1, page - 1))}
                     disabled={!pagination.has_prev}
-                    className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-cream-300 bg-white px-3 text-sm font-semibold text-brown-700 hover:bg-cream-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-cream-300 bg-white px-3 text-sm font-semibold text-brown-700 hover:bg-cream-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-brown-600 dark:bg-brown-900 dark:text-cream-200 dark:hover:bg-brown-700"
                   >
                     <ChevronLeft className="h-4 w-4" aria-hidden="true" /> Previous
                   </button>
@@ -193,7 +193,7 @@ export function QuizHistory() {
                     type="button"
                     onClick={() => setPage(page + 1)}
                     disabled={!pagination.has_next}
-                    className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-cream-300 bg-white px-3 text-sm font-semibold text-brown-700 hover:bg-cream-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:hover:bg-slate-700"
+                    className="inline-flex min-h-11 items-center gap-1 rounded-xl border border-cream-300 bg-white px-3 text-sm font-semibold text-brown-700 hover:bg-cream-50 disabled:cursor-not-allowed disabled:opacity-50 dark:border-brown-600 dark:bg-brown-900 dark:text-cream-200 dark:hover:bg-brown-700"
                   >
                     Next <ChevronRight className="h-4 w-4" aria-hidden="true" />
                   </button>

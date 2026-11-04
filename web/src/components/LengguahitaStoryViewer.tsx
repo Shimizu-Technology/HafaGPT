@@ -73,13 +73,13 @@ function WordPopup({
         role="dialog"
         aria-modal="true"
         aria-labelledby="story-word-heading"
-        className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 dark:bg-slate-800"
+        className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 dark:bg-brown-900"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleDialogKeyDown}
       >
         <div className="flex items-start justify-between mb-3">
           <div>
-            <h3 id="story-word-heading" className="text-xl font-bold text-brown-800 dark:text-white">{word}</h3>
+            <h3 id="story-word-heading" className="text-xl font-bold text-brown-800 dark:text-cream-100">{word}</h3>
             {/* Show root word if different */}
             {wordData?.rootWord && wordData.rootWord !== word && (
               <p className="text-sm text-teal-600 dark:text-teal-400">
@@ -87,7 +87,7 @@ function WordPopup({
               </p>
             )}
             {wordData?.pronunciation && (
-              <p className="text-sm text-brown-500 dark:text-gray-400">/{wordData.pronunciation}/</p>
+              <p className="text-sm text-brown-500 dark:text-brown-300">/{wordData.pronunciation}/</p>
             )}
           </div>
           <div className="flex items-center gap-2">
@@ -97,7 +97,7 @@ function WordPopup({
               type="button"
               onClick={onClose}
               aria-label="Close word details"
-              className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-slate-700"
+              className="flex h-11 w-11 items-center justify-center rounded-xl hover:bg-gray-100 dark:hover:bg-brown-700"
             >
               <X className="w-5 h-5 text-gray-500" />
             </button>
@@ -120,8 +120,8 @@ function WordPopup({
             )}
             
             <div>
-              <p className="text-sm font-medium text-brown-500 dark:text-gray-400">Definition</p>
-              <p className="text-brown-800 dark:text-white">{wordData.definition}</p>
+              <p className="text-sm font-medium text-brown-500 dark:text-brown-300">Definition</p>
+              <p className="text-brown-800 dark:text-cream-100">{wordData.definition}</p>
             </div>
             {wordData.partOfSpeech && (
               <div>
@@ -132,8 +132,8 @@ function WordPopup({
             )}
             {wordData.examples && wordData.examples.length > 0 && (
               <div>
-                <p className="text-sm font-medium text-brown-500 dark:text-gray-400">Example</p>
-                <p className="text-sm text-brown-600 dark:text-gray-300 italic">
+                <p className="text-sm font-medium text-brown-500 dark:text-brown-300">Example</p>
+                <p className="text-sm text-brown-600 dark:text-brown-100 italic">
                   {wordData.examples[0]}
                 </p>
               </div>
@@ -152,11 +152,11 @@ function WordPopup({
             
             {/* Show English context as fallback */}
             {englishContext && (
-              <div className="p-3 bg-cream-50 dark:bg-slate-700/50 rounded-lg">
-                <p className="text-xs font-medium text-brown-500 dark:text-gray-400 mb-1">
+              <div className="p-3 bg-cream-50 dark:bg-brown-700/50 rounded-lg">
+                <p className="text-xs font-medium text-brown-500 dark:text-brown-300 mb-1">
                   From the English translation:
                 </p>
-                <p className="text-sm text-brown-700 dark:text-gray-300 italic">
+                <p className="text-sm text-brown-700 dark:text-brown-100 italic">
                   "{englishContext}"
                 </p>
               </div>
@@ -165,14 +165,14 @@ function WordPopup({
             {/* Suggestions */}
             {wordData?.suggestions && wordData.suggestions.length > 0 && (
               <div>
-                <p className="text-xs font-medium text-brown-500 dark:text-gray-400 mb-2">
+                <p className="text-xs font-medium text-brown-500 dark:text-brown-300 mb-2">
                   Try looking up:
                 </p>
                 <div className="flex flex-wrap gap-2">
                   {wordData.suggestions.map((suggestion, i) => (
                     <span
                       key={i}
-                      className="rounded-full bg-cream-100 px-2 py-1 text-xs text-brown-600 dark:bg-slate-700 dark:text-gray-300"
+                      className="rounded-full bg-cream-100 px-2 py-1 text-xs text-brown-600 dark:bg-brown-700 dark:text-brown-100"
                     >
                       {suggestion}
                     </span>
@@ -181,7 +181,7 @@ function WordPopup({
               </div>
             )}
             
-            <p className="text-brown-500 dark:text-gray-400 text-sm">
+            <p className="text-brown-500 dark:text-brown-300 text-sm">
               This word isn't in our dictionary yet.
             </p>
             
@@ -291,7 +291,7 @@ export function LengguahitaStoryViewer() {
       <LearnerPageShell className="flex items-center justify-center">
         <div className="text-center">
           <Loader2 className="w-12 h-12 animate-spin text-teal-500 mx-auto mb-4" />
-          <p className="text-brown-600 dark:text-gray-400">Loading story...</p>
+          <p className="text-brown-600 dark:text-brown-300">Loading story...</p>
         </div>
       </LearnerPageShell>
     );
@@ -300,7 +300,7 @@ export function LengguahitaStoryViewer() {
   if (error || !story) {
     return (
       <LearnerPageShell className="flex items-center justify-center p-4">
-        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
+        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-900">
           <p className="text-red-500 mb-4">Failed to load story</p>
           <Link replace
             to="/stories"
@@ -337,8 +337,8 @@ export function LengguahitaStoryViewer() {
           </a>
         )}
         below={(
-          <div className="h-1 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Story progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-            <div className="h-full bg-coral-700 dark:bg-teal-700 transition-[width,background-color] duration-300" style={{ width: `${progress}%` }} />
+          <div className="h-1 overflow-hidden rounded-full bg-cream-200 dark:bg-brown-700" role="progressbar" aria-label="Story progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+            <div className="h-full bg-action transition-[width,background-color] duration-300" style={{ width: `${progress}%` }} />
           </div>
         )}
       />
@@ -346,22 +346,22 @@ export function LengguahitaStoryViewer() {
       <main className="mx-auto max-w-4xl space-y-6 px-4 py-5 sm:py-8">
         {/* Story Info Card */}
         {currentParagraph === 0 && (
-          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900">
             <div className="flex items-start gap-4">
               <div className="flex h-14 w-14 flex-none items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-950">
                 <BookOpen className="w-7 h-7 text-teal-600 dark:text-teal-400" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-brown-800 dark:text-white">
+                <h2 className="text-xl font-bold text-brown-800 dark:text-cream-100">
                   {story.titleEnglish}
                 </h2>
                 {story.titleChamorro && (
-                  <p className="text-sm text-brown-500 dark:text-gray-400 italic">
+                  <p className="text-sm text-brown-500 dark:text-brown-300 italic">
                     {story.titleChamorro}
                   </p>
                 )}
                 {story.author && (
-                  <p className="text-sm text-brown-500 dark:text-gray-400 mt-1">
+                  <p className="text-sm text-brown-500 dark:text-brown-300 mt-1">
                     by {story.author}
                   </p>
                 )}
@@ -375,7 +375,7 @@ export function LengguahitaStoryViewer() {
                   }`}>
                     {story.difficulty}
                   </span>
-                  <span className="text-brown-500 dark:text-gray-400">
+                  <span className="text-brown-500 dark:text-brown-300">
                     {story.paragraphCount} paragraphs • ~{story.readingTime} min
                   </span>
                 </div>
@@ -385,7 +385,7 @@ export function LengguahitaStoryViewer() {
         )}
 
         {/* Paragraph Card */}
-        <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
+        <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900 sm:p-6">
           {/* Chamorro Text */}
           <div className="mb-6">
             <div className="flex items-center justify-between mb-3">
@@ -394,29 +394,29 @@ export function LengguahitaStoryViewer() {
               </span>
               <PronunciationButton text={paragraph.chamorro} className="bg-teal-100 dark:bg-teal-900/30" />
             </div>
-            <p className="font-chamorro text-xl leading-relaxed text-brown-800 dark:text-white">
+            <p className="font-chamorro text-xl leading-relaxed text-brown-800 dark:text-cream-100">
               <TappableText text={paragraph.chamorro} onWordTap={handleWordTap} />
             </p>
-            <p className="text-xs text-brown-500 dark:text-gray-400 mt-2">
+            <p className="text-xs text-brown-500 dark:text-brown-300 mt-2">
               Tap any word to see its translation
             </p>
           </div>
 
           {/* English Translation Toggle */}
-          <div className="border-t border-cream-200 dark:border-slate-700 pt-4">
+          <div className="border-t border-cream-200 dark:border-brown-700 pt-4">
             <button
               onClick={() => setShowEnglish(!showEnglish)}
-              className="w-full py-3 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-medium hover:bg-cream-200 dark:hover:bg-slate-600 transition-colors"
+              className="w-full py-3 rounded-xl bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 font-medium hover:bg-cream-200 dark:hover:bg-brown-600 transition-colors"
             >
               {showEnglish ? 'Hide Translation' : 'Show English Translation'}
             </button>
             
             {showEnglish && (
-              <div className="mt-4 p-4 bg-cream-50 dark:bg-slate-700/50 rounded-xl">
-                <span className="text-sm font-semibold text-brown-500 dark:text-gray-400 block mb-2">
+              <div className="mt-4 p-4 bg-cream-50 dark:bg-brown-700/50 rounded-xl">
+                <span className="text-sm font-semibold text-brown-500 dark:text-brown-300 block mb-2">
                   English
                 </span>
-                <p className="text-brown-700 dark:text-gray-300 leading-relaxed">
+                <p className="text-brown-700 dark:text-brown-100 leading-relaxed">
                   {paragraph.english}
                 </p>
               </div>
@@ -433,8 +433,8 @@ export function LengguahitaStoryViewer() {
               disabled={currentParagraph === 0}
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-colors flex-shrink-0 ${
                 currentParagraph === 0
-                  ? 'bg-cream-100 dark:bg-slate-800 text-brown-500 dark:text-gray-600 cursor-not-allowed'
-                  : 'bg-white dark:bg-slate-800 text-brown-700 dark:text-gray-300 hover:bg-cream-100 dark:hover:bg-slate-700 border border-cream-200 dark:border-slate-700'
+                  ? 'bg-cream-100 dark:bg-brown-900 text-brown-500 dark:text-brown-600 cursor-not-allowed'
+                  : 'bg-white dark:bg-brown-900 text-brown-700 dark:text-brown-100 hover:bg-cream-100 dark:hover:bg-brown-700 border border-cream-200 dark:border-brown-700'
               }`}
             >
               <ChevronLeft className="w-5 h-5" />
@@ -443,7 +443,7 @@ export function LengguahitaStoryViewer() {
 
             {/* Page indicator - text only on mobile */}
             <div className="flex-1 text-center">
-              <span className="text-sm text-brown-600 dark:text-gray-400">
+              <span className="text-sm text-brown-600 dark:text-brown-300">
                 {currentParagraph + 1} / {story.paragraphs.length}
               </span>
             </div>
@@ -453,7 +453,7 @@ export function LengguahitaStoryViewer() {
               disabled={currentParagraph === story.paragraphs.length - 1}
               className={`flex items-center gap-1 sm:gap-2 px-3 sm:px-5 py-3 rounded-xl font-medium transition-colors flex-shrink-0 ${
                 currentParagraph === story.paragraphs.length - 1
-                  ? 'bg-cream-100 dark:bg-slate-800 text-brown-500 dark:text-gray-600 cursor-not-allowed'
+                  ? 'bg-cream-100 dark:bg-brown-900 text-brown-500 dark:text-brown-600 cursor-not-allowed'
                   : 'bg-teal-700 text-white hover:bg-teal-800'
               }`}
             >
@@ -476,13 +476,13 @@ export function LengguahitaStoryViewer() {
                     ? 'bg-teal-500 w-6'
                     : i < currentParagraph
                     ? 'bg-teal-300 dark:bg-teal-700'
-                    : 'bg-cream-300 dark:bg-slate-600'
+                    : 'bg-cream-300 dark:bg-brown-600'
                 }`}
                 title={`Go to paragraph ${i + 1}`}
               />
             ))}
             {story.paragraphs.length > 15 && (
-              <span className="text-xs text-brown-500 dark:text-gray-400 ml-1 self-center">
+              <span className="text-xs text-brown-500 dark:text-brown-300 ml-1 self-center">
                 +{story.paragraphs.length - 15}
               </span>
             )}
@@ -490,7 +490,7 @@ export function LengguahitaStoryViewer() {
         </div>
 
         {/* Attribution */}
-        <div className="text-center text-xs text-brown-500 dark:text-gray-400 pt-4">
+        <div className="text-center text-xs text-brown-500 dark:text-brown-300 pt-4">
           <p>{story.attribution}</p>
           <a 
             href={story.sourceUrl} 

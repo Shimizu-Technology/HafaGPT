@@ -42,14 +42,14 @@ function StorySection({
   children: React.ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
+    <section className="rounded-3xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900 sm:p-7">
       <div className="mb-4 flex items-center gap-3">
         <span className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl ${iconClassName}`}>
           <Icon className="h-5 w-5" aria-hidden="true" />
         </span>
-        <h2 className="text-xl font-bold text-brown-950 dark:text-white">{title}</h2>
+        <h2 className="text-xl font-bold text-brown-950 dark:text-cream-100">{title}</h2>
       </div>
-      <div className="space-y-4 leading-relaxed text-brown-700 dark:text-gray-300">{children}</div>
+      <div className="space-y-4 leading-relaxed text-brown-700 dark:text-brown-100">{children}</div>
     </section>
   );
 }
@@ -60,80 +60,80 @@ export function AboutPage() {
     <PublicPage title="Our story" titleAs="p" subtitle="Why HåfaGPT exists and who it is for" icon={Heart} maxWidthClassName="max-w-4xl">
       <section className="grid items-center gap-6 sm:grid-cols-[minmax(0,1fr)_18rem] sm:gap-9">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight text-brown-950 dark:text-white sm:text-4xl">Why I built HåfaGPT</h1>
-          <p className="mt-4 max-w-xl text-lg leading-relaxed text-brown-600 dark:text-gray-300">
+          <h1 className="text-3xl font-bold tracking-tight text-brown-950 dark:text-cream-100 sm:text-4xl">Why I built HåfaGPT</h1>
+          <p className="mt-4 max-w-xl text-lg leading-relaxed text-brown-600 dark:text-brown-100">
             A family project that grew into a practical place to ask, translate, listen, practice, and learn Chamorro.
           </p>
-          <Link to="/chat" className="pressable mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800">
+          <Link to="/chat" className="pressable mt-6 inline-flex min-h-12 items-center justify-center rounded-xl bg-action px-6 font-semibold text-white hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2">
             Ask HåfaGPT
           </Link>
         </div>
-        <img src="/stassie-kami-leon-japan.JPG" alt="Leon, Kami, and Stassie together in Japan" className="aspect-[4/3] w-full rounded-3xl border border-cream-200 object-cover dark:border-slate-700 sm:aspect-[4/5]" />
+        <img src="/stassie-kami-leon-japan.JPG" alt="Leon, Kami, and Stassie together in Japan" className="aspect-[4/3] w-full rounded-3xl border border-cream-200 object-cover dark:border-brown-700 sm:aspect-[4/5]" />
       </section>
 
       <div className="mt-8 space-y-5">
-        <StorySection title="The problem" icon={Heart} iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300">
+        <StorySection title="The problem" icon={Heart} iconClassName="bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-brown-100">
           <p>I was born and raised in Guam, but I never really learned Chamorro. Like many Chamorros my age, I grew up speaking English at home, and the language slowly faded into the background.</p>
           <p>That changed when my daughter <strong>Stassie</strong>—whose Chamorro name is <strong>Tasi</strong>—started at <strong>Hurao Academy</strong>, a Chamorro immersion school. Homework, announcements, and parent messages arrived in Chamorro, and I often could not understand them.</p>
-          <blockquote className="rounded-2xl border border-cream-200 dark:border-slate-700 bg-cream-50 px-4 py-3 italic dark:bg-slate-700/50">
+          <blockquote className="rounded-2xl border border-cream-200 dark:border-brown-700 bg-cream-50 px-4 py-3 italic dark:bg-brown-700/50">
             ChatGPT and Google Translate helped sometimes, but the translations were not consistently reliable. As a software engineer, I started wondering whether I could build something more useful for our family.
           </blockquote>
         </StorySection>
 
-        <StorySection title="The spark" icon={Lightbulb} iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300">
+        <StorySection title="The spark" icon={Lightbulb} iconClassName="bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-brown-100">
           <p>
             I am a software engineer and teach software engineering at{' '}
-            <a href="https://codeschoolofguam.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-coral-700 underline underline-offset-2 dark:text-teal-300">Code School of Guam</a>. I began experimenting with AI tools both for this project and to better understand what I could teach my students.
+            <a href="https://codeschoolofguam.com" target="_blank" rel="noopener noreferrer" className="font-semibold text-coral-700 underline underline-offset-2">Code School of Guam</a>. I began experimenting with AI tools both for this project and to better understand what I could teach my students.
           </p>
           <p>The first version was a small command-line tool. The turning point was retrieval-augmented generation: giving the tutor relevant passages from dictionaries, grammar research, and educational materials instead of asking a general model to answer from memory alone.</p>
-          <p className="font-semibold text-coral-700 dark:text-teal-300">That is when the answers became meaningfully more useful.</p>
+          <p className="font-semibold text-coral-700">That is when the answers became meaningfully more useful.</p>
         </StorySection>
 
-        <StorySection title="How it grew" icon={Rocket} iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300">
+        <StorySection title="How it grew" icon={Rocket} iconClassName="bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-brown-100">
           <p>
             HåfaGPT&apos;s source registry includes Chamorro dictionaries, grammar guides, and learning resources that can support retrieval, comparison, and citations when their usage policy allows it. Registered sources include{' '}
-            <a href="https://www.guampedia.com" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Guampedia</a>,{' '}
-            <a href="https://lengguahita.com" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Lengguahi-ta</a>,{' '}
-            <a href="https://www.guampdn.com" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Pacific Daily News</a>,{' '}
-            <a href="http://www.chamoru.info" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Chamoru.info</a>, the{' '}
-            <a href="https://natibunmarianas.org/dictionary-introduction/" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2 dark:text-teal-300">Natibu Marianas Revised Chamorro-English Dictionary</a>, Dr. Sandra Chung&apos;s grammar and orthography research, and Topping&apos;s dictionary.
+            <a href="https://www.guampedia.com" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2">Guampedia</a>,{' '}
+            <a href="https://lengguahita.com" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2">Lengguahi-ta</a>,{' '}
+            <a href="https://www.guampdn.com" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2">Pacific Daily News</a>,{' '}
+            <a href="http://www.chamoru.info" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2">Chamoru.info</a>, the{' '}
+            <a href="https://natibunmarianas.org/dictionary-introduction/" target="_blank" rel="noopener noreferrer" className="text-coral-700 underline underline-offset-2">Natibu Marianas Revised Chamorro-English Dictionary</a>, Dr. Sandra Chung&apos;s grammar and orthography research, and Topping&apos;s dictionary.
           </p>
           <p>The translator became a broader learning platform with stories, vocabulary, flashcards, quizzes, games, conversation practice, and progress tools. Each source is still treated as a reference with its own context—not as interchangeable proof.</p>
           <div className="grid grid-cols-2 gap-2 pt-2 sm:grid-cols-4">
             {capabilities.map(({ label, icon: Icon }) => (
-              <div key={label} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl bg-cream-50 p-3 text-center dark:bg-slate-700/60">
-                <Icon className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />
-                <span className="text-xs font-semibold text-brown-700 dark:text-gray-200">{label}</span>
+              <div key={label} className="flex min-h-20 flex-col items-center justify-center gap-2 rounded-2xl bg-cream-50 p-3 text-center dark:bg-brown-700/60">
+                <Icon className="h-5 w-5 text-coral-700" aria-hidden="true" />
+                <span className="text-xs font-semibold text-brown-700 dark:text-cream-200">{label}</span>
               </div>
             ))}
           </div>
         </StorySection>
 
-        <StorySection title="How to read our content labels" icon={ShieldCheck} iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300">
+        <StorySection title="How to read our content labels" icon={ShieldCheck} iconClassName="bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-brown-100">
           <p>HåfaGPT keeps useful material available while showing how strongly each learning surface is supported. A source-backed label does not mean a person has independently approved every example.</p>
           <div className="grid gap-3 sm:grid-cols-2">
             {(Object.entries(TRUST_LABELS) as Array<[ContentTrustLevel, (typeof TRUST_LABELS)[ContentTrustLevel]]>).map(([level, details]) => (
               <div key={level} className={`rounded-2xl border p-4 ${TRUST_LEVEL_SURFACE_CLASSES[level]}`}>
-                <h3 className="font-bold text-brown-950 dark:text-white">{details.label}</h3>
-                <p className="mt-1 text-sm leading-relaxed text-brown-700 dark:text-gray-300">{details.description}</p>
+                <h3 className="font-bold text-brown-950 dark:text-cream-100">{details.label}</h3>
+                <p className="mt-1 text-sm leading-relaxed text-brown-700 dark:text-brown-100">{details.description}</p>
               </div>
             ))}
           </div>
           <p>Confirmed errors are corrected. Regional variants remain discoverable and are labeled instead of being treated as mistakes. Human review can be added later without withholding the rest of the learning library.</p>
         </StorySection>
 
-        <StorySection title="Built for every kind of learner" icon={Users} iconClassName="bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-300">
+        <StorySection title="Built for every kind of learner" icon={Users} iconClassName="bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-brown-100">
           <p>HåfaGPT began for Stassie, Kami, and me, but it is for anyone who wants to learn about the Chamorro language, Guam, its people, and its history: children learning with a caregiver, students, teens, adults reconnecting with family, and curious visitors.</p>
           <p>It can be a quick reference for one school message or a place to build a daily learning habit. The goal is the same: make it easier to begin, while staying honest about sources and the limits of AI.</p>
-          <p className="pt-2 text-center text-lg font-semibold text-coral-700 dark:text-teal-300">Si Yu&apos;os Ma&apos;åse&apos; for being here.</p>
+          <p className="pt-2 text-center text-lg font-semibold text-coral-700">Si Yu&apos;os Ma&apos;åse&apos; for being here.</p>
         </StorySection>
       </div>
 
-      <section className="mt-8 rounded-3xl border border-coral-200 bg-coral-50 p-6 text-center dark:border-teal-900 dark:bg-teal-950/20 sm:p-8">
-        <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Start with whatever you need today</h2>
-        <p className="mx-auto mt-2 max-w-xl text-brown-600 dark:text-gray-300">Ask a question, translate a message, or choose a guided learning activity.</p>
-        <Link to="/" className="pressable mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800">Explore HåfaGPT</Link>
-        <p className="mt-4 text-xs text-brown-500 dark:text-gray-400">
+      <section className="mt-8 rounded-3xl border border-coral-200 bg-coral-50 p-6 text-center sm:p-8">
+        <h2 className="text-2xl font-bold text-brown-950 dark:text-cream-100">Start with whatever you need today</h2>
+        <p className="mx-auto mt-2 max-w-xl text-brown-600 dark:text-brown-100">Ask a question, translate a message, or choose a guided learning activity.</p>
+        <Link to="/" className="pressable mt-5 inline-flex min-h-12 items-center justify-center rounded-xl bg-action px-6 font-semibold text-white hover:bg-action-hover">Explore HåfaGPT</Link>
+        <p className="mt-4 text-xs text-brown-500 dark:text-brown-300">
           Built by <a href="https://shimizutechnology.com" target="_blank" rel="noopener noreferrer" className="font-semibold underline underline-offset-2">Shimizu Technology</a>
         </p>
       </section>

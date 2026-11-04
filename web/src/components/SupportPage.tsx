@@ -21,49 +21,49 @@ const faqs = [
   },
 ];
 
-const resourceLinkClass = 'flex min-h-14 items-center justify-between gap-3 rounded-xl border border-cream-200 px-4 py-3 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-coral-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:text-gray-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700/50';
+const resourceLinkClass = 'flex min-h-14 items-center justify-between gap-3 rounded-xl border border-cream-200 px-4 py-3 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-coral-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-brown-700 dark:text-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700/50';
 
 export default function SupportPage() {
   return (
     <PublicPage title="Support" titleAs="p" subtitle="Answers, account help, and a direct way to reach us" icon={HelpCircle}>
-      <section className="rounded-3xl border border-coral-200 bg-coral-50 p-6 dark:border-teal-900 dark:bg-teal-950/20 sm:p-8">
-        <h1 className="text-3xl font-bold tracking-tight text-brown-950 dark:text-white">How can we help?</h1>
-        <p className="mt-3 max-w-2xl leading-relaxed text-brown-600 dark:text-gray-300">
+      <section className="rounded-3xl border border-coral-200 bg-coral-50 p-6 sm:p-8">
+        <h1 className="text-3xl font-bold tracking-tight text-brown-950 dark:text-cream-100">How can we help?</h1>
+        <p className="mt-3 max-w-2xl leading-relaxed text-brown-600 dark:text-brown-100">
           A real person reads every message. Ask about a school message, report something that did not work, suggest a feature, or request help with your account.
         </p>
-        <a href="mailto:support@shimizutechnology.com" className="pressable mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
+        <a href="mailto:support@shimizutechnology.com" className="pressable mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-action px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2">
           <Mail className="h-5 w-5" aria-hidden="true" />
           Email support
         </a>
-        <p className="mt-3 break-all text-sm text-brown-500 dark:text-gray-400">support@shimizutechnology.com</p>
+        <p className="mt-3 break-all text-sm text-brown-500 dark:text-brown-300">support@shimizutechnology.com</p>
       </section>
 
-      <section className="mt-6 rounded-3xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
+      <section className="mt-6 rounded-3xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900 sm:p-7">
         <div className="flex items-center gap-3">
-          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cream-100 text-coral-700 dark:bg-slate-700 dark:text-teal-300">
+          <span className="flex h-10 w-10 items-center justify-center rounded-xl bg-cream-100 text-coral-700 dark:bg-brown-700">
             <MessageCircle className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
-            <h2 className="text-xl font-bold text-brown-950 dark:text-white">Frequently asked questions</h2>
+            <h2 className="text-xl font-bold text-brown-950 dark:text-cream-100">Frequently asked questions</h2>
           </div>
         </div>
-        <div className="mt-5 divide-y divide-cream-200 border-y border-cream-200 dark:divide-slate-700 dark:border-slate-700">
+        <div className="mt-5 divide-y divide-cream-200 border-y border-cream-200 dark:divide-brown-700 dark:border-brown-700">
           {faqs.map((faq) => (
             <details key={faq.question} className="group py-1">
-              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 font-semibold text-brown-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white [&::-webkit-details-marker]:hidden">
+              <summary className="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 py-3 font-semibold text-brown-900 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-cream-100 [&::-webkit-details-marker]:hidden">
                 {faq.question}
-                <span className="text-xl font-normal text-coral-700 group-open:rotate-45 dark:text-teal-300" aria-hidden="true">+</span>
+                <span className="text-xl font-normal text-coral-700 group-open:rotate-45" aria-hidden="true">+</span>
               </summary>
-              <p className="pb-4 pr-8 text-base leading-relaxed text-brown-600 dark:text-gray-300">{faq.answer}</p>
+              <p className="pb-4 pr-8 text-base leading-relaxed text-brown-600 dark:text-brown-100">{faq.answer}</p>
             </details>
           ))}
         </div>
       </section>
 
-      <section className="mt-6 rounded-3xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-7">
+      <section className="mt-6 rounded-3xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900 sm:p-7">
         <div className="mb-4 flex items-center gap-3">
-          <BookOpen className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />
-          <h2 className="text-xl font-bold text-brown-950 dark:text-white">Helpful links</h2>
+          <BookOpen className="h-5 w-5 text-coral-700" aria-hidden="true" />
+          <h2 className="text-xl font-bold text-brown-950 dark:text-cream-100">Helpful links</h2>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">
           <Link to="/about" className={resourceLinkClass}>About HåfaGPT <ArrowRight className="h-4 w-4" aria-hidden="true" /></Link>

@@ -286,13 +286,13 @@ export function SoundMatch() {
         {gameState === 'setup' && (
           <div className="animate-fade-in">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Choose what to practice</h2>
-              <p className="mt-2 text-brown-600 dark:text-gray-300">No reading needed: tap the speaker to hear each Chamorro word, then choose a picture. You can take your time.</p>
+              <h2 className="text-2xl font-bold text-brown-950 dark:text-cream-100">Choose what to practice</h2>
+              <p className="mt-2 text-brown-600 dark:text-brown-100">No reading needed: tap the speaker to hear each Chamorro word, then choose a picture. You can take your time.</p>
             </div>
 
             {/* Category Selection */}
-            <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <h3 className="mb-3 text-sm font-semibold text-brown-700 dark:text-gray-300">Topic</h3>
+            <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+              <h3 className="mb-3 text-sm font-semibold text-brown-700 dark:text-brown-100">Topic</h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {GAME_CATEGORIES.map(category => (
                   <button
@@ -301,8 +301,8 @@ export function SoundMatch() {
                     aria-pressed={selectedCategory.id === category.id}
                     className={`p-3 rounded-xl border-2 transition-colors ${
                       selectedCategory.id === category.id
-                        ? 'border-coral-700 bg-coral-700 text-white dark:border-teal-700 dark:bg-teal-700'
-                        : 'border-cream-200 text-brown-700 dark:text-gray-300 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
+                        ? 'border-coral-700 bg-action text-white'
+                        : 'border-cream-200 text-brown-700 dark:text-brown-100 dark:border-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
                     }`}
                   >
                     <span className="text-2xl block mb-1">{category.icon}</span>
@@ -318,14 +318,14 @@ export function SoundMatch() {
             {/* Start Button */}
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-action px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover"
              disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
             </button>
 
             {/* Games remaining */}
-            <p className="text-center text-sm text-brown-500 dark:text-gray-400 mt-3">
+            <p className="text-center text-sm text-brown-500 dark:text-brown-300 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
           </div>
@@ -376,7 +376,7 @@ export function SoundMatch() {
                 const isCorrectAnswer = option.chamorro === currentWord.chamorro;
                 const showResult = gameState === 'feedback';
 
-                let buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-400 ';
+                let buttonClass = 'bg-white dark:bg-brown-900 border-2 border-cream-200 dark:border-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-400 ';
 
                 if (showResult) {
                   if (isCorrectAnswer) {
@@ -384,7 +384,7 @@ export function SoundMatch() {
                   } else if (isSelected && !isCorrectAnswer) {
                     buttonClass = 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 opacity-60';
                   } else {
-                    buttonClass = 'bg-white dark:bg-slate-800 border-2 border-cream-200 dark:border-slate-700 opacity-40';
+                    buttonClass = 'bg-white dark:bg-brown-900 border-2 border-cream-200 dark:border-brown-700 opacity-40';
                   }
                 }
 
@@ -398,7 +398,7 @@ export function SoundMatch() {
                   >
                     <span className="text-5xl sm:text-6xl block mb-2">{option.emoji}</span>
                     {showResult && (
-                      <span className={`text-sm font-medium ${isCorrectAnswer ? 'text-green-600 dark:text-green-400' : 'text-brown-500 dark:text-gray-400'}`}>
+                      <span className={`text-sm font-medium ${isCorrectAnswer ? 'text-green-600 dark:text-green-400' : 'text-brown-500 dark:text-brown-300'}`}>
                         {option.english}
                       </span>
                     )}
@@ -428,7 +428,7 @@ export function SoundMatch() {
                 )}
               </div>
             )}
-            {gameState === 'feedback' && <button type="button" onClick={continueRound} className="mt-4 min-h-14 w-full rounded-xl bg-coral-700 px-4 font-bold text-white dark:bg-teal-700">{currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}</button>}
+            {gameState === 'feedback' && <button type="button" onClick={continueRound} className="mt-4 min-h-14 w-full rounded-xl bg-action px-4 font-bold text-white">{currentRound >= ROUNDS_PER_GAME ? 'See results' : 'Next round'}</button>}
           </div>
         )}
 

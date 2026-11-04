@@ -526,7 +526,7 @@ function FlashcardSession() {
           <p className="text-red-600 dark:text-red-400 mb-4 font-medium">{error}</p>
           <button
             onClick={() => navigate(`/flashcards?source=${cardType}`, { replace: true })}
-            className="min-h-11 rounded-xl bg-coral-700 px-6 py-2.5 font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
+            className="min-h-11 rounded-xl bg-action px-6 py-2.5 font-semibold text-white hover:bg-action-hover"
           >
             Back to Decks
           </button>
@@ -540,8 +540,8 @@ function FlashcardSession() {
     return (
       <LearnerPageShell className="flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400 mx-auto mb-2" />
-          <p className="text-brown-600 dark:text-gray-300">Loading dictionary flashcards...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-coral-700 mx-auto mb-2" />
+          <p className="text-brown-600 dark:text-brown-100">Loading dictionary flashcards...</p>
         </div>
       </LearnerPageShell>
     );
@@ -552,8 +552,8 @@ function FlashcardSession() {
     return (
       <LearnerPageShell className="flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-700 dark:text-ocean-400 mx-auto mb-2" />
-          <p className="text-brown-600 dark:text-gray-300">Loading flashcards...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-coral-700 mx-auto mb-2" />
+          <p className="text-brown-600 dark:text-brown-100">Loading flashcards...</p>
         </div>
       </LearnerPageShell>
     );
@@ -585,7 +585,7 @@ function FlashcardSession() {
           <div className="flex items-center gap-1">
             <TTSDisclaimer variant="tooltip" />
             {cardType === 'dictionary' && (
-              <button type="button" onClick={loadMoreDictionaryCards} disabled={isDictionaryLoading || saveDeckMutation.isPending || isGeneratingMore || !!deckSaveError} aria-label="Get new flashcards" className="flex h-11 w-11 items-center justify-center rounded-xl text-coral-700 hover:bg-coral-100 disabled:opacity-50 dark:text-ocean-300 dark:hover:bg-ocean-950">
+              <button type="button" onClick={loadMoreDictionaryCards} disabled={isDictionaryLoading || saveDeckMutation.isPending || isGeneratingMore || !!deckSaveError} aria-label="Get new flashcards" className="flex h-11 w-11 items-center justify-center rounded-xl text-coral-700 hover:bg-coral-100 disabled:opacity-50">
                 <RefreshCw className={`h-5 w-5 ${isDictionaryLoading ? 'animate-spin' : ''}`} />
               </button>
             )}
@@ -593,10 +593,10 @@ function FlashcardSession() {
         )}
         below={(
           <div className="flex items-center gap-3">
-            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700" role="progressbar" aria-label="Flashcard progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
-              <div className="h-full bg-coral-700 dark:bg-teal-700 transition-[width,background-color] duration-300" style={{ width: `${progress}%` }} />
+            <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-cream-200 dark:bg-brown-700" role="progressbar" aria-label="Flashcard progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={progress}>
+              <div className="h-full bg-action transition-[width,background-color] duration-300" style={{ width: `${progress}%` }} />
             </div>
-            <span className="text-xs font-semibold text-brown-500 dark:text-gray-400">{currentIndex + 1} / {flashcards.length}</span>
+            <span className="text-xs font-semibold text-brown-500 dark:text-brown-300">{currentIndex + 1} / {flashcards.length}</span>
           </div>
         )}
       />
@@ -610,22 +610,22 @@ function FlashcardSession() {
       >
         <div className="w-full max-w-md">
           {cardTypeParam === 'custom' ? (
-            <section aria-label="Save this set" className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <p className="text-base text-brown-600 dark:text-gray-300">Keep this set in Saved decks to review these cards again.</p>
+            <section aria-label="Save this set" className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+              <p className="text-base text-brown-600 dark:text-brown-100">Keep this set in Saved decks to review these cards again.</p>
               {deckSaveError && <p role="alert" className="mt-2 text-base text-red-700 dark:text-red-300">{deckSaveError}</p>}
               {isDeckSaved ? (
                 <div role="status" className="mt-2">
                   <p className="font-semibold">Deck saved.</p>
-                  <Link to={`/flashcards/my-deck/${savedDeckId}`} className="inline-flex min-h-11 items-center font-semibold text-coral-700 underline dark:text-ocean-300">Review saved deck</Link>
+                  <Link to={`/flashcards/my-deck/${savedDeckId}`} className="inline-flex min-h-11 items-center font-semibold text-coral-700 underline">Review saved deck</Link>
                 </div>
               ) : (
-                <button type="button" onClick={handleSaveDeck} disabled={saveDeckMutation.isPending || isGeneratingMore} className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-xl bg-coral-700 px-4 py-2 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:bg-ocean-700">
+                <button type="button" onClick={handleSaveDeck} disabled={saveDeckMutation.isPending || isGeneratingMore} className="mt-2 inline-flex min-h-11 items-center gap-2 rounded-xl bg-action px-4 py-2 font-semibold text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50">
                   {saveDeckMutation.isPending ? <Loader2 className="h-5 w-5 animate-spin" aria-hidden="true" /> : <Save className="h-5 w-5" aria-hidden="true" />}
                   {saveDeckMutation.isPending ? 'Saving...' : deckSaveError ? 'Try saving again' : 'Save this set'}
                 </button>
               )}
             </section>
-          ) : <p className="mb-4 text-base text-brown-600 dark:text-gray-300">Rate cards as you practice to keep your review progress.</p>}
+          ) : <p className="mb-4 text-base text-brown-600 dark:text-brown-100">Rate cards as you practice to keep your review progress.</p>}
           <ContentTrustNote trust={contentTrust} className="mb-4" compact />
           <Flashcard
             front={currentCard.front}
@@ -643,7 +643,7 @@ function FlashcardSession() {
                   location.hash,
                 ),
               })}
-              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300 dark:hover:bg-ocean-950/30"
+              className="mt-3 inline-flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500"
             >
               <BookOpen className="h-4 w-4" aria-hidden="true" />
               Open this dictionary entry
@@ -673,9 +673,9 @@ function FlashcardSession() {
             onClick={handlePrevious}
             aria-label="Previous flashcard"
             disabled={currentIndex === 0}
-            className="flex-none p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 transition-colors touch-manipulation"
+            className="flex-none p-3 rounded-full bg-white dark:bg-brown-900 border-2 border-coral-200 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 transition-colors touch-manipulation"
           >
-            <ChevronLeft className="w-6 h-6 text-coral-700 dark:text-ocean-400" />
+            <ChevronLeft className="w-6 h-6 text-coral-700" />
           </button>
 
           {/* Decorative position strip; the header carries the "n / total" count. */}
@@ -685,8 +685,8 @@ function FlashcardSession() {
                 key={index}
                 className={`h-2 flex-none rounded-full transition-[width,background-color] duration-300 ${
                   index === currentIndex
-                    ? 'w-8 bg-coral-500 dark:bg-ocean-500 '
-                    : 'w-2 bg-gray-300 dark:bg-slate-600'
+                    ? 'w-8 bg-coral-500 '
+                    : 'w-2 bg-gray-300 dark:bg-brown-600'
                 }`}
               />
             ))}
@@ -696,9 +696,9 @@ function FlashcardSession() {
             onClick={handleNext}
             aria-label="Next flashcard"
             disabled={currentIndex === flashcards.length - 1}
-            className="flex-none p-3 rounded-full bg-white dark:bg-slate-800 border-2 border-coral-200 dark:border-ocean-900/50 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 dark:hover:border-ocean-500 transition-colors touch-manipulation"
+            className="flex-none p-3 rounded-full bg-white dark:bg-brown-900 border-2 border-coral-200 disabled:opacity-30 disabled:cursor-not-allowed hover:border-coral-400 transition-colors touch-manipulation"
           >
-            <ChevronRight className="w-6 h-6 text-coral-700 dark:text-ocean-400" />
+            <ChevronRight className="w-6 h-6 text-coral-700" />
           </button>
         </div>
 
@@ -746,12 +746,12 @@ function FlashcardSession() {
         )}
 
         {/* Desktop hint */}
-        <p className="hidden sm:block text-sm text-brown-600 dark:text-gray-400 mt-6 font-medium">
+        <p className="hidden sm:block text-sm text-brown-600 dark:text-brown-300 mt-6 font-medium">
           Use arrow keys to navigate • Click card to flip
         </p>
 
         {/* Mobile hint */}
-        <p className="sm:hidden text-sm text-brown-600 dark:text-gray-400 mt-6 font-medium">
+        <p className="sm:hidden text-sm text-brown-600 dark:text-brown-300 mt-6 font-medium">
           Swipe to navigate • Tap card to flip
         </p>
       </div>
@@ -759,9 +759,9 @@ function FlashcardSession() {
       {/* Generating More Indicator */}
       {isGeneratingMore && !showNewCardsNotification && (
         <div className="fixed learner-toast-offset left-1/2 transform -translate-x-1/2 z-20">
-          <div className="bg-white dark:bg-slate-800 rounded-full border-2 border-coral-200 dark:border-ocean-900/50 px-6 py-3 flex items-center gap-3">
-            <Loader2 className="w-5 h-5 animate-spin text-coral-700 dark:text-ocean-400" />
-            <span className="text-sm font-semibold text-brown-800 dark:text-white">
+          <div className="bg-white dark:bg-brown-900 rounded-full border-2 border-coral-200 px-6 py-3 flex items-center gap-3">
+            <Loader2 className="w-5 h-5 animate-spin text-coral-700" />
+            <span className="text-sm font-semibold text-brown-800 dark:text-cream-100">
               Generating 3 more cards...
             </span>
           </div>

@@ -80,16 +80,16 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
       >
         {/* Front of card */}
         <div className="absolute inset-0 backface-hidden" aria-hidden={isFlipped}>
-          <div className="w-full h-full bg-white dark:bg-slate-800 rounded-2xl border border-cream-300 dark:border-slate-700 flex flex-col p-6">
+          <div className="w-full h-full bg-white dark:bg-brown-900 rounded-2xl border border-cream-300 dark:border-brown-700 flex flex-col p-6">
             <div ref={frontContent} data-testid="flashcard-front-content" className="min-h-0 flex-1 overflow-y-auto">
               <div className="flex min-h-full items-center justify-center">
-                <p className="w-full break-words font-chamorro text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-white text-center">
+                <p className="w-full break-words font-chamorro text-3xl sm:text-4xl font-semibold text-brown-800 dark:text-cream-100 text-center">
                   {front}
                 </p>
               </div>
             </div>
 
-            <p className="shrink-0 text-center text-sm text-brown-500 dark:text-gray-400 mt-4">
+            <p className="shrink-0 text-center text-sm text-brown-500 dark:text-brown-300 mt-4">
               Tap to flip
             </p>
           </div>
@@ -97,7 +97,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
 
         {/* Back of card */}
         <div className="absolute inset-0 backface-hidden rotate-y-180" aria-hidden={!isFlipped}>
-          <div className="w-full h-full bg-coral-700 dark:bg-teal-700 rounded-2xl border border-coral-800 dark:border-teal-700 flex flex-col p-6 text-white">
+          <div className="w-full h-full bg-action rounded-2xl border border-coral-800 flex flex-col p-6 text-white">
             <div ref={backContent} id={backContentId} data-testid="flashcard-back-content" className="min-h-0 flex-1 overflow-y-auto">
               <div className="flex min-h-full flex-col items-center justify-center gap-3">
                 <p className="w-full break-words text-2xl sm:text-3xl font-semibold text-center">
@@ -135,7 +135,7 @@ export function Flashcard({ front, back, pronunciation, example, onFlip }: Flash
           onClick={handleSpeak}
           onTouchEnd={handleSpeakTouch}
           aria-label={isSpeaking ? `Stop playing ${front}` : `Listen to ${front}`}
-          className="absolute top-4 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-coral-100 text-coral-700 transition-colors hover:bg-coral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-900/30 dark:text-ocean-400 dark:hover:bg-ocean-800/50"
+          className="absolute top-4 right-4 z-10 flex h-11 w-11 items-center justify-center rounded-full bg-coral-100 text-coral-700 transition-colors hover:bg-coral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
         >
           <Volume2 className={`w-5 h-5 ${isSpeaking ? 'motion-safe:animate-pulse' : ''}`} aria-hidden="true" />
         </button>

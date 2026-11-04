@@ -158,13 +158,13 @@ function LessonPageSession() {
   if (!topic) {
     return (
       <LearnerPageShell className="flex items-center justify-center p-4">
-        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-          <h1 className="text-2xl font-bold text-brown-800 dark:text-white mb-4">
+        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-900">
+          <h1 className="text-2xl font-bold text-brown-800 dark:text-cream-100 mb-4">
             Topic not found
           </h1>
           <Link
             to="/"
-            className="pressable inline-flex min-h-11 items-center rounded-xl bg-coral-700 dark:bg-teal-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800 dark:hover:bg-teal-800"
+            className="pressable inline-flex min-h-11 items-center rounded-xl bg-action px-5 py-2.5 font-semibold text-white hover:bg-action-hover"
           >
             Return to home
           </Link>
@@ -267,7 +267,7 @@ function LessonPageSession() {
         below={(
           <div>
             <div
-              className="h-1.5 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700"
+              className="h-1.5 overflow-hidden rounded-full bg-cream-200 dark:bg-brown-700"
               role="progressbar"
               aria-label="Lesson progress"
               aria-valuemin={0}
@@ -289,16 +289,16 @@ function LessonPageSession() {
                       isCompleted
                         ? 'text-emerald-700 dark:text-emerald-300'
                         : isCurrent
-                          ? 'text-coral-700 dark:text-ocean-300'
-                          : 'text-brown-600 dark:text-gray-300'
+                          ? 'text-coral-700'
+                          : 'text-brown-600 dark:text-brown-100'
                     }`}
                   >
                     <span className={`flex h-7 w-7 flex-none items-center justify-center rounded-lg ${
                       isCompleted
                         ? 'bg-emerald-100 dark:bg-emerald-950'
                         : isCurrent
-                          ? 'bg-coral-100 dark:bg-ocean-950'
-                          : 'bg-cream-100 dark:bg-slate-800'
+                          ? 'bg-coral-100'
+                          : 'bg-cream-100 dark:bg-brown-900'
                     }`}>
                       {isCompleted ? <CheckCircle className="h-4 w-4" aria-hidden="true" /> : <StepIcon className="h-4 w-4" aria-hidden="true" />}
                     </span>

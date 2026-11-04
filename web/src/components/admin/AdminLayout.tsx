@@ -71,17 +71,17 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   const sidebarContent = (
     <>
         {/* Sidebar Header */}
-        <div className="min-h-16 flex flex-none items-center justify-between px-4 pt-[env(safe-area-inset-top)] border-b border-cream-200 dark:border-slate-700">
+        <div className="min-h-16 flex flex-none items-center justify-between px-4 pt-[env(safe-area-inset-top)] border-b border-cream-200 dark:border-brown-700">
           <Link to="/admin" onClick={() => setSidebarOpen(false)} className="flex items-center gap-2 [@media(hover:hover)]:hover:opacity-80 transition-opacity">
             <BrandMark className="w-7 h-7" />
-            <span className="font-bold text-brown-800 dark:text-white">HåfaGPT Admin</span>
+            <span className="font-bold text-brown-800 dark:text-cream-100">HåfaGPT Admin</span>
           </Link>
           <button 
             onClick={() => setSidebarOpen(false)}
             aria-label="Close admin navigation"
-            className="lg:hidden min-h-11 min-w-11 p-2 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 rounded-lg"
+            className="lg:hidden min-h-11 min-w-11 p-2 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-brown-700 rounded-lg"
           >
-            <X className="w-5 h-5 text-brown-600 dark:text-gray-400" />
+            <X className="w-5 h-5 text-brown-600 dark:text-brown-300" />
           </button>
         </div>
         
@@ -101,8 +101,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                 className={`
                   pressable flex min-h-11 items-center gap-3 px-4 py-3 rounded-xl font-medium transition-colors
                   ${isActive 
-                    ? 'bg-coral-50 dark:bg-slate-700 text-coral-800 dark:text-teal-300'
-                    : 'text-brown-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700'
+                    ? 'bg-coral-50 dark:bg-brown-700 text-coral-800'
+                    : 'text-brown-600 dark:text-brown-300 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-brown-700'
                   }
                 `}
               >
@@ -114,11 +114,11 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         </nav>
         
         {/* Sidebar Footer */}
-        <div className="flex-none p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-cream-200 dark:border-slate-700">
+        <div className="flex-none p-4 pb-[max(1rem,env(safe-area-inset-bottom))] border-t border-cream-200 dark:border-brown-700">
           <Link
             to="/"
             onClick={() => setSidebarOpen(false)}
-            className="pressable flex min-h-11 items-center gap-3 px-4 py-3 rounded-xl text-brown-600 dark:text-gray-400 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 transition-colors"
+            className="pressable flex min-h-11 items-center gap-3 px-4 py-3 rounded-xl text-brown-600 dark:text-brown-300 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-brown-700 transition-colors"
           >
             <ArrowLeft className="w-5 h-5" />
             Back to App
@@ -129,8 +129,8 @@ export function AdminLayout({ children }: AdminLayoutProps) {
   );
 
   return (
-    <div className="min-h-screen bg-cream-50 dark:bg-slate-900">
-      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-cream-200 bg-white dark:border-slate-700 dark:bg-slate-800 lg:flex">
+    <div className="min-h-screen bg-cream-50 dark:bg-brown-950">
+      <aside className="fixed inset-y-0 left-0 z-30 hidden w-64 flex-col border-r border-cream-200 bg-white dark:border-brown-700 dark:bg-brown-900 lg:flex">
         {sidebarContent}
       </aside>
       <dialog
@@ -139,7 +139,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
         onCancel={() => setSidebarOpen(false)}
         onClose={() => setSidebarOpen(false)}
         onClick={(event) => { if (event.target === mobileDialogRef.current) setSidebarOpen(false); }}
-        className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(88vw,20rem)] max-w-none border-0 bg-white p-0 text-brown-800 backdrop:bg-black/50 dark:bg-slate-800 dark:text-white lg:hidden"
+        className="fixed inset-y-0 left-0 m-0 h-dvh max-h-none w-[min(88vw,20rem)] max-w-none border-0 bg-white p-0 text-brown-800 backdrop:bg-black/50 dark:bg-brown-900 dark:text-cream-100 lg:hidden"
       >
         <div className="flex h-full flex-col">{sidebarContent}</div>
       </dialog>
@@ -147,20 +147,20 @@ export function AdminLayout({ children }: AdminLayoutProps) {
       {/* Main Content */}
       <div className="lg:ml-64">
         {/* Top Header */}
-        <header className="bg-white/80 dark:bg-slate-900/80 backdrop-blur-sm border-b border-cream-200 dark:border-slate-700 sticky top-0 z-30">
+        <header className="bg-white/80 dark:bg-brown-950/80 backdrop-blur-sm border-b border-cream-200 dark:border-brown-700 sticky top-0 z-30">
           <div className="px-4 py-3 flex items-center justify-between safe-area-top">
             {/* Mobile menu button */}
             <button 
               onClick={() => setSidebarOpen(true)}
               aria-label="Open admin navigation"
               aria-expanded={sidebarOpen}
-              className="lg:hidden min-h-11 min-w-11 p-2 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 rounded-lg"
+              className="lg:hidden min-h-11 min-w-11 p-2 [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-brown-700 rounded-lg"
             >
-              <Menu className="w-5 h-5 text-brown-600 dark:text-gray-400" />
+              <Menu className="w-5 h-5 text-brown-600 dark:text-brown-300" />
             </button>
             
             {/* Page title - shows on mobile */}
-            <div className="flex items-center gap-1 text-sm font-semibold text-brown-800 dark:text-white lg:hidden">
+            <div className="flex items-center gap-1 text-sm font-semibold text-brown-800 dark:text-cream-100 lg:hidden">
               <BrandMark className="h-5 w-5" />
               HåfaGPT Admin
             </div>
@@ -169,12 +169,12 @@ export function AdminLayout({ children }: AdminLayoutProps) {
             <div className="flex items-center gap-3 ml-auto">
               <button
                 onClick={toggleTheme}
-                className="min-h-11 min-w-11 p-2 rounded-lg [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 transition-colors flex items-center justify-center"
+                className="min-h-11 min-w-11 p-2 rounded-lg [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-brown-700 transition-colors flex items-center justify-center"
                 aria-label="Toggle theme"
               >
                 {theme === 'light' 
-                  ? <Moon className="w-5 h-5 text-brown-600 dark:text-gray-400" /> 
-                  : <Sun className="w-5 h-5 text-brown-600 dark:text-gray-400" />
+                  ? <Moon className="w-5 h-5 text-brown-600 dark:text-brown-300" /> 
+                  : <Sun className="w-5 h-5 text-brown-600 dark:text-brown-300" />
                 }
               </button>
               
@@ -187,7 +187,7 @@ export function AdminLayout({ children }: AdminLayoutProps) {
                       className="hidden sm:block w-8 h-8 rounded-full"
                     />
                   )}
-                  <span className="inline-block max-w-20 truncate text-xs font-medium text-brown-700 dark:text-gray-300 sm:max-w-48 sm:text-sm" title={user.fullName || user.emailAddresses[0]?.emailAddress}>
+                  <span className="inline-block max-w-20 truncate text-xs font-medium text-brown-700 dark:text-brown-100 sm:max-w-48 sm:text-sm" title={user.fullName || user.emailAddresses[0]?.emailAddress}>
                     {user.fullName || user.emailAddresses[0]?.emailAddress}
                   </span>
                 </div>

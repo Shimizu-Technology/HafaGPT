@@ -14,13 +14,13 @@ export function AdminRoute({ children }: AdminRouteProps) {
   const timedOut = useAuthLoadTimeout(isLoaded);
   if (!isLoaded && timedOut) {
     return (
-      <main className="grid min-h-screen place-items-center bg-cream-50 px-4 dark:bg-slate-950">
-        <section role="alert" className="max-w-md rounded-2xl border border-cream-300 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-900">
-          <h1 className="text-xl font-bold text-brown-900 dark:text-white">We could not check your sign-in</h1>
-          <p className="mt-3 text-brown-600 dark:text-gray-300">Check your connection and try again to open administration.</p>
+      <main className="grid min-h-screen place-items-center bg-cream-50 px-4 dark:bg-brown-950">
+        <section role="alert" className="max-w-md rounded-2xl border border-cream-300 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-950">
+          <h1 className="text-xl font-bold text-brown-900 dark:text-cream-100">We could not check your sign-in</h1>
+          <p className="mt-3 text-brown-600 dark:text-brown-100">Check your connection and try again to open administration.</p>
           <div className="mt-5 flex flex-wrap justify-center gap-3">
-            <button type="button" onClick={() => window.location.reload()} className="min-h-11 rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)]:hover:bg-coral-800">Try again</button>
-            <Link to="/" className="inline-flex min-h-11 items-center rounded-xl border border-cream-300 px-4 text-brown-800 dark:text-white">Return home</Link>
+            <button type="button" onClick={() => window.location.reload()} className="min-h-11 rounded-xl bg-action px-4 font-semibold text-white [@media(hover:hover)]:hover:bg-action-hover">Try again</button>
+            <Link to="/" className="inline-flex min-h-11 items-center rounded-xl border border-cream-300 px-4 text-brown-800 dark:text-cream-100">Return home</Link>
           </div>
         </section>
       </main>
@@ -30,10 +30,10 @@ export function AdminRoute({ children }: AdminRouteProps) {
   // Show loading while auth is being checked
   if (!isLoaded) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-800 flex items-center justify-center">
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-900 flex items-center justify-center">
         <div className="text-center">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
-          <p className="text-brown-600 dark:text-gray-400">Loading...</p>
+          <Loader2 className="w-8 h-8 animate-spin text-coral-500 mx-auto mb-4" />
+          <p className="text-brown-600 dark:text-brown-300">Loading...</p>
         </div>
       </div>
     );
@@ -49,21 +49,21 @@ export function AdminRoute({ children }: AdminRouteProps) {
   
   if (!isAdmin) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-800 flex items-center justify-center p-4">
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 max-w-md w-full text-center border border-cream-200 dark:border-slate-700">
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-900 flex items-center justify-center p-4">
+        <div className="bg-white dark:bg-brown-900 rounded-2xl p-8 max-w-md w-full text-center border border-cream-200 dark:border-brown-700">
           <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-4">
             <Shield className="w-8 h-8 text-red-500" />
           </div>
-          <h1 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
+          <h1 className="text-2xl font-bold text-brown-800 dark:text-cream-100 mb-2">
             Access Denied
           </h1>
-          <p className="text-brown-600 dark:text-gray-400 mb-6">
+          <p className="text-brown-600 dark:text-brown-300 mb-6">
             You don't have permission to access the admin dashboard. 
             This area is restricted to administrators only.
           </p>
           <a 
             href="/"
-            className="pressable inline-flex min-h-11 items-center gap-2 px-6 py-3 bg-coral-700 dark:bg-ocean-700 text-white rounded-xl font-medium [@media(hover:hover)]:hover:opacity-90 transition-opacity"
+            className="pressable inline-flex min-h-11 items-center gap-2 px-6 py-3 bg-action text-white rounded-xl font-medium [@media(hover:hover)]:hover:opacity-90 transition-opacity"
           >
             Return to Home
           </a>
