@@ -7,7 +7,7 @@ export const AUTH_LOAD_TIMEOUT_MS = 3_000;
  * authentication state. Public learning content should still become usable,
  * while protected routes continue to fail closed.
  */
-export function useAuthLoadTimeout(isLoaded: boolean) {
+export function useAuthLoadTimeout(isLoaded: boolean, timeoutMs: number = AUTH_LOAD_TIMEOUT_MS) {
   const [hasTimedOut, setHasTimedOut] = useState(false);
 
   useEffect(() => {
@@ -16,9 +16,9 @@ export function useAuthLoadTimeout(isLoaded: boolean) {
       return;
     }
 
-    const timeoutId = window.setTimeout(() => setHasTimedOut(true), AUTH_LOAD_TIMEOUT_MS);
+    const timeoutId = window.setTimeout(() => setHasTimedOut(true), timeoutMs);
     return () => window.clearTimeout(timeoutId);
-  }, [isLoaded]);
+  }, [isLoaded, timeoutMs]);
 
   return hasTimedOut;
 }
