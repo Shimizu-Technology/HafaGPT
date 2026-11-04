@@ -99,7 +99,7 @@ from .chatbot_service import (
 )
 from .atomic_regeneration import atomic_regeneration_events
 from .provider_errors import TurnFailed, report_if_provider_error
-from .feature_generation import feature_json, strip_card_citations
+from .feature_generation import feature_json, strip_card_citations, strip_reply_citations
 from . import chat_requests
 from . import tutor_reservations
 from . import conversations
@@ -6470,9 +6470,9 @@ async def conversation_practice(
 
         evidence = validated_objective_evidence(response_data, request)
         return ConversationPracticeResponse(
-            chamorro_response=response_data.get("chamorro_response", ""),
-            english_translation=response_data.get("english_translation", ""),
-            feedback=response_data.get("feedback"),
+            chamorro_response=strip_reply_citations(response_data.get("chamorro_response", ""), canonical_sources),
+            english_translation=strip_reply_citations(response_data.get("english_translation", ""), canonical_sources),
+            feedback=strip_reply_citations(response_data.get("feedback"), canonical_sources),
             objectives_completed=[item["objective"] for item in evidence],
             objective_evidence=evidence,
             is_complete=response_data.get("is_complete", False),

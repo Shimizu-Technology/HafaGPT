@@ -103,6 +103,7 @@ IMPORTANT INSTRUCTIONS:
 13. Every observed goal MUST cite a verbatim quote from a USER message in objective_evidence. Set language to english for English evidence, or uncertain when uncertain. Never cite your own messages or infer ability from the number of turns.
 14. Prefer exact governed example phrases. Do not compose unsupported Chamorro simply to stay in character; if no supporting phrase is available, leave chamorro_response empty and use English translation/feedback to explain the next step.
 15. Give at most one specific suggestion at a time. Avoid generic praise and do not issue proficiency grades.
+16. This is a conversation, so never put source names or citation brackets in chamorro_response, english_translation, or feedback. Copy each objective exactly as the scenario writes it.
 
 GOVERNED REFERENCE MATCHES (may be empty):
 {governed_context or 'No exact governed source match was found for this turn.'}
