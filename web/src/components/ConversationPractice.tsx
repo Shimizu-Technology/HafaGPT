@@ -450,7 +450,7 @@ export function ConversationPractice() {
                 <button
                   key={i}
                   onClick={() => { setUserInput(prev => prev + (prev ? ' ' : '') + phrase.chamorro); setHintUsed(true); }}
-                  className="min-h-11 rounded-lg border border-teal-200 bg-white px-3 py-1.5 font-chamorro text-base text-brown-900 transition-colors hover:bg-teal-100 dark:border-teal-800 dark:bg-brown-900 dark:text-cream-100 dark:hover:bg-teal-900/40"
+                  className="selectable min-h-11 rounded-lg border border-teal-200 bg-white px-3 py-1.5 font-chamorro text-base text-brown-900 transition-colors hover:bg-teal-100 dark:border-teal-800 dark:bg-brown-900 dark:text-cream-100 dark:hover:bg-teal-900/40"
                 >
                   {phrase.chamorro}
                 </button>
@@ -461,7 +461,7 @@ export function ConversationPractice() {
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-4 py-4">
+      <div className="flex-1 overflow-y-auto overscroll-y-contain px-4 py-4">
         <div className="max-w-2xl mx-auto space-y-4">
           {conversation.messages.map((message) => (
             <MessageBubble 

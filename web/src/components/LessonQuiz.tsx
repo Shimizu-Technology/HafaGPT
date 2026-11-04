@@ -579,7 +579,7 @@ function LessonQuizSession({
                   aria-pressed={isSelected}
                   onClick={() => !isAnswered && setSelectedAnswer(option)}
                   disabled={isAnswered}
-                  className={`w-full p-4 rounded-xl border-2 text-left transition-colors ${bgClass} ${borderClass} ${
+                  className={`selectable w-full p-4 rounded-xl border-2 text-left transition-colors ${bgClass} ${borderClass} ${
                     isAnswered ? 'cursor-default' : 'cursor-pointer'
                   }`}
                 >

@@ -73,7 +73,7 @@ function WordPopup({
         role="dialog"
         aria-modal="true"
         aria-labelledby="story-word-heading"
-        className="max-h-[80vh] w-full max-w-sm overflow-y-auto rounded-2xl bg-white p-5 dark:bg-brown-900"
+        className="max-h-[80vh] w-full max-w-sm overflow-y-auto overscroll-y-contain rounded-2xl bg-white p-5 dark:bg-brown-900"
         onClick={(e) => e.stopPropagation()}
         onKeyDown={handleDialogKeyDown}
       >

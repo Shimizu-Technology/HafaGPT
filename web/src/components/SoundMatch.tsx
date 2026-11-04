@@ -340,7 +340,7 @@ export function SoundMatch() {
             <button
               onClick={playWord}
               disabled={isSpeaking}
-              className={`w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
+              className={`selectable w-full py-5 rounded-2xl mb-6 transition-colors flex flex-col items-center justify-center gap-2 ${
                 isSpeaking
                   ? 'bg-teal-700 text-white'
                   : 'bg-teal-100 dark:bg-teal-900/50 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-900/70 border-2 border-teal-300 dark:border-teal-700'
@@ -394,7 +394,7 @@ export function SoundMatch() {
                     onClick={() => handleAnswer(option)}
                     disabled={gameState === 'feedback' || !audio.canAnswer}
                     aria-label={option.english}
-                    className={`p-6 sm:p-8 rounded-2xl transition-colors ${buttonClass}`}
+                    className={`selectable p-6 sm:p-8 rounded-2xl transition-colors ${buttonClass}`}
                   >
                     <span className="text-5xl sm:text-6xl block mb-2">{option.emoji}</span>
                     {showResult && (

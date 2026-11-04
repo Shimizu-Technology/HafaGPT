@@ -162,7 +162,7 @@ export function ConversationSidebar({ conversations, activeConversationId, onSel
         <div className="px-3 pt-3">
           <input type="search" aria-label="Search conversations" placeholder="Search chats" value={search} onChange={event => setSearch(event.target.value)} className="min-h-11 w-full rounded-xl border border-cream-300 bg-white px-3 text-base text-brown-900 placeholder-brown-600 dark:border-brown-700 dark:bg-brown-950 dark:text-cream-100 dark:placeholder-brown-300" />
         </div>
-        <div className="min-h-0 flex-1 overflow-y-auto p-2">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain p-2">
           {isLoading ? <div role="status" aria-label="Loading conversations" className="space-y-2 motion-safe:animate-pulse">
             {[1, 2, 3, 4, 5].map(item => <div key={item} className="h-11 rounded-lg bg-cream-200 dark:bg-brown-900" />)}
           </div> : conversations.length === 0 ? <p className="px-4 py-8 text-center text-sm text-brown-500 dark:text-brown-300">No conversations yet</p>

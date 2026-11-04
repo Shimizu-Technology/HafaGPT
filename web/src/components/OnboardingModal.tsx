@@ -314,7 +314,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
           </p>
         </header>
 
-        <div ref={contentRef} className="flex-1 overflow-y-auto p-4 sm:p-6">
+        <div ref={contentRef} className="flex-1 overflow-y-auto overscroll-y-contain p-4 sm:p-6">
           <div className="space-y-2.5">
             {step === 0 && LEARNER_MODE_OPTIONS.map((option) => (
               <ChoiceCard key={option.id} {...option} icon={MODE_ICONS[option.id]} selected={learnerMode === option.id} onSelect={setLearnerMode} />

@@ -544,7 +544,7 @@ export function AdminDashboard() {
               </span>
             </div>
           </div>
-          <div className="divide-y divide-cream-100 dark:divide-brown-700 max-h-80 overflow-y-auto">
+          <div className="divide-y divide-cream-100 dark:divide-brown-700 max-h-80 overflow-y-auto overscroll-y-contain">
             {activityData?.activities && activityData.activities.length > 0 ? (
               activityData.activities.map((activity) => (
                 <div 

@@ -188,7 +188,7 @@ export function StoryViewer() {
           </p>
           <p className="font-chamorro text-xl leading-loose">
             {annotateStoryText(paragraph.chamorro, paragraph.words).map((part, idx) => part.word ? (
-              <button key={idx} type="button" onClick={() => handleWordTap(part.word!)} aria-label={`Meaning of ${part.text}`} className={`inline rounded -mx-0.5 px-0.5 py-1 underline decoration-amber-300 decoration-dotted underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 ${selectedWord === part.word ? 'bg-amber-100 text-amber-900 dark:bg-amber-800 dark:text-amber-100' : 'hover:bg-amber-50 dark:hover:bg-amber-900/30'}`}>{part.text}</button>
+              <button key={idx} type="button" onClick={() => handleWordTap(part.word!)} aria-label={`Meaning of ${part.text}`} className={`selectable inline rounded -mx-0.5 px-0.5 py-1 underline decoration-amber-300 decoration-dotted underline-offset-4 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-600 ${selectedWord === part.word ? 'bg-amber-100 text-amber-900 dark:bg-amber-800 dark:text-amber-100' : 'hover:bg-amber-50 dark:hover:bg-amber-900/30'}`}>{part.text}</button>
             ) : <span key={idx}>{part.text}</span>)}
           </p>
         </div>
@@ -201,7 +201,7 @@ export function StoryViewer() {
 
       {/* Word Translation Popup */}
       {selectedWord && (
-        <div className="mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-5 dark:border-amber-700 dark:bg-amber-950/40">
+        <div className="story-word-popover mb-4 rounded-2xl border border-amber-300 bg-amber-50 p-5 dark:border-amber-700 dark:bg-amber-950/40">
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="flex flex-wrap items-center gap-2 mb-1">
