@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import unicodedata
-from functools import lru_cache
+from functools import lru_cache, wraps
 from pathlib import Path
 
-from .dictionary_glosses import definition_gloss_segments as _definition_gloss_segments
+from .dictionary_glosses import definition_gloss_segments as _definition_gloss_segments, is_species_entry
 from src.rag.source_policy import resolve_source
 from src.rag.source_reviews import build_registered_source_citation
 from src.rag.text_normalization import normalize_chamorro_match_text
@@ -67,13 +68,38 @@ def _normalize_exact_headword(value: str) -> str:
     return " ".join(re.sub(r"[^\w'-]+", " ", composed).split())
 
 
+def single_flight_cache(builder):
+    """Memoize a no-argument index builder so concurrent first callers build once.
+
+    ``lru_cache`` lets a request and the startup warm-up that miss together both
+    run the builder. Each builder gets its own lock because builders call one
+    another; a shared non-reentrant lock would deadlock. A builder that raises
+    caches nothing, so the next caller retries.
+    """
+
+    lock = threading.Lock()
+    built: list = []
+
+    @wraps(builder)
+    def wrapper():
+        if built:
+            return built[0]
+        with lock:
+            if not built:
+                built.append(builder())
+        return built[0]
+
+    wrapper.cache_clear = built.clear
+    return wrapper
+
+
 @lru_cache(maxsize=1)
 def _canonical_entries() -> tuple[dict, ...]:
     payload = json.loads(CANONICAL_VOCABULARY_PATH.read_text(encoding="utf-8"))
     return tuple(payload.get("entries", []))
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _exact_dictionary_data() -> tuple[tuple[str, dict], ...]:
     dictionaries = []
     for filename, display_name in EXACT_DICTIONARY_FILES:
@@ -137,7 +163,7 @@ def _extract_requested_english_gloss(user_input: str) -> str:
     return target
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _exact_english_gloss_index(
 ) -> dict[str, tuple[tuple[int, str, str, object], ...]]:
     """Index direct dictionary glosses for deterministic reverse lookup."""
@@ -193,6 +219,9 @@ def _not_a_standalone_translation(headword: str, definition: object) -> str:
     return ""
 
 
+MAX_DIRECT_GLOSS_RANK = 2
+
+
 def _lookup_exact_english_glosses(
     english_gloss: str,
 ) -> list[tuple[str, str, object]]:
@@ -200,6 +229,16 @@ def _lookup_exact_english_glosses(
 
     normalized_gloss = _normalize_for_match(english_gloss)
     ranked_matches = _exact_english_gloss_index().get(normalized_gloss, ())
+    if not ranked_matches:
+        return []
+    # A species description ("Type of plant--<taxon>. Aramina.") only describes
+    # its entry; the per-word lookup keeps it as a lead, never a direct gloss.
+    # Other rank-3 matches (a dash explanation's head, a letter name) stay so
+    # the block can state why they are no standalone translation.
+    ranked_matches = tuple(
+        match for match in ranked_matches
+        if match[0] <= MAX_DIRECT_GLOSS_RANK or not is_species_entry(match[3])
+    )
     if not ranked_matches:
         return []
     best_rank = ranked_matches[0][0]
@@ -218,7 +257,7 @@ def _lookup_exact_english_glosses(
     return matches
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _exact_dictionary_index() -> dict[str, tuple[tuple[str, str, object], ...]]:
     """Index governed local dictionaries once for deterministic passage evidence."""
 
@@ -280,7 +319,7 @@ def _spelling_candidate_key(headword: str) -> str:
     return "".join(char for char in decomposed if not unicodedata.combining(char)).replace("'", "").replace("o", "u")
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _spelling_candidate_index() -> dict[str, tuple[str, ...]]:
     buckets: dict[str, list[str]] = {}
     for headword in _exact_dictionary_index():

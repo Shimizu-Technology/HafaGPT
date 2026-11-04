@@ -1,19 +1,23 @@
 """Per-word dictionary lookup before vector search (tutor T4)."""
 
 import re
+import threading
 
 import pytest
 
-from api.canonical_context import SENSE_SCOPE_RULE, get_canonical_tutor_context
+from api.canonical_context import SENSE_SCOPE_RULE, get_canonical_tutor_context, single_flight_cache
 from api.chamorro_morphology import affix_root_candidates, attested_root_candidates, strip_prefix
 from api.dictionary_glosses import definition_gloss_segments
 from api.dictionary_service import DictionaryService
+import api.lexical_lookup as ll
+from api.canonical_context import _exact_dictionary_index, _exact_english_gloss_index
 from api.lexical_lookup import (
     homograph_sense_context,
     lexical_lookup_context,
     lexical_lookup_request,
 )
-from src.rag.chamorro_rag import window_reference
+from src.rag.chamorro_rag import _WINDOW_STOP_WORDS, window_reference
+from src.rag import knowledge_cards
 from src.rag.knowledge_cards import uncovered_card_clauses
 from src.rag.query_routing import should_use_rag
 from src.utils.token_manager import count_tokens
@@ -49,6 +53,110 @@ def test_word_and_wording_requests_get_a_lookup_payload(query, payload, directio
 @pytest.mark.parametrize("query", ["good job", "thanks", "ok", "Can you summarize our chat?", ""])
 def test_conversation_is_not_a_lookup(query):
     assert lexical_lookup_request(query) is None
+
+
+def test_an_english_stop_word_is_not_looked_up_per_word_even_when_glossed():
+    # The dictionary glosses many entries "like", but a function word in an
+    # English request is not the concept being asked about; its neighbors are.
+    assert _exact_english_gloss_index().get("like")
+    only_stop_word = lexical_lookup_context("What is like in Chamorro?")
+    assert only_stop_word.context == "" and only_stop_word.words == ()
+    with_content = lexical_lookup_context("Help me say I like banana in Chamorro")
+    assert with_content.words == ("banana",)
+    assert 'for "like"' not in with_content.context
+    assert _direct_headwords(with_content.context, "banana")
+
+
+def test_warm_up_builds_every_index_a_lookup_can_reach(monkeypatch):
+    built = []
+    for name in ("_exact_dictionary_index", "_exact_english_gloss_index", "_normalized_headword_index",
+                 "_compact_headword_index", "_spelling_candidate_index", "_mention_index"):
+        monkeypatch.setattr(ll, name, lambda name=name: built.append(name))
+    ll.warm_lexical_indexes()
+    assert "_mention_index" in built and len(set(built)) == 6
+
+
+def test_concurrent_first_callers_share_one_index_build():
+    started, release, builds = threading.Event(), threading.Event(), []
+
+    @single_flight_cache
+    def slow_index():
+        builds.append(threading.get_ident())
+        started.set()
+        release.wait(2)
+        return {"built": len(builds)}
+
+    results = []
+    workers = [threading.Thread(target=lambda: results.append(slow_index())) for _ in range(6)]
+    workers[0].start()
+    assert started.wait(2)
+    for worker in workers[1:]:
+        worker.start()
+    release.set()
+    for worker in workers:
+        worker.join(5)
+
+    assert len(builds) == 1 and len(results) == 6
+    assert all(result is results[0] for result in results)
+    slow_index.cache_clear()
+    assert slow_index() == {"built": 2}
+
+
+def test_a_builder_that_fails_caches_nothing_and_builders_may_nest():
+    attempts = []
+
+    @single_flight_cache
+    def inner():
+        attempts.append("inner")
+        if len(attempts) == 1:
+            raise RuntimeError("first build fails")
+        return "inner"
+
+    @single_flight_cache
+    def outer():
+        return inner() + "+outer"
+
+    with pytest.raises(RuntimeError):
+        outer()
+    assert outer() == "inner+outer" and outer() == "inner+outer"
+    assert attempts == ["inner", "inner"]
+
+
+def test_a_long_passage_probes_a_bounded_number_of_phrase_spans(monkeypatch):
+    probes = []
+    real = ll._chamorro_blocks
+
+    def counting(phrase, *args, **kwargs):
+        probes.append(phrase)
+        return real(phrase, *args, **kwargs)
+
+    monkeypatch.setattr(ll, "_chamorro_blocks", counting)
+    headwords = [h for h in _exact_dictionary_index() if h.isalpha() and 4 <= len(h) <= 9][:600]
+    prefix = "Translate this Chamorro notice into English: "
+    short = lexical_lookup_context(prefix + " ".join(headwords[:ll.MAX_PHRASE_TOKENS]))
+    short_probes, probes[:] = len(probes), []
+    long = lexical_lookup_context(prefix + " ".join(headwords))
+
+    # Cost no longer grows with the notice, and the leading spans (longest
+    # first) are answered exactly as they are without the rest of the notice.
+    assert len(probes) <= short_probes + ll.MAX_LOOKUP_WORDS
+    assert long.matched == short.matched
+    widths = [len(s.split()) for s in probes if len(s.split()) > 1]
+    assert widths == sorted(widths, reverse=True)
+
+
+def test_a_phrase_inside_the_probed_window_is_still_found_in_a_long_passage():
+    filler = " ".join(["school"] * 400)
+    context = lexical_lookup_context(f"Translate into Chamorro: thank you {filler}").context
+    assert 'for "thank you"' in context
+
+
+def test_alternate_dictionary_sources_are_cited_with_the_grouped_entry():
+    lookup = lexical_lookup_context("I want to say bamboo")
+    assert "Also recorded as: pi'ao (Topping, Ogo, and Dungca dictionary)" in lookup.context
+    names = [source[0] if isinstance(source, tuple) else source["name"] for source in lookup.sources]
+    assert "Topping, Ogo, and Dungca dictionary" in names
+    assert len(names) == len(set(names))
 
 
 def test_bamboo_is_found_inside_a_longer_definition_without_false_direct_matches():
@@ -197,7 +305,11 @@ def test_morphology_keeps_only_an_attested_root():
     [
         ("Review Chamorro colors", (True, "full")),
         ("Can you review the Chamorro words for numbers?", (True, "full")),
+        ("Review vocabulary", (True, "full")),
+        ("Review the words", (True, "full")),
+        ("Please review my vocab", (True, "full")),
         ("Can you summarize our chat?", (False, None)),
+        ("Summarize the words", (False, None)),
         ("Please review my essay", (False, None)),
     ],
 )
@@ -211,6 +323,27 @@ def test_a_card_settles_only_the_clause_it_matched():
     assert uncovered_card_clauses("What is the current Guam CHamoru orthography?") == ""
 
 
+def test_a_clause_matched_only_by_an_omitted_card_still_needs_retrieval(monkeypatch):
+    # Four cards match the whole request but only three reach the prompt.
+    cards = {name: {"id": name} for name in ("a", "b", "c", "d")}
+    clause_matches = {
+        "Explain orthography here.": ["a"],
+        "Explain possession there.": ["d"],
+    }
+
+    def fake_matches(text, *, limit=3):
+        found = ["a", "b", "c"] if text.startswith("Explain orthography here. ") else clause_matches.get(text, [])
+        return [cards[name] for name in found][:limit]
+
+    monkeypatch.setattr(knowledge_cards, "matching_production_cards", fake_matches)
+    monkeypatch.setattr(knowledge_cards, "production_cards", lambda: list(cards.values()))
+
+    assert uncovered_card_clauses("Explain orthography here. Explain possession there.") == "Explain possession there."
+    # When the other clause's card is among those selected, it is settled.
+    clause_matches["Explain possession there."] = ["b"]
+    assert uncovered_card_clauses("Explain orthography here. Explain possession there.") == ""
+
+
 def test_oversized_references_are_windowed_around_the_request():
     filler = "Chapter opening about word order and sound changes.\n" * 400
     passage = "Possession: a possessor agreement suffix marks the possessed noun.\n"
@@ -222,6 +355,67 @@ def test_oversized_references_are_windowed_around_the_request():
     assert window_reference("short", "possession") == "short"
     head = window_reference(filler * 2, "unrelated", max_chars=500)
     assert head.startswith("Chapter opening") and re.search(r"\[Excerpt: first 500 of \d+ characters\]$", head)
+
+
+def test_window_anchors_on_a_whole_word_before_a_longer_word_that_starts_with_it():
+    filler = "Chapter opening about word order and sound changes.\n" * 100
+    prefix_only = "The treeline and the trees were far off.\n"
+    whole_word = "A tree is a tall plant.\n"
+    content = prefix_only + filler * 6 + whole_word + filler * 6
+    windowed = window_reference(content, "tree", max_chars=1000)
+    assert whole_word.strip() in windowed and prefix_only.strip() not in windowed
+    # With no whole-word occurrence, the prefix match remains the fallback.
+    fallback = window_reference(prefix_only + filler * 12, "tree", max_chars=1000)
+    assert "treeline" in fallback
+
+
+def _scan_all_positions_window(content: str, query: str, max_chars: int) -> str:
+    """The earlier window search: every match scans the whole remaining tail."""
+
+    lowered = content.casefold()
+    terms = {
+        term for term in re.findall(r"[^\W\d_][\w'’]{3,}", query.casefold())
+        if term not in _WINDOW_STOP_WORDS
+    }
+    positions = sorted(
+        (match.start(), term) for term in terms
+        for match in re.finditer(rf"(?<![^\W\d_]){re.escape(term)}", lowered)
+    )
+    best_start, best_score = positions[0][0], 0
+    for index, (position, _term) in enumerate(positions):
+        window_terms = {term for other, term in positions[index:] if other < position + max_chars * 2 // 3}
+        if len(window_terms) > best_score:
+            best_start, best_score = position, len(window_terms)
+    return best_start
+
+
+def test_bounded_window_scan_scores_exactly_like_the_full_tail_scan():
+    import random
+
+    rng = random.Random(7)
+    vocabulary = ["possession", "suffix", "agreement", "noun", "plural", "verb", "stem", "the", "and", "of", "a"]
+    for _ in range(40):
+        words = [rng.choice(vocabulary) for _ in range(rng.randint(500, 1500))]
+        content = " ".join(words)
+        query = "explain possession suffix agreement noun plural"
+        expected_start = _scan_all_positions_window(content, query, 600)
+        windowed = window_reference(content, query, max_chars=600)
+        header, _, body = windowed.partition("\n")
+        start = int(re.search(r"characters (\d+)-", header).group(1)) - 1
+        # Same anchor as the full scan, with the same one-third lead-in.
+        assert start == max(0, expected_start - 600 // 3)
+        assert body == content[start:start + 600]
+
+
+def test_callback_and_homograph_signatures_are_annotated():
+    import typing
+    from src.rag.chamorro_rag import ChamorroRAG
+
+    assert typing.get_type_hints(attested_root_candidates)["is_attested"] == typing.Callable[[str], bool]
+    for name in ("dictionary_homograph_senses", "_homograph_index", "_load_homograph_index"):
+        hints = typing.get_type_hints(getattr(ChamorroRAG, name))
+        assert "return" in hints, name
+    assert "headwords" in typing.get_type_hints(ChamorroRAG.dictionary_homograph_senses)
 
 
 def _strong_headwords(context: str) -> set[str]:
@@ -402,6 +596,11 @@ def test_words_in_a_quoted_chamorro_phrase_stay_chamorro(query):
     assert "spelled like" not in lexical
 
 
+@pytest.mark.parametrize("word", ["gosh", "golly"])
+def test_synonyms_before_etc_still_reach_a_reverse_lookup(word):
+    assert "kåråmba" in lexical_lookup_context(f"What is {word} in Chamorro?").context
+
+
 @pytest.mark.parametrize(
     ("definition", "excluded", "kept"),
     [
@@ -413,6 +612,13 @@ def test_words_in_a_quoted_chamorro_phrase_stay_chamorro(query):
         ("obedient, amenable, submissive to restraint, control, or command", {"control", "or command"},
          {"obedient", "amenable"}),
         ("v. Hold; seize; grasp; receive and keep in the hand.", {"v"}, {"hold", "seize", "grasp"}),
+        ("Gosh, golly, etc.", {"etc"}, {"gosh", "golly"}),
+        ("males, men, boys, kids, etc", {"etc"}, {"males", "men", "boys", "kids"}),
+        ("pound, beat, as pounding roots, etc", {"as pounding roots", "etc"}, {"pound", "beat"}),
+        ("Scab; a crust over the sore, wound, etc.", {"wound", "a crust over the sore", "etc"}, {"scab"}),
+        ("Uninjured; free from defect, ailment, wound, etc.", {"ailment", "wound", "etc"}, {"uninjured"}),
+        ("joint of stalk of cane, bamboo, corn, etc.", {"bamboo", "corn", "etc", "joint of stalk of cane"}, set()),
+        ("native traditions, beliefs, stories, etc., preserved through generations", {"beliefs", "stories", "etc"}, set()),
     ],
 )
 def test_complements_and_part_of_speech_markers_are_not_glosses(definition, excluded, kept):

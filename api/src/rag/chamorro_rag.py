@@ -3,11 +3,13 @@ Helper module for RAG (Retrieval-Augmented Generation) functionality.
 Loads the Chamorro grammar vector database and provides search capabilities.
 """
 
+import bisect
 import os
 import re
 import unicodedata
 import threading
 import time
+from collections.abc import Iterable
 from contextlib import closing
 from langchain_postgres import PGVector
 from langchain_openai import OpenAIEmbeddings
@@ -316,16 +318,23 @@ def window_reference(content: str, query: str, max_chars: int = MAX_REFERENCE_CH
         for term in re.findall(r"[^\W\d_][\w'’]{3,}", (query or "").casefold())
         if term not in _WINDOW_STOP_WORDS
     }
-    positions = sorted(
-        (match.start(), term)
+    matches = sorted(
+        (match.start(), term, not re.match(r"[^\W\d_]", lowered[match.end():match.end() + 1]))
         for term in terms
         for match in re.finditer(rf"(?<![^\W\d_]){re.escape(term)}", lowered)
     )
-    if not positions:
+    if not matches:
         return content[:max_chars] + f"\n[Excerpt: first {max_chars} of {len(content)} characters]"
-    best_start, best_score = positions[0][0], 0
-    for index, (position, _term) in enumerate(positions):
-        window_terms = {term for other, term in positions[index:] if other < position + max_chars * 2 // 3}
+    positions = [(position, term) for position, term, _whole in matches]
+    # A term that only starts a longer word ("trees" for "tree") anchors the
+    # window only when no whole-word occurrence exists.
+    anchors = [index for index, (_position, _term, whole) in enumerate(matches) if whole] or range(len(positions))
+    span = max_chars * 2 // 3
+    best_start, best_score = positions[anchors[0]][0], 0
+    for index in anchors:
+        position = positions[index][0]
+        end = bisect.bisect_left(positions, (position + span,), index)
+        window_terms = {term for _other, term in positions[index:end]}
         if len(window_terms) > best_score:
             best_start, best_score = position, len(window_terms)
     start = max(0, best_start - max_chars // 3)
@@ -671,7 +680,7 @@ class ChamorroRAG:
             print(f"⚠️  Keyword search error: {e}")
             return []
     
-    def dictionary_homograph_senses(self, headwords):
+    def dictionary_homograph_senses(self, headwords: Iterable[str]) -> dict[str, tuple[tuple[str, dict], ...]]:
         """Return extra governed senses for exact headwords, keyed by headword.
 
         The bundled dictionary JSON is keyed by headword, so a second entry
@@ -688,7 +697,7 @@ class ChamorroRAG:
     _homograph_lock = threading.Lock()
     HOMOGRAPH_RETRY_SECONDS = 60.0
 
-    def _homograph_index(self):
+    def _homograph_index(self) -> dict[str, tuple[tuple[str, dict], ...]]:
         cached = getattr(self, "_homograph_cache", None)
         if cached is not None:
             return cached
@@ -708,7 +717,7 @@ class ChamorroRAG:
                 return {}
             return self._homograph_cache
 
-    def _load_homograph_index(self):
+    def _load_homograph_index(self) -> dict[str, tuple[tuple[str, dict], ...]]:
         # Chamoru.info entry documents begin "entry | <headword>" and carry a
         # "meaning | ..." row. Plain string functions keep this one scan fast;
         # grouping happens here rather than in a slower SQL aggregate.

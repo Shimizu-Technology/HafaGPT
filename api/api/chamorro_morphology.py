@@ -14,7 +14,7 @@ Chamorro morphological patterns:
 4. Infixes: -um-, -in-
 """
 
-from typing import List, Tuple, Optional
+from typing import Callable, List, Tuple, Optional
 
 # Possessive suffixes (most common)
 POSSESSIVE_SUFFIXES = [
@@ -274,7 +274,7 @@ def affix_root_candidates(word: str) -> List[Tuple[str, str]]:
     return ordered
 
 
-def attested_root_candidates(word: str, is_attested) -> List[Tuple[str, str]]:
+def attested_root_candidates(word: str, is_attested: Callable[[str], bool]) -> List[Tuple[str, str]]:
     """Return the first affix-stripped root that ``is_attested(root)`` confirms.
 
     Candidates are ordered from the most to the least common analysis; one

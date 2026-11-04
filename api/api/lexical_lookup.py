@@ -21,7 +21,6 @@ from __future__ import annotations
 import re
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
-from functools import lru_cache
 
 from src.rag.text_normalization import normalize_chamorro_match_text
 from src.rag.translation_policy import (
@@ -39,6 +38,7 @@ from src.utils.token_manager import count_tokens
 from .canonical_context import (
     _bound_form_kind,
     SENSE_SCOPE_RULE,
+    single_flight_cache,
     _edit_distance_at_most_one,
     _exact_dictionary_data,
     _exact_dictionary_index,
@@ -55,6 +55,10 @@ from .dictionary_example_validation import COMMON_ENGLISH_WORDS
 
 MAX_LEXICAL_TOKENS = 1200
 MAX_LOOKUP_WORDS = 16
+# Phrase spans are probed only inside the leading tokens, so a long pasted
+# notice costs a fixed number of index probes. Three times the single-word
+# budget leaves room for stop words and multiword terms between content words.
+MAX_PHRASE_TOKENS = 3 * MAX_LOOKUP_WORDS
 MAX_HEADWORDS_PER_WORD = 3
 MAX_SINGLE_WORD_HEADWORDS = 5
 MAX_MENTIONS_PER_WORD = 2
@@ -141,6 +145,7 @@ def warm_lexical_indexes() -> None:
     _normalized_headword_index()
     _compact_headword_index()
     _spelling_candidate_index()
+    _mention_index()
 
 
 def lexical_lookup_request(query: str) -> tuple[str, str] | None:
@@ -298,7 +303,7 @@ def _is_affix(headword: str) -> bool:
 _AFFIX_REQUEST = re.compile(r"(?i)\b(?:prefix|suffix|infix|affix|ending)(?:es|s)?\b")
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _normalized_headword_index() -> dict[str, tuple[tuple[str, str, object], ...]]:
     index: dict[str, list[tuple[str, str, object]]] = {}
     for display_name, dictionary in _exact_dictionary_data():
@@ -309,7 +314,7 @@ def _normalized_headword_index() -> dict[str, tuple[tuple[str, str, object], ...
     return {key: tuple(values) for key, values in index.items()}
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _compact_headword_index() -> dict[str, tuple[str, ...]]:
     """Index headwords without spaces or hyphens for phone/OCR spacing."""
 
@@ -321,7 +326,7 @@ def _compact_headword_index() -> dict[str, tuple[str, ...]]:
     return {key: tuple(sorted(values)) for key, values in index.items()}
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _mention_index() -> dict[str, tuple[tuple[int, str, str, object], ...]]:
     """English words that occur inside short definitions without being a gloss."""
 
@@ -581,12 +586,13 @@ def lexical_lookup_context(
 
     # Phrases first ("thank you", "banana tree", "si yu'os ma'åse'").
     lowered = [token.casefold() for token in tokens]
-    for width in range(min(4, len(tokens)), 1, -1):
-        for start in range(len(tokens) - width + 1):
+    phrase_tokens = tokens[:MAX_PHRASE_TOKENS]
+    for width in range(min(4, len(phrase_tokens)), 1, -1):
+        for start in range(len(phrase_tokens) - width + 1):
             span = range(start, start + width)
             if any(position in covered for position in span):
                 continue
-            phrase = " ".join(tokens[start:start + width])
+            phrase = " ".join(phrase_tokens[start:start + width])
             if all(lowered[position] in _ENGLISH_STOP_WORDS for position in span):
                 continue
             blocks: list[_Block] = []
@@ -730,11 +736,13 @@ def _assemble(
                 progressed = True
                 if observed and observed not in matched:
                     matched.append(observed)
-                source = block.citation or (block.display_name, None)
-                key = (source.get("source_id"), source.get("url")) if isinstance(source, dict) else source
-                if key not in seen_sources:
-                    seen_sources.add(key)
-                    sources.append(source)
+                # Every dictionary named in "Also recorded as" is cited too.
+                for source in (block.citation or (block.display_name, None),
+                               *((alternate, None) for _headword, alternate in block.also)):
+                    key = (source.get("source_id"), source.get("url")) if isinstance(source, dict) else source
+                    if key not in seen_sources:
+                        seen_sources.add(key)
+                        sources.append(source)
                 break
     if not rendered:
         return LexicalLookup(words=words, matched=tuple(matched))

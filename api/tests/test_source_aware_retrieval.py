@@ -241,6 +241,19 @@ def test_bare_dictionary_word_is_looked_up_even_when_the_router_skips() -> None:
     assert get_rag_context("good job") == ("", [])
 
 
+def test_a_failing_bare_word_probe_counts_as_no_match_instead_of_raising() -> None:
+    get_rag_context, _ = _load_get_rag_context(
+        fake_rag=FakeRAG(), card_context="", use_rag=False, real_lexical=True,
+    )
+
+    def broken_lookup(_query, **_kwargs):
+        raise RuntimeError("dictionary unavailable")
+
+    get_rag_context.__globals__["lexical_lookup_context"] = broken_lookup
+
+    assert get_rag_context("brown") == ("", [])
+
+
 def test_per_word_lookups_come_after_exact_matches_and_before_cards_and_vectors() -> None:
     fake_rag = FakeRAG()
     get_rag_context, _ = _load_get_rag_context(fake_rag=fake_rag, card_context="", real_lexical=True)

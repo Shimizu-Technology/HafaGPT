@@ -395,8 +395,9 @@ def uncovered_card_clauses(query: str) -> str:
     """Return the clauses of a compound question that no approved card matches.
 
     An empty string means the request is a single clause, or every clause is
-    covered, so the matched cards remain the complete answer. A short clause
-    counts when it names a topic ("Explain possession.").
+    covered, so the matched cards remain the complete answer. A clause is
+    covered only by a card among those selected for the whole request. A short
+    clause counts when it names a topic ("Explain possession.").
     """
 
     sentences = _CLAUSE_BOUNDARY.split(query or "")
@@ -410,7 +411,14 @@ def uncovered_card_clauses(query: str) -> str:
     ]
     if len(clauses) < 2:
         return ""
-    uncovered = [clause for clause in clauses if not matching_production_cards(clause)]
+    # A clause is settled only by a card that is actually in the prompt: the
+    # cards chosen for the whole request, at most three.
+    selected = {card["id"] for card in matching_production_cards(query)}
+    every_card = max(len(production_cards()), 1)
+    uncovered = [
+        clause for clause in clauses
+        if not selected.intersection(card["id"] for card in matching_production_cards(clause, limit=every_card))
+    ]
     if not uncovered or len(uncovered) == len(clauses):
         return ""
     return " ".join(uncovered)

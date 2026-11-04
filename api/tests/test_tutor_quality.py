@@ -324,8 +324,30 @@ def test_un_rejection_rule_flags_the_production_error_only():
     case = next(c for c in tq.load_cases() if 'rejects_un_as_only_you' in c['must_not'])
     flagged = tq.score(case, 'In the dictionary, un only means "you (sg.)", so un rato should not be used.', '')
     assert 'rejects_un_as_only_you' in flagged['must_not_violations']
+    for wording in ('The dictionary says un means only "you (sg.)", so un rato is incorrect.',
+                    'Here un is just "you", so the phrase cannot be right.',
+                    'Un means only you (singular) in the dictionary.'):
+        assert 'rejects_un_as_only_you' in tq.score(case, wording, '')['must_not_violations'], wording
     supported = tq.score(case, 'The references record un as "you (sg.)" and as "a, an, one" [Chamoru.info dictionary].', '')
     assert 'rejects_un_as_only_you' not in supported['must_not_violations']
+    also = tq.score(case, 'The dictionary records un as "you" and also as "a, an, one" [Chamoru.info dictionary].', '')
+    assert 'rejects_un_as_only_you' not in also['must_not_violations']
+
+
+def test_used_retrieval_counts_evidence_kept_in_the_final_prompt():
+    case = tq.load_cases()[0]
+    full, kept = tq.digest('retrieved but cut by the prompt budget'), tq.digest('[Direct dictionary gloss]')
+    base = dict(tq.score(case, None, ''), id='x', category=case['category'], expected_behavior='answer',
+                router='none', expected_router='none', latency_s=1, error=None)
+    rows = [
+        dict(base, evidence_hash=full, retained_evidence_hash=tq.EMPTY_DIGEST),  # truncated away entirely
+        dict(base, evidence_hash=full, retained_evidence_hash=kept),
+        dict(base, evidence_hash=tq.EMPTY_DIGEST, retained_evidence_hash=tq.EMPTY_DIGEST),
+        dict(base, evidence_hash=full),  # a row recorded before the retained digest existed
+    ]
+    summary = tq.summarize(rows, {})
+    assert summary['used_retrieval_cases'] == 2
+    assert summary['retrieved_evidence_cases'] == 3
 
 
 def test_subset_summaries_compare_suite_versions():
@@ -365,6 +387,13 @@ def test_non_answer_detection_widens_without_changing_the_legacy_refusal_signal(
     partial = ('**tronkon håyu** is supported as “tree” [Chamoru.info dictionary], but the supplied references '
                'do not cover “all.” Send me the full sentence if you want a draft.')
     assert tq.score(case, partial, '')['refusal_or_non_answer'] is False
+    # A supported answer that then declines part of the request is still flagged
+    # by the documented inability branch, not the coverage branch.
+    mixed = ('**tronkon håyu** is supported as “tree” [Chamoru.info dictionary]. '
+             'I cannot review the remaining words.')
+    assert tq.CANNOT_ANSWER.search(mixed) and not tq.LACKS_COVERAGE.search(mixed)
+    assert tq.score(case, mixed, '')['refusal_or_non_answer'] is True
+    assert tq.score(case, mixed, '')['refusal'] is False
     rows = [dict(tq.score(case, text, ''), id=f'tq1-00{i}', category=case['category'], expected_behavior='answer',
                  router='none', expected_router='none', latency_s=1, error=None)
             for i, text in enumerate((colors, partial))]

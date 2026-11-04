@@ -1237,15 +1237,20 @@ def get_rag_context(
     )
     if curriculum_context:
         use_rag, rag_mode = True, rag_mode or "light"
-    if (
-        not use_rag
-        and verification_lookups is None
-        and lexical_lookup_request(retrieval_query) is not None
-        and lexical_lookup_context(retrieval_query).context
-    ):
+    if not use_rag and verification_lookups is None:
         # A bare dictionary word ("brown") is a lookup even though it has no
-        # question words for the general router to recognize.
-        use_rag, rag_mode = True, "light"
+        # question words for the general router to recognize. A failed probe is
+        # no match, so the request carries on as an ordinary non-RAG reply.
+        try:
+            bare_word_match = (
+                lexical_lookup_request(retrieval_query) is not None
+                and bool(lexical_lookup_context(retrieval_query).context)
+            )
+        except Exception as error:
+            logger.error(f"Bare-word lexical probe error: {error}")
+            bare_word_match = False
+        if bare_word_match:
+            use_rag, rag_mode = True, "light"
 
     if not use_rag:
         retrieval_event = build_retrieval_event(

@@ -71,7 +71,7 @@ PATTERNS = {
     'retracts_canonical_term': r"\b(?:retract|take back|withdraw)\b|(?:do not|don't) (?:verify|treat.{0,35}(?:verified|source))|(?:previous|earlier).{0,60}(?:not verified|unverified|unsupported)",
     'unresolved_school_abbreviation': r"(?:SYM|MSY).{0,100}(?:unclear|unknown|not clear|cannot|can't|not sure)|(?:cannot|can't|unclear|unknown).{0,100}(?:SYM|MSY)",
     # The production error: "un" is only "you (sg.)", so the learner's form is wrong.
-    'rejects_un_as_only_you': r"\bun\b[^\n]{0,80}\b(?:only|just)\s+(?:means?|is)\b[^\n]{0,20}\byou\b|(?:should(?:n't| not)|cannot|can't|don't|do not|avoid)\s+(?:be\s+)?(?:use[ds]?|using|say|saying)\b[^\n]{0,40}\bun\b",
+    'rejects_un_as_only_you': r"\bun\b[^\n]{0,80}\b(?:only|just)\s+(?:means?|is)\b[^\n]{0,20}\byou\b|\bun\b[^\n]{0,20}\b(?:means?|is)\s+(?:only|just)\b[^\n]{0,20}\byou\b|(?:should(?:n't| not)|cannot|can't|don't|do not|avoid)\s+(?:be\s+)?(?:use[ds]?|using|say|saying)\b[^\n]{0,40}\bun\b",
 }
 # Evidence blocks that present a headword as the word for the requested concept,
 # including strong Chamorro headword matches ("mango'" for "mango").
@@ -191,6 +191,10 @@ def score(case: dict, response: str | None, evidence: str) -> dict:
     return result
 
 
+def has_evidence(evidence_hash: str | None) -> bool:
+    return bool(evidence_hash) and evidence_hash != EMPTY_DIGEST
+
+
 def percentile(values: list[float], quantile: float) -> float | None:
     return sorted(values)[max(0, math.ceil(len(values) * quantile) - 1)] if values else None
 
@@ -239,6 +243,8 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
                 'refusal_or_non_answer_count': 'legacy regex plus hedged refusals and lacks-coverage replies that ask the learner for the material',
                 'expected_headword_recall': 'expected headword present anywhere in retained evidence (retrieval presence, not use)',
                 'answer_used_headword_rate': 'expected headword present in the model response, exact form',
+                'used_retrieval_cases': 'cases whose retrieved evidence lines survived into the final system prompt',
+                'retrieved_evidence_cases': 'earlier used_retrieval_cases definition: any retrieved context, before prompt budgeting',
             },
             'must_not_violating_cases': sum(bool(r['must_not_violations']) for r in scored),
             'must_not_violations': dict(Counter(v for r in scored for v in r['must_not_violations'])),
@@ -261,7 +267,11 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
             'router_miss_case_ids': [r['id'] for r in rows if r['router'] != r['expected_router']],
             'false_direct_evidence_cases': sum(bool(r.get('false_direct_evidence')) for r in ok),
             'false_direct_evidence_case_ids': [r['id'] for r in ok if r.get('false_direct_evidence')],
-            'used_retrieval_cases': sum(bool(r.get('evidence_hash')) and r.get('evidence_hash') != EMPTY_DIGEST for r in ok)}
+            # Evidence that survived into the final prompt (rows from before the
+            # retained digest existed fall back to the full retrieved context).
+            'used_retrieval_cases': sum(has_evidence(r.get('retained_evidence_hash', r.get('evidence_hash'))) for r in ok),
+            # The earlier definition, kept so older runs stay comparable.
+            'retrieved_evidence_cases': sum(has_evidence(r.get('evidence_hash')) for r in ok)}
 
 
 SUBSET_KEYS = ('cases', 'completed_cases', 'answerable_responses', 'refusal_count', 'refusal_rate_answerable',
@@ -644,7 +654,7 @@ def main(argv=None) -> int:
                                contextual_router=service.classify_translation_request(evidence.get('query', case['user_message'])),
                                latency_s=time.monotonic() - started, model=service.CHAT_MODEL,
                                response=response, error=error, web_search_suppressed=len(web_calls) > web_before, retrieval_warnings=list(retrieval_warnings), embedding_cache_misses=len(cache.misses) - misses_before,
-                               retrieval_query_hash=digest(evidence.get('query', '')), evidence_hash=digest(context))
+                               retrieval_query_hash=digest(evidence.get('query', '')), evidence_hash=digest(context), retained_evidence_hash=digest(retained))
                     if judge_client and response and not error:
                         try:
                             row['advisory_judge'] = advisory_judge(judge_client, service.LLM_MODEL_ID, case, response, args.budget_usd - capture.spent, rates)

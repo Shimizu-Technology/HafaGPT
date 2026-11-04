@@ -27,6 +27,11 @@ _RELATIVE_CLAUSE = re.compile(
     r"(?i)^(?:(?:in|on|at|by|from|of|to|with|for|under|through|during)\s+)?(?:which|whom|whose|where)\s+\w"
 )
 _OTHER_MEMBERS = re.compile(r"(?i)^(?:and|or)\s+(?:other|similar)\b")
+# A member built around a function word ("as in string", "sitting of court",
+# "a crust over the sore", "one who bakes bread") is a complement, not a synonym.
+_SERIES_COMPLEMENT = re.compile(
+    r"(?i)\b(?:a|an|the|as|of|for|from|with|over|in|on|at|by|to|who|that|especially|such)\b"
+)
 _INFINITIVE_HEAD = re.compile(r"(?i)\w\s+to\s+\w+$")
 
 
@@ -66,6 +71,16 @@ def format_definition(definition: object) -> str:
     return ""
 
 
+_SPECIES_ENTRY = re.compile(r"(?i)\s*type of [\w ]+?\s*(?:--|-)")
+
+
+def is_species_entry(definition: object) -> bool:
+    """True for a "Type of plant--<taxon>" entry, whose later sentences describe the species."""
+
+    text = " ".join(format_definition(definition).split())
+    return bool(_SPECIES_ENTRY.match(re.split(r";(?![^()]*\))", text)[0]))
+
+
 def definition_gloss_segments(definition: object) -> tuple[tuple[str, int], ...]:
     """Index whole glosses, not line wraps or words inside descriptions.
 
@@ -99,7 +114,7 @@ def definition_gloss_segments(definition: object) -> tuple[tuple[str, int], ...]
     # "Type of plant--<taxon>" opens a species entry. A later sentence such as
     # "Tree" describes that species rather than glossing the general word,
     # unless the source marks it "(general)" as in "Bamboo (general)".
-    species_entry = bool(clauses) and bool(re.match(r"(?i)\s*type of [\w ]+?\s*(?:--|-)", clauses[0]))
+    species_entry = bool(clauses) and bool(_SPECIES_ENTRY.match(clauses[0]))
     for clause_index, clause in enumerate(clauses):
         # The sentence split reads the "v" of "v. Hold" as a sentence of its
         # own; a part-of-speech marker is never a gloss.
@@ -140,9 +155,22 @@ def definition_gloss_segments(definition: object) -> tuple[tuple[str, int], ...]
         # "joint of stalk of cane, bamboo, corn, etc" and "follow as a pattern,
         # model, or example" list complements; neither the complements nor
         # "etc" are synonyms.
-        if re.search(r"(?i)\betc\b", clause) or re.search(
-            r"(?i)\b(?:of|for|from|with)\s+\w+|^\w+ as an?\b", parts[0]
-        ):
+        if re.search(r"(?i)\b(?:of|for|from|with)\s+\w+|^\w+ as an?\b", parts[0]):
+            continue
+        # "etc" outside a parenthesis trails off a list. In a sense's own series
+        # ("Gosh, golly, etc.") the members before the first complement are
+        # synonyms and are kept. A later sense ("rings, necklaces, etc." after
+        # "jewelry") lists examples of an earlier sense, so none of it is.
+        if re.search(r"(?i)\betc\b", re.sub(r"\([^)]*\)", " ", clause)):
+            etc_at = next((index for index, part in enumerate(parts) if re.search(r"(?i)\betc\b", part)), 0)
+            # "beliefs, stories, etc., preserved through generations": more
+            # description follows, so the series modifies it, not the headword.
+            if clause_index or etc_at < len(parts) - 1:
+                continue
+            for index, part in enumerate(parts):
+                if re.search(r"(?i)\betc\b", part) or (index and _SERIES_COMPLEMENT.search(re.sub(r"\([^)]*\)", " ", part))):
+                    break
+                add(part, 1)
             continue
         complements = _complement_members(parts)
         if complements:
