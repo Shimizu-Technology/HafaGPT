@@ -397,7 +397,7 @@ def uncovered_card_clauses(query: str) -> str:
     An empty string means the request is a single clause, or every clause is
     covered, so the matched cards remain the complete answer. A clause is
     covered only by a card among those selected for the whole request. A short
-    clause counts when it names a topic ("Explain possession.").
+    clause counts when it names a topic ("Explain possession.") or an acronym.
     """
 
     sentences = _CLAUSE_BOUNDARY.split(query or "")
@@ -407,7 +407,8 @@ def uncovered_card_clauses(query: str) -> str:
     ]
     clauses = [
         clause for clause in clauses
-        if any(len(word) >= 4 and word not in _CLAUSE_FILLER for word in re.findall(r"[^\W\d_]+", clause.casefold()))
+        if re.search(r"\b[A-Z]{3,}\b", clause)  # "Why SYM?"
+        or any(len(word) >= 4 and word not in _CLAUSE_FILLER for word in re.findall(r"[^\W\d_]+", clause.casefold()))
     ]
     if len(clauses) < 2:
         return ""

@@ -310,11 +310,22 @@ def test_morphology_keeps_only_an_attested_root():
         ("Please review my vocab", (True, "full")),
         ("Can you summarize our chat?", (False, None)),
         ("Summarize the words", (False, None)),
+        ("Please review the words of my essay", (False, None)),
         ("Please review my essay", (False, None)),
     ],
 )
 def test_review_and_summary_words_do_not_skip_language_requests(query, expected):
     assert should_use_rag(query) == expected
+
+
+def test_an_acronym_only_clause_still_reaches_vector_retrieval():
+    assert uncovered_card_clauses("What is the current Guam CHamoru orthography? Why ABC?") == "Why ABC?"
+    assert uncovered_card_clauses("What is the current Guam CHamoru orthography? OK.") == ""
+
+
+@pytest.mark.parametrize("statement", ['I like the word "bread" a lot.', 'My kid said "bread" today.'])
+def test_a_quoted_word_in_a_statement_is_not_a_lookup(statement):
+    assert lexical_lookup_context(statement).context == ""
 
 
 def test_a_card_settles_only_the_clause_it_matched():

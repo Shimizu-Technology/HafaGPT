@@ -134,6 +134,23 @@ def headword_present(headword: str, text: str) -> bool:
     return bool(re.search(r'(?<![\w\'’])' + re.escape(headword) + r'(?![\w\'’])', text, re.I))
 
 
+_REJECTED_BEFORE = re.compile(
+    r"(?i)\b(?:do\s+not|don['’]t|never|avoid|not|instead\s+of|rather\s+than)(?:\s+(?:use|using|say|saying|write|writing))?\s*[\"'“‘*`_]*$"
+)
+
+
+def headword_used(headword: str, text: str) -> bool:
+    """True when the reply uses a headword, not only rejects it ("Do not use mangga")."""
+    pattern = r'(?<![\w\'’])' + re.escape(headword) + r'(?![\w\'’])'
+    return any(not _REJECTED_BEFORE.search(text[max(0, match.start() - 40):match.start()])
+               for match in re.finditer(pattern, text, re.I))
+
+
+def evidence_entries(retained: str) -> str:
+    """Retained evidence without bracketed block headers, so a header alone is not evidence."""
+    return '\n'.join(line for line in retained.splitlines() if not line.startswith('['))
+
+
 def direct_evidence_headwords(evidence: str, headwords: list[str]) -> list[str]:
     """Headwords that retained evidence labels as a direct gloss for the request.
 
@@ -182,7 +199,7 @@ def score(case: dict, response: str | None, evidence: str) -> dict:
         LACKS_COVERAGE.search(response) and asks_for_requested_material(response, case['user_message']))
     # Retrieval recall counts a headword anywhere in the evidence; this counts
     # only expected headwords the reply itself uses (same exact-form matching).
-    used = [g['concept'] for g in groups if any(headword_present(r['headword'], response) for r in g['any_of'])]
+    used = [g['concept'] for g in groups if any(headword_used(r['headword'], response) for r in g['any_of'])]
     behavior = case['expected_behavior']
     result.update(refusal=refusal, refusal_or_non_answer=non_answer,
                   answer_used_headwords=len(used), answer_used_concepts=used, must_not_violations=violations,
@@ -654,7 +671,7 @@ def main(argv=None) -> int:
                                contextual_router=service.classify_translation_request(evidence.get('query', case['user_message'])),
                                latency_s=time.monotonic() - started, model=service.CHAT_MODEL,
                                response=response, error=error, web_search_suppressed=len(web_calls) > web_before, retrieval_warnings=list(retrieval_warnings), embedding_cache_misses=len(cache.misses) - misses_before,
-                               retrieval_query_hash=digest(evidence.get('query', '')), evidence_hash=digest(context), retained_evidence_hash=digest(retained))
+                               retrieval_query_hash=digest(evidence.get('query', '')), evidence_hash=digest(context), retained_evidence_hash=digest(evidence_entries(retained)))
                     if judge_client and response and not error:
                         try:
                             row['advisory_judge'] = advisory_judge(judge_client, service.LLM_MODEL_ID, case, response, args.budget_usd - capture.spent, rates)

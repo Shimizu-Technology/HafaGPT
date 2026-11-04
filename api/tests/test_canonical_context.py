@@ -282,7 +282,13 @@ def test_real_glosses_still_supply_direct_evidence(gloss, expected):
     assert expected in {match[1] for match in _lookup_exact_english_glosses(gloss)}
 
 
-@pytest.mark.parametrize('gloss', ['aramina', 'a spiny shrub', 'type of fly', 'scaleless blennies'])
+@pytest.mark.parametrize(('gloss', 'expected'), [('coffee', 'kafe'), ('coconut palm', 'niyok')])
+def test_a_species_common_name_stays_direct_gloss_evidence(gloss, expected):
+    from api.canonical_context import _lookup_exact_english_glosses
+    assert expected in {match[1] for match in _lookup_exact_english_glosses(gloss)}
+
+
+@pytest.mark.parametrize('gloss', ['a spiny shrub', 'type of fly', 'a type of grass'])
 def test_species_descriptions_are_not_direct_gloss_evidence(gloss):
     from api.canonical_context import _exact_english_gloss_index, _lookup_exact_english_glosses
     # The index keeps them, as the weaker rank 3, for lead-level lookups.

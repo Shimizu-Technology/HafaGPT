@@ -220,6 +220,7 @@ def _not_a_standalone_translation(headword: str, definition: object) -> str:
 
 
 MAX_DIRECT_GLOSS_RANK = 2
+_SPECIES_DESCRIPTION = re.compile(r"(?:an?|any|another|the|types?|kinds?|species)\b")
 
 
 def _lookup_exact_english_glosses(
@@ -231,14 +232,17 @@ def _lookup_exact_english_glosses(
     ranked_matches = _exact_english_gloss_index().get(normalized_gloss, ())
     if not ranked_matches:
         return []
-    # A species description ("Type of plant--<taxon>. Aramina.") only describes
-    # its entry; the per-word lookup keeps it as a lead, never a direct gloss.
-    # Other rank-3 matches (a dash explanation's head, a letter name) stay so
-    # the block can state why they are no standalone translation.
-    ranked_matches = tuple(
-        match for match in ranked_matches
-        if match[0] <= MAX_DIRECT_GLOSS_RANK or not is_species_entry(match[3])
-    )
+    # After a species' taxon, the source usually gives its common name ("Type of
+    # plant--coffea arabica. Coffee."), and that name is the direct gloss. A
+    # sentence worded as a description ("A spiny shrub", "a type of grass") only
+    # describes its entry. Other rank-3 matches (a dash explanation's head, a
+    # letter name) stay so the block can state why they are no standalone
+    # translation.
+    if _SPECIES_DESCRIPTION.match(normalized_gloss):
+        ranked_matches = tuple(
+            match for match in ranked_matches
+            if match[0] <= MAX_DIRECT_GLOSS_RANK or not is_species_entry(match[3])
+        )
     if not ranked_matches:
         return []
     best_rank = ranked_matches[0][0]

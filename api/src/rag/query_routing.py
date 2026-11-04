@@ -29,8 +29,16 @@ def should_use_rag(
     if any(re.search(pattern, user_lower) for pattern in simple_patterns):
         return False, None
 
-    # A review of vocabulary or words is a language request.
-    if re.search(r"\breview\w*", user_lower) and re.search(r"\b(?:vocab\w*|words?)\b", user_lower):
+    # A review of vocabulary or words is a language request, unless the words
+    # belong to an English document ("review the words of my essay").
+    if (
+        re.search(r"\breview\w*", user_lower)
+        and re.search(r"\b(?:vocab\w*|words?)\b", user_lower)
+        and not re.search(
+            r"\b(?:essay|paper|report|document|article|resume|email|letter|contract|proposal|thesis|code)s?\b",
+            user_lower,
+        )
+    ):
         return True, "full"
 
     # "Summarize our chat" needs no references, but "Review Chamorro colors"

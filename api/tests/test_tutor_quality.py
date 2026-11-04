@@ -336,7 +336,7 @@ def test_un_rejection_rule_flags_the_production_error_only():
 
 def test_used_retrieval_counts_evidence_kept_in_the_final_prompt():
     case = tq.load_cases()[0]
-    full, kept = tq.digest('retrieved but cut by the prompt budget'), tq.digest('[Direct dictionary gloss]')
+    full, kept = tq.digest('retrieved but cut by the prompt budget'), tq.digest('Chamorro headword: example')
     base = dict(tq.score(case, None, ''), id='x', category=case['category'], expected_behavior='answer',
                 router='none', expected_router='none', latency_s=1, error=None)
     rows = [
@@ -348,6 +348,23 @@ def test_used_retrieval_counts_evidence_kept_in_the_final_prompt():
     summary = tq.summarize(rows, {})
     assert summary['used_retrieval_cases'] == 2
     assert summary['retrieved_evidence_cases'] == 3
+
+
+def test_a_retained_header_alone_is_not_evidence():
+    assert tq.evidence_entries('[Direct dictionary gloss]\n[Source: x]') == ''
+    assert tq.evidence_entries('[Direct dictionary gloss]\nChamorro headword: x') == 'Chamorro headword: x'
+
+
+@pytest.mark.parametrize(('reply', 'used'), [
+    ('Do not use håyu here.', False),
+    ('Avoid "håyu" in this sentence.', False),
+    ('The word is tronko, not håyu.', False),
+    ('Use håyu here.', True),
+    ('Do not use tronko. Use håyu.', True),
+    ('Do not use håyu here, although håyu is common.', True),
+])
+def test_answer_use_skips_a_headword_the_reply_only_rejects(reply, used):
+    assert tq.headword_used('håyu', reply) is used
 
 
 def test_subset_summaries_compare_suite_versions():
