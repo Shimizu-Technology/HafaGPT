@@ -50,6 +50,7 @@ from .canonical_context import (
     spelling_coincidence_label,
 )
 from .chamorro_morphology import attested_root_candidates
+from .source_citations import REVISED_DICTIONARY_NAME, REVISED_DICTIONARY_SOURCE_ID
 from .dictionary_example_validation import COMMON_ENGLISH_WORDS
 
 
@@ -64,7 +65,7 @@ MAX_SINGLE_WORD_HEADWORDS = 5
 MAX_MENTIONS_PER_WORD = 2
 MAX_MENTION_DEFINITION_CHARS = 240
 MAX_DEFINITION_CHARS = 320
-REVISED_DICTIONARY = "Revised and updated Chamorro dictionary"
+REVISED_DICTIONARY = REVISED_DICTIONARY_NAME
 
 # A homograph provider maps an exact normalized headword to (meaning, metadata)
 # pairs from governed entries that the bundled JSON collapsed into one key.

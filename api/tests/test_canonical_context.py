@@ -185,7 +185,7 @@ def test_exact_passage_spelling_does_not_hide_conflicting_governed_senses() -> N
     assert "space, room, area" in context
     assert "not synonyms" in context
     assert "flag unresolved conflicts" in context
-    assert ("Revised and updated Chamorro dictionary", None) in sources
+    assert ("Revised Chamorro dictionary", None) in sources
 
 
 def test_passage_retains_each_governed_dictionary_definition_for_headword() -> None:
@@ -195,7 +195,7 @@ def test_passage_retains_each_governed_dictionary_definition_for_headword() -> N
     basket_matches = [match for match in matches if match[2].casefold() == "guagua'"]
     assert {match[1] for match in basket_matches} == {
         "Chamoru.info dictionary", "Topping, Ogo, and Dungca dictionary",
-        "Revised and updated Chamorro dictionary",
+        "Revised Chamorro dictionary",
     }
     assert all(not match[4] for match in basket_matches)
     assert any(match[2] == "åcho'" for match in matches)

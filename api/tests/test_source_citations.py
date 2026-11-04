@@ -1,9 +1,14 @@
+import re
+
 import pytest
 
 from api.source_citations import (
     HAFAGPT_LIST_NAME,
     HAFAGPT_LIST_SOURCE_ID,
     LEGACY_HAFAGPT_LIST_NAMES,
+    LEGACY_REVISED_DICTIONARY_NAMES,
+    REVISED_DICTIONARY_NAME,
+    REVISED_DICTIONARY_SOURCE_ID,
     format_source_citations,
 )
 from src.rag.source_policy import get_registered_source
@@ -96,6 +101,44 @@ def test_unavailable_lessons_keep_attribution_without_a_broken_link() -> None:
                                          'url': 'http://www.chamoru.info/language-lessons/'}])[0]
     assert citation['name'] == 'Chamoru.info language lessons'
     assert citation['url'] is None
+
+
+def test_registry_names_the_revised_dictionary_plainly() -> None:
+    assert (
+        get_registered_source(REVISED_DICTIONARY_SOURCE_ID)["name"]
+        == REVISED_DICTIONARY_NAME
+        == "Revised Chamorro dictionary"
+    )
+
+
+@pytest.mark.parametrize("name", [REVISED_DICTIONARY_NAME, *sorted(LEGACY_REVISED_DICTIONARY_NAMES)])
+def test_current_and_saved_revised_dictionary_names_resolve(name: str) -> None:
+    from_tuple = format_source_citations([(name, 12)])[0]
+    from_saved_dict = format_source_citations(
+        [{"source_id": REVISED_DICTIONARY_SOURCE_ID, "name": name, "page": 12}]
+    )[0]
+
+    for citation in (from_tuple, from_saved_dict):
+        assert citation["source_id"] == REVISED_DICTIONARY_SOURCE_ID
+        assert citation["name"] == REVISED_DICTIONARY_NAME
+        assert citation["page"] == 12
+
+
+def test_a_legacy_name_is_not_renamed_under_another_source_id() -> None:
+    citation = format_source_citations(
+        [{"source_id": "chamoru_info_dictionary", "name": "Revised and updated Chamorro dictionary"}]
+    )[0]
+
+    assert citation["name"] == "Revised and updated Chamorro dictionary"
+
+
+def test_no_learner_facing_registry_name_reads_as_internal_jargon() -> None:
+    from src.rag.source_policy import load_source_registry
+
+    jargon = re.compile(r"\b(?:snapshot|governed|ledger|canonical)\b|\bindex\b", re.I)
+    for source in load_source_registry()["sources"]:
+        if (source.get("retrieval") or {}).get("allowed"):
+            assert not jargon.search(source["name"]), source["name"]
 
 
 def test_registry_names_hafagpts_own_list_plainly() -> None:

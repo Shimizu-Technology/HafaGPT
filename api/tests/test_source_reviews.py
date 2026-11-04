@@ -79,7 +79,7 @@ def test_citation_contract_exposes_authority_region_time_and_role() -> None:
 
     assert citation == {
         "source_id": "local_revised_dictionary_snapshot",
-        "name": "Local Revised Chamorro Dictionary snapshot",
+        "name": "Revised Chamorro dictionary",
         "url": None,
         "page": 42,
         "content_role": "reviewed_lexicon",

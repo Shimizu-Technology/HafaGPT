@@ -9,7 +9,7 @@ import unicodedata
 from functools import lru_cache, wraps
 from pathlib import Path
 
-from .source_citations import HAFAGPT_LIST_NAME
+from .source_citations import HAFAGPT_LIST_NAME, REVISED_DICTIONARY_NAME
 from .dictionary_glosses import definition_gloss_segments as _definition_gloss_segments, is_species_entry
 from src.rag.source_policy import resolve_source
 from src.rag.source_reviews import build_registered_source_citation
@@ -32,10 +32,7 @@ DICTIONARY_DATA_PATH = Path(__file__).resolve().parents[1] / "dictionary_data"
 EXACT_DICTIONARY_FILES = (
     ("chamoru_info_dictionary.json", "Chamoru.info dictionary"),
     ("chamorro_english_dictionary_TOD.json", "Topping, Ogo, and Dungca dictionary"),
-    (
-        "revised_and_updated_chamorro_dictionary.json",
-        "Revised and updated Chamorro dictionary",
-    ),
+    ("revised_and_updated_chamorro_dictionary.json", REVISED_DICTIONARY_NAME),
 )
 # A dictionary entry is evidence of the senses it lists, not proof that a word
 # has no other use (a learner was once told "un" could not mean "a" because the

@@ -14,7 +14,7 @@ from functools import lru_cache
 from typing import Optional
 from pathlib import Path
 
-from .source_citations import HAFAGPT_LIST_NAME
+from .source_citations import HAFAGPT_LIST_NAME, REVISED_DICTIONARY_NAME
 from .time_utils import get_guam_date
 from .dictionary_glosses import definition_gloss_segments, format_definition
 from .dictionary_example_validation import supported_example_pair
@@ -28,19 +28,19 @@ DICTIONARY_TRUST = {
     "level": "source_backed",
     "label": "Source-backed",
     "summary": (
-        "This entry comes from the Local Revised Chamorro Dictionary snapshot. "
+        f"This entry comes from the {REVISED_DICTIONARY_NAME}. "
         "Guåhan spelling may differ, so regional variants remain discoverable."
     ),
     "sources": [
         {
-            "name": "Local Revised Chamorro Dictionary snapshot",
+            "name": REVISED_DICTIONARY_NAME,
             "url": "https://natibunmarianas.org/dictionary-introduction/",
         }
     ],
     "region": "CNMI",
     "orthography": "CNMI 2010",
     "independentlyReviewed": False,
-    "notes": ["Snapshot provenance and reuse permission are still being completed."],
+    "notes": ["Where this dictionary's text came from, and permission to reuse it, are still being confirmed."],
 }
 
 DEVELOPING_CORPUS_TRUST = {
@@ -69,32 +69,75 @@ _REVIEW_GATED_ENTRY_STATUSES = {"needs_review", "deprecated", "do_not_teach"}
 _REVIEW_GATED_VARIANT_STATUSES = {"needs_review", "deprecated", "do_not_teach"}
 
 
-@lru_cache(maxsize=1)
-def _review_gated_terms() -> frozenset[str]:
-    """Normalized terms the canonical layer says must not be taught as settled.
+def _exact_term_key(term: str) -> str:
+    """The written form of a term: Unicode-composed, lower-cased, one apostrophe.
 
-    Reads the same `review_status` fields that the canonical audit uses, so a
-    term added to the review gate there is excluded here without a second list.
+    Unlike normalize_chamorro this keeps å, ñ, and the glottal stop, so Nåna and
+    Nana, or Å'paka' and A'paka', stay different words.
+    """
+
+    exact = unicodedata.normalize("NFC", term or "").strip().casefold()
+    return re.sub("[\u2018\u2019\u02bc`\u00b4]", "'", exact)
+
+
+@lru_cache(maxsize=1)
+def _review_gate_tables() -> tuple[frozenset[str], frozenset[str]]:
+    """(folded, exact) terms the canonical layer says must not be taught as settled.
+
+    Reads the same `review_status` fields the canonical audit uses, so a term
+    added to the review gate there is excluded here without a second list.
+
+    A whole entry marked for review is gated under every spelling a learner or a
+    keyboard might give its phrase (folded: diacritics and apostrophes ignored).
+    A single variant or listed term marked for review is gated only as written.
+    Folding it would also hide the entry's own source-backed word, because the
+    flagged form is usually the same word without its diacritics (the ASCII
+    fallback A'paka' for Å'paka', or Nanå, the Wordle accent, for Nåna).
     """
 
     if not CANONICAL_VOCABULARY_PATH.exists():
-        return frozenset()
+        return frozenset(), frozenset()
     payload = json.loads(CANONICAL_VOCABULARY_PATH.read_text(encoding="utf-8"))
-    gated: set[str] = set()
+    folded: set[str] = set()
+    exact: set[str] = set()
+    protected: set[str] = set()
     for entry in payload.get("entries", []):
         entry_gated = entry.get("review_status") in _REVIEW_GATED_ENTRY_STATUSES
         if entry_gated:
-            gated.add(entry.get("canonical_chamorro"))
-            gated.add(entry.get("recommended_teaching_term"))
+            folded.update(
+                normalize_chamorro(term)
+                for term in (entry.get("canonical_chamorro"), entry.get("recommended_teaching_term"))
+                if term
+            )
+        else:
+            protected.update(
+                _exact_term_key(term)
+                for term in (entry.get("canonical_chamorro"), entry.get("recommended_teaching_term"))
+                if term
+            )
         for variant in entry.get("variants", []) or []:
-            if entry_gated or variant.get("status") in _REVIEW_GATED_VARIANT_STATUSES:
-                gated.add(variant.get("term"))
-        gated.update(item.get("term") for item in entry.get("needs_review_terms", []) or [])
-    return frozenset(normalize_chamorro(term) for term in gated if term)
+            term = variant.get("term")
+            if not term:
+                continue
+            if entry_gated:
+                folded.add(normalize_chamorro(term))
+            elif variant.get("status") in _REVIEW_GATED_VARIANT_STATUSES:
+                exact.add(_exact_term_key(term))
+            elif variant.get("status") == "source_backed":
+                protected.add(_exact_term_key(term))
+        exact.update(_exact_term_key(item["term"]) for item in entry.get("needs_review_terms", []) or [] if item.get("term"))
+    return frozenset(folded), frozenset(exact - protected)
+
+
+def _review_gated_terms() -> frozenset[str]:
+    """Normalized phrases of entries that are themselves held for review."""
+
+    return _review_gate_tables()[0]
 
 
 def _is_review_gated(term: str) -> bool:
-    return normalize_chamorro(term) in _review_gated_terms()
+    folded, exact = _review_gate_tables()
+    return normalize_chamorro(term) in folded or _exact_term_key(term) in exact
 
 
 def _word_of_day_pools(words: list[dict]) -> tuple[list[dict], list[dict]]:

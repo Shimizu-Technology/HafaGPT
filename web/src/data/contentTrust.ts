@@ -182,17 +182,17 @@ export const CONVERSATION_CONTENT_TRUST: ContentTrust = {
 export const DICTIONARY_CONTENT_TRUST: ContentTrust = {
   level: 'source_backed',
   label: TRUST_LABELS.source_backed.label,
-  summary: 'Dictionary entries come from a named CNMI dictionary snapshot. Guåhan spelling may differ, so search keeps regional variants discoverable.',
+  summary: 'Dictionary entries come from the Revised Chamorro dictionary, a CNMI reference. Guåhan spelling may differ, so search keeps regional variants discoverable.',
   sources: [
     {
-      name: 'Local Revised Chamorro Dictionary snapshot',
+      name: 'Revised Chamorro dictionary',
       url: 'https://natibunmarianas.org/dictionary-introduction/',
     },
   ],
   region: 'CNMI',
   orthography: 'CNMI 2010',
   independentlyReviewed: false,
-  notes: ['Snapshot provenance and reuse permission are still being completed.'],
+  notes: ["Where this dictionary's text came from, and permission to reuse it, are still being confirmed."],
 };
 
 export const GAME_CONTENT_TRUST: ContentTrust = {

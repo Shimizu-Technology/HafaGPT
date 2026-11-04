@@ -9,6 +9,7 @@ from pathlib import Path
 from typing import Literal
 
 from .canonical_context import get_canonical_tutor_context
+from .source_citations import REVISED_DICTIONARY_NAME, REVISED_DICTIONARY_SOURCE_ID
 from src.rag.source_reviews import build_registered_source_citation
 
 TutorIntent = Literal["translate", "explain", "practice"]
@@ -78,12 +79,12 @@ def curriculum_tutor_context(message: str, intent: str | None,
         example = _introduction_example()
         if example:
             value, gloss = example
-            context += ("\n\nSource: Revised and updated Chamorro dictionary\n"
+            context += (f"\n\nSource: {REVISED_DICTIONARY_NAME}\n"
                         "Entry: Chumbai'\nVerbatim dictionary example: " + value +
                         "\nEnglish gloss: " + gloss +
                         "\nUse this existing example to explain the name-introduction pattern. Name substitution is an adaptation, not a verbatim source quote. Do not imply that this example verifies a longer new introduction or the learner's whole sentence.")
-            sources.append({**(build_registered_source_citation("local_revised_dictionary_snapshot") or {}),
-                            "name": "Revised and updated Chamorro dictionary", "page": None,
+            sources.append({**(build_registered_source_citation(REVISED_DICTIONARY_SOURCE_ID) or {}),
+                            "name": REVISED_DICTIONARY_NAME, "page": None,
                             "locator": "Chumbai' entry: name-introduction example",
                             "support": "Contains the quoted name-introduction example; adapted names and new sentences are not verbatim source text.",
                             "evidence_kind": "curriculum_dictionary_example"})
