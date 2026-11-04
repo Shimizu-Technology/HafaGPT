@@ -1,0 +1,4490 @@
+{
+  "schema_version": 1,
+  "suite_id": "tutor_quality_v2",
+  "source_notes": [
+    "PLAN.md Phase 1; REPORT.md; private PROD_TUTOR_REVIEW.md (anonymized excerpts only); KB_AUDIT.md; RESOURCE_RESEARCH.md §3. Original reports are intentionally not bundled.",
+    "Expected headwords are source attestations, not native accuracy labels. Alternative source matches count once per concept.",
+    "Multi-turn fixtures isolate conversational failures; they do not replay private production exports.",
+    "v2 = every v1 case byte-identical (tq1-*) plus tq2-* additions. Compare with v1 baselines on the tq1 subset only.",
+    "tq2 histories reuse v1 production requests and list only source-copied terms; no Chamorro is composed."
+  ],
+  "cases": [
+    {
+      "id": "tq1-001",
+      "category": "production",
+      "history": [],
+      "user_message": "What about tree",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-002",
+      "category": "production",
+      "history": [],
+      "user_message": "How about banana",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-003",
+      "category": "production",
+      "history": [],
+      "user_message": "How about blue?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-004",
+      "category": "production",
+      "history": [],
+      "user_message": "What's primero?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-005",
+      "category": "production",
+      "history": [],
+      "user_message": "What does galaide' mean?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "canoe",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "galaide'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-006",
+      "category": "production",
+      "history": [],
+      "user_message": "What does pi'ao mean?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-007",
+      "category": "production",
+      "history": [],
+      "user_message": "What does sabot-ña mean?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "taste",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "sabot"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-008",
+      "category": "production",
+      "history": [],
+      "user_message": "So I just want to say hahaha thank you, I’ll be over in a bit",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "greetings.thank_you",
+              "headword": "Si Yu'os Ma'åse'"
+            }
+          ]
+        },
+        {
+          "concept": "come",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maila'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "maila'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maila'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-009",
+      "category": "production",
+      "history": [],
+      "user_message": "Nice so I want to say something like hahaha thank you, I’ll be over in a bit",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "greetings.thank_you",
+              "headword": "Si Yu'os Ma'åse'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-010",
+      "category": "production",
+      "history": [],
+      "user_message": "How would we write don’t cut down all the trees",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-011",
+      "category": "production",
+      "history": [],
+      "user_message": "How would we day help others?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-012",
+      "category": "production",
+      "history": [],
+      "user_message": "Got it so how would I say - haha thank you, I’ll be over in a bit",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "greetings.thank_you",
+              "headword": "Si Yu'os Ma'åse'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-013",
+      "category": "production",
+      "history": [],
+      "user_message": "Thank you for the reminder, I forgot about class",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "greetings.thank_you",
+              "headword": "Si Yu'os Ma'åse'"
+            }
+          ]
+        },
+        {
+          "concept": "forget",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maleffa"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maleffa"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "forgot_as_scared"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-014",
+      "category": "production",
+      "history": [],
+      "user_message": "A good question to ask my 7-year-old",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "happy",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "magof"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "magof"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-015",
+      "category": "production",
+      "history": [
+        {
+          "role": "user",
+          "content": "How do I thank my manager?"
+        },
+        {
+          "role": "assistant",
+          "content": "Si Yu'os Ma'åse' [canonical vocabulary ledger]"
+        }
+      ],
+      "user_message": "You're sure about all of these words?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "greetings.thank_you",
+              "headword": "Si Yu'os Ma'åse'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance. Prior assistant is a source-copied term, not a new sentence."
+    },
+    {
+      "id": "tq1-016",
+      "category": "production",
+      "history": [
+        {
+          "role": "user",
+          "content": "How do I thank my manager?"
+        },
+        {
+          "role": "assistant",
+          "content": "Si Yu'os Ma'åse' [canonical vocabulary ledger]"
+        }
+      ],
+      "user_message": "Are you sure about these words?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "greetings.thank_you",
+              "headword": "Si Yu'os Ma'åse'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance. Prior assistant is a source-copied term, not a new sentence."
+    },
+    {
+      "id": "tq1-017",
+      "category": "production",
+      "history": [
+        {
+          "role": "user",
+          "content": "How do I thank my manager?"
+        },
+        {
+          "role": "assistant",
+          "content": "Si Yu'os Ma'åse' [canonical vocabulary ledger]"
+        }
+      ],
+      "user_message": "Can I send that to my boss?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "greetings.thank_you",
+              "headword": "Si Yu'os Ma'åse'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance. Prior assistant is a source-copied term, not a new sentence."
+    },
+    {
+      "id": "tq1-018",
+      "category": "production",
+      "history": [],
+      "user_message": "My manager and my coworker sent this. I want to say thank you; I will be over soon.",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "greetings.thank_you",
+              "headword": "Si Yu'os Ma'åse'"
+            }
+          ]
+        },
+        {
+          "concept": "come",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maila'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "maila'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maila'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance. Personal names replaced with roles."
+    },
+    {
+      "id": "tq1-019",
+      "category": "production",
+      "history": [],
+      "user_message": "Help me understand my child’s materials homework: canoe and bamboo.",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "canoe",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "galaide'"
+            }
+          ]
+        },
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-020",
+      "category": "production",
+      "history": [],
+      "user_message": "Translate this worksheet word to English: acho'.",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "rock",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "acho'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance."
+    },
+    {
+      "id": "tq1-021",
+      "category": "production",
+      "history": [],
+      "user_message": "Translate this school message: SYM para i pinasensian-miyu. SYM🧡",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance. Only reported source excerpt; not the private full message."
+    },
+    {
+      "id": "tq1-022",
+      "category": "production",
+      "history": [],
+      "user_message": "Monkey",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "matching_as_monkey"
+      ],
+      "notes": "PROD_TUTOR_REVIEW.md; sanitized excerpt or English reconstruction. Images unavailable: text-only surrogate, not vision acceptance. Do not accept extraction noise as a verified headword."
+    },
+    {
+      "id": "tq1-023",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is tree in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-024",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for tree?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-025",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is banana in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-026",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for banana?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-027",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is blue in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-028",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for blue?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-029",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is first in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-030",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for first?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-031",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is canoe in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "canoe",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "galaide'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-032",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for canoe?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "canoe",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "galaide'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-033",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is bamboo in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-034",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for bamboo?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-035",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is happy in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "happy",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "magof"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "magof"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-036",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for happy?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "happy",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "magof"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "magof"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-037",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is forget in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "forget",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maleffa"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maleffa"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-038",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for forget?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "forget",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maleffa"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maleffa"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-039",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is taste in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "taste",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "sabot"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-040",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for taste?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "taste",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "sabot"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-041",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is flower in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "flower",
+          "any_of": [
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "floris"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-042",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for flower?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "flower",
+          "any_of": [
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "floris"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-043",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is wood in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "wood",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "håyu"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-044",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for wood?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "wood",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "håyu"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-045",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is come in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "come",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maila'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "maila'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maila'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-046",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for come?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "come",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maila'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "maila'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maila'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-047",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is rock in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "rock",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "acho'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-048",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for rock?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "rock",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "acho'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-049",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is love in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "love",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "guaiya"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "guaiya"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "guaiya"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-050",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for love?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "love",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "guaiya"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "guaiya"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "guaiya"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-051",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is white in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "white",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "colors.white",
+              "headword": "Å'paka'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-052",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for white?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "white",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "colors.white",
+              "headword": "Å'paka'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-053",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is red in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "red",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "colors.red",
+              "headword": "Agaga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-054",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for red?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "red",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "colors.red",
+              "headword": "Agaga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-055",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is green in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "green",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "colors.green",
+              "headword": "Betde"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-056",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for green?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "green",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "colors.green",
+              "headword": "Betde"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-057",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is black in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "black",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "colors.black",
+              "headword": "Åttilung"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-058",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for black?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "black",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "colors.black",
+              "headword": "Åttilung"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-059",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is one in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "one",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "numbers.one",
+              "headword": "Unu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-060",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for one?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "one",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "numbers.one",
+              "headword": "Unu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-061",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is two in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "two",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "numbers.two",
+              "headword": "Dos"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-062",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What is the Chamorro word for two?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "two",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "numbers.two",
+              "headword": "Dos"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Attestation only, not independent native verification. Any listed source/headword satisfies this concept."
+    },
+    {
+      "id": "tq1-063",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "I want to say tree",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-064",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How would we write tree?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-065",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What about tree?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-066",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How about tree?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-067",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "Can you put this in Chamorro: tree",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-068",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What’s the Chamorro for tree?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-069",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "I want to say banana",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-070",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How would we write banana?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-071",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What about banana?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-072",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How about banana?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-073",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "Can you put this in Chamorro: banana",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-074",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What’s the Chamorro for banana?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-075",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "I want to say blue",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-076",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How would we write blue?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-077",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What about blue?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-078",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How about blue?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-079",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "Can you put this in Chamorro: blue",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-080",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What’s the Chamorro for blue?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-081",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "I want to say first",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-082",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How would we write first?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-083",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What about first?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-084",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How about first?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-085",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "Can you put this in Chamorro: first",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-086",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What’s the Chamorro for first?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-087",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "I want to say canoe",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "canoe",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "galaide'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-088",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How would we write canoe?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "canoe",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "galaide'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-089",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What about canoe?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "canoe",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "galaide'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-090",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How about canoe?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "canoe",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "galaide'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-091",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "Can you put this in Chamorro: canoe",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "canoe",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "galaide'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-092",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What’s the Chamorro for canoe?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "canoe",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "galaide'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-093",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "I want to say bamboo",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-094",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How would we write bamboo?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-095",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What about bamboo?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-096",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "How about bamboo?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-097",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "Can you put this in Chamorro: bamboo",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-098",
+      "category": "phrasing_variant",
+      "history": [],
+      "user_message": "What’s the Chamorro for bamboo?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Single content word; same expected evidence regardless of request wrapper."
+    },
+    {
+      "id": "tq1-099",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is tree in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "tronkon håyu [dictionary_data/chamoru_info_dictionary.json]"
+        }
+      ],
+      "user_message": "Are you sure about these words?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-100",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is tree in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "tronkon håyu [dictionary_data/chamoru_info_dictionary.json]"
+        }
+      ],
+      "user_message": "Can you check the word you just gave me?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-101",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is banana in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "aga' [dictionary_data/chamorro_english_dictionary_TOD.json]"
+        }
+      ],
+      "user_message": "Are you sure about these words?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-102",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is banana in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "aga' [dictionary_data/chamorro_english_dictionary_TOD.json]"
+        }
+      ],
+      "user_message": "Can you check the word you just gave me?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "banana",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "aga'"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "aga'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-103",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is blue in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "asut [dictionary_data/chamorro_english_dictionary_TOD.json]"
+        }
+      ],
+      "user_message": "Are you sure about these words?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-104",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is blue in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "asut [dictionary_data/chamorro_english_dictionary_TOD.json]"
+        }
+      ],
+      "user_message": "Can you check the word you just gave me?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "blue",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "asut"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-105",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is first in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "primeru [dictionary_data/chamorro_english_dictionary_TOD.json]"
+        }
+      ],
+      "user_message": "Are you sure about these words?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-106",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is first in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "primeru [dictionary_data/chamorro_english_dictionary_TOD.json]"
+        }
+      ],
+      "user_message": "Can you check the word you just gave me?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "first",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "primeru"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "primeru"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-107",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is happy in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "magof [dictionary_data/chamorro_english_dictionary_TOD.json]"
+        }
+      ],
+      "user_message": "Are you sure about these words?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "happy",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "magof"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "magof"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-108",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is happy in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "magof [dictionary_data/chamorro_english_dictionary_TOD.json]"
+        }
+      ],
+      "user_message": "Can you check the word you just gave me?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "happy",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "magof"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "magof"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-109",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is forget in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "maleffa [dictionary_data/chamorro_english_dictionary_TOD.json]"
+        }
+      ],
+      "user_message": "Are you sure about these words?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "forget",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maleffa"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maleffa"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-110",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "What is forget in Chamorro?"
+        },
+        {
+          "role": "assistant",
+          "content": "maleffa [dictionary_data/chamorro_english_dictionary_TOD.json]"
+        }
+      ],
+      "user_message": "Can you check the word you just gave me?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "forget",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maleffa"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maleffa"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Prior assistant headword copied byte-exact from source; expectation is re-check actual prior target."
+    },
+    {
+      "id": "tq1-111",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: SYM para i pinasensian-miyu",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-112",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: SYM🧡",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-113",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: SYM — Family Day is tomorrow.",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-114",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: Family Day is tomorrow. SYM",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-115",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: Family Day is tomorrow. SYM🧡",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-116",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: 🧡 SYM Family Day is tomorrow.",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-117",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: Family Day SYM is tomorrow.",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-118",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: SYM\nFamily Day is tomorrow.\nSYM🧡",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-119",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: MSY para i pinasensian-miyu",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-120",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: MSY🧡",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-121",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: MSY — Family Day is tomorrow.",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-122",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: Family Day is tomorrow. MSY",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-123",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: Family Day is tomorrow. MSY🧡",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-124",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: 🧡 MSY Family Day is tomorrow.",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-125",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: Family Day MSY is tomorrow.",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-126",
+      "category": "school_message",
+      "history": [],
+      "user_message": "Translate this school announcement to English: MSY\nFamily Day is tomorrow.\nMSY🧡",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_english",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "unresolved_school_abbreviation"
+      ],
+      "notes": "Synthetic English school context plus byte-exact abbreviation/excerpt from production review. No authored Chamorro sentence."
+    },
+    {
+      "id": "tq1-127",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Help me greet a classmate in Chamorro.",
+      "tutor_intent": "translate",
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE interpersonal domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-128",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "I want to introduce myself to my teacher in Chamorro.",
+      "tutor_intent": "translate",
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE interpersonal domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-129",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "How do I ask permission to use the restroom in Chamorro?",
+      "tutor_intent": "translate",
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE interpersonal domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-130",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Help me ask a friend how they feel in Chamorro.",
+      "tutor_intent": "translate",
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE interpersonal domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-131",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Explain how to find the main idea in a short Chamorro classroom announcement.",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE interpretive domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-132",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Help me distinguish a question from a statement in Chamorro.",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE interpretive domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-133",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Show me how to check whether a Chamorro sentence has a negation.",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE interpretive domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-134",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "How should I read an unfamiliar Chamorro word in a school notice?",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE interpretive domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-135",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Help me describe my family in Chamorro.",
+      "tutor_intent": "translate",
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE presentational domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-136",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "I want to say what I like to eat in Chamorro.",
+      "tutor_intent": "translate",
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE presentational domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-137",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Help me write a short invitation to a school event in Chamorro.",
+      "tutor_intent": "translate",
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE presentational domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-138",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Help me describe the colors of a picture in Chamorro.",
+      "tutor_intent": "translate",
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE presentational domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-139",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Explain how to ask respectfully about a Chamorro family custom.",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE culture domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-140",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "How do I ask an elder which greeting is appropriate?",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE culture domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-141",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Help me thank a volunteer in Chamorro.",
+      "tutor_intent": "translate",
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "entry_id": "greetings.thank_you",
+              "headword": "Si Yu'os Ma'åse'"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE community domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-142",
+      "category": "communicative_goal",
+      "history": [],
+      "user_message": "Practice asking for help at a community event in Chamorro.",
+      "tutor_intent": "practice",
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Original English learner request inspired by GDOE community domain described in RESOURCE_RESEARCH.md §2.2/§3; not a quoted or validated grade-level indicator."
+    },
+    {
+      "id": "tq1-143",
+      "category": "absent_word",
+      "history": [],
+      "user_message": "What is the Chamorro word for penguin?",
+      "tutor_intent": null,
+      "expected_behavior": "refuse_absent",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "invented_absent_headword"
+      ],
+      "notes": "All three local JSONs searched. Penguin absent; unicorn occurs only in fish definitions, not the requested mythical animal. Absence is local, not a claim about all Chamorro usage."
+    },
+    {
+      "id": "tq1-144",
+      "category": "absent_word",
+      "history": [],
+      "user_message": "Do the local dictionaries attest a word for penguin?",
+      "tutor_intent": null,
+      "expected_behavior": "refuse_absent",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "invented_absent_headword"
+      ],
+      "notes": "All three local JSONs searched. Penguin absent; unicorn occurs only in fish definitions, not the requested mythical animal. Absence is local, not a claim about all Chamorro usage."
+    },
+    {
+      "id": "tq1-145",
+      "category": "absent_word",
+      "history": [],
+      "user_message": "What is the Chamorro word for unicorn (the mythical horse, not a fish)?",
+      "tutor_intent": null,
+      "expected_behavior": "refuse_absent",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "invented_absent_headword"
+      ],
+      "notes": "All three local JSONs searched. Penguin absent; unicorn occurs only in fish definitions, not the requested mythical animal. Absence is local, not a claim about all Chamorro usage."
+    },
+    {
+      "id": "tq1-146",
+      "category": "absent_word",
+      "history": [],
+      "user_message": "Do the local dictionaries attest a word for unicorn (the mythical horse, not a fish)?",
+      "tutor_intent": null,
+      "expected_behavior": "refuse_absent",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "invented_absent_headword"
+      ],
+      "notes": "All three local JSONs searched. Penguin absent; unicorn occurs only in fish definitions, not the requested mythical animal. Absence is local, not a claim about all Chamorro usage."
+    },
+    {
+      "id": "tq1-147",
+      "category": "grammar",
+      "history": [],
+      "user_message": "Explain how Chamorro possessive suffixes work.",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Explain with sources and scope uncertainty; no agent-authored Chamorro answer key."
+    },
+    {
+      "id": "tq1-148",
+      "category": "grammar",
+      "history": [],
+      "user_message": "What does reduplication do in Chamorro grammar?",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Explain with sources and scope uncertainty; no agent-authored Chamorro answer key."
+    },
+    {
+      "id": "tq1-149",
+      "category": "grammar",
+      "history": [],
+      "user_message": "How do I tell whether a Chamorro sentence is negated?",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Explain with sources and scope uncertainty; no agent-authored Chamorro answer key."
+    },
+    {
+      "id": "tq1-150",
+      "category": "grammar",
+      "history": [],
+      "user_message": "What does the Chamorro infix -um- do?",
+      "tutor_intent": "explain",
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Explain with sources and scope uncertainty; no agent-authored Chamorro answer key."
+    },
+    {
+      "id": "tq2-001",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "Thank you for the reminder, I forgot about class"
+        },
+        {
+          "role": "assistant",
+          "content": "Si Yu'os Ma'åse' [HåfaGPT canonical vocabulary]; maleffa [Topping, Ogo, and Dungca dictionary]"
+        }
+      ],
+      "user_message": "You're sure about all of these words for this sentence?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "headword": "Si Yu'os Ma'åse'",
+              "entry_id": "greetings.thank_you"
+            }
+          ]
+        },
+        {
+          "concept": "forget",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maleffa"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maleffa"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Full production wording of the re-check request; v1 only had the shortened form."
+    },
+    {
+      "id": "tq2-002",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "How would we write don’t cut down all the trees"
+        },
+        {
+          "role": "assistant",
+          "content": "tronkon håyu [Chamoru.info dictionary]"
+        }
+      ],
+      "user_message": "You're sure about all of these words for this sentence?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Full production wording against a sentence request."
+    },
+    {
+      "id": "tq2-003",
+      "category": "verification",
+      "history": [
+        {
+          "role": "user",
+          "content": "Thank you for the reminder, I forgot about class"
+        },
+        {
+          "role": "assistant",
+          "content": "Si Yu'os Ma'åse' [HåfaGPT canonical vocabulary]; maleffa [Topping, Ogo, and Dungca dictionary]"
+        }
+      ],
+      "user_message": "Are you sure about all these words in that sentence?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "thank you",
+          "any_of": [
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "headword": "Si Yu'os Ma'åse'",
+              "entry_id": "greetings.thank_you"
+            }
+          ]
+        },
+        {
+          "concept": "forget",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "maleffa"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "maleffa"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "retracts_canonical_term"
+      ],
+      "notes": "Sentence-naming re-check variant (#107)."
+    },
+    {
+      "id": "tq2-004",
+      "category": "routing",
+      "history": [],
+      "user_message": "Review Chamorro colors",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english"
+      ],
+      "notes": "KB audit: the review/summary substring skipped retrieval before language intent."
+    },
+    {
+      "id": "tq2-005",
+      "category": "routing",
+      "history": [],
+      "user_message": "brown",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "brown",
+          "any_of": [
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "kulót chukulåti"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "kulot chikolåti"
+            },
+            {
+              "file": "language_content/canonical_vocabulary.json",
+              "headword": "Kulót chukulåti",
+              "entry_id": "colors.brown"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "KB audit: a bare color word skipped retrieval."
+    },
+    {
+      "id": "tq2-006",
+      "category": "grammar",
+      "history": [],
+      "user_message": "What is the current Guam CHamoru orthography? Also explain possession in detail.",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [],
+      "must_not": [
+        "send_in_english"
+      ],
+      "notes": "KB audit synthetic compound question: the orthography card must not suppress retrieval for possession."
+    },
+    {
+      "id": "tq2-007",
+      "category": "function_word",
+      "history": [],
+      "user_message": "Is it okay to use \"un rato\"?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "none",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "un",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "un"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "un"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "rejects_un_as_only_you"
+      ],
+      "notes": "Production check: the tutor said un means only \"you (sg.)\", so un rato should not be used. The governed corpus also records un as an indefinite article."
+    },
+    {
+      "id": "tq2-008",
+      "category": "function_word",
+      "history": [],
+      "user_message": "What does \"un lugåt\" mean?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "un",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "un"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "un"
+            }
+          ]
+        },
+        {
+          "concept": "place",
+          "any_of": [
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "lugåt"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "lugåt"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "rejects_un_as_only_you"
+      ],
+      "notes": "Worksheet text form."
+    },
+    {
+      "id": "tq2-009",
+      "category": "function_word",
+      "history": [],
+      "user_message": "What does \"un ihemplo\" mean?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "example",
+          "any_of": [
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "ihemplu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation",
+        "rejects_un_as_only_you"
+      ],
+      "notes": "Worksheet text form; the dictionary headword is spelled ihemplu."
+    },
+    {
+      "id": "tq2-010",
+      "category": "false_evidence",
+      "history": [],
+      "user_message": "What is chicken in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "chicken",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "mannok"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "månnok"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "månnuk"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "#103: gutos (snap off the neck of a chicken) is not a direct gloss.",
+      "must_not_direct_headwords": [
+        "gutos"
+      ]
+    },
+    {
+      "id": "tq2-011",
+      "category": "false_evidence",
+      "history": [],
+      "user_message": "What is food in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "food",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "boka"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "boka"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "boka"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "#103: ha'ilas (scarcity of food) is not a direct gloss.",
+      "must_not_direct_headwords": [
+        "ha'ilas"
+      ]
+    },
+    {
+      "id": "tq2-012",
+      "category": "false_evidence",
+      "history": [],
+      "user_message": "How do I say bamboo in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "bamboo",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "pi'ao"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "pi'ao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "gao lists bamboo as an example of a stalk joint; it is not a gloss for bamboo.",
+      "must_not_direct_headwords": [
+        "gao"
+      ]
+    },
+    {
+      "id": "tq2-013",
+      "category": "false_evidence",
+      "history": [],
+      "user_message": "What is tree in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "tree",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "tronkon håyu"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Species entries (bånalu: type of plant ... Tree) are not the general word.",
+      "must_not_direct_headwords": [
+        "bånalu"
+      ]
+    },
+    {
+      "id": "tq2-014",
+      "category": "dictionary_lookup",
+      "history": [],
+      "user_message": "What does ma a nao mean?",
+      "tutor_intent": null,
+      "expected_behavior": "answer",
+      "expected_router": "single_word_lookup",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "afraid",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "ma'å'ñao"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "Phone/OCR spacing from the production report (PR #65 idea)."
+    },
+    {
+      "id": "tq2-015",
+      "category": "polysemy",
+      "history": [],
+      "user_message": "How do I say \"I will eat later\" in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "will (future marker)",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "bai"
+            },
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "bai"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PR #109 polysemy: future \"will\". Source defines bai as \"Will (future marker)\"; gånas is the desire sense of \"will\".",
+      "must_not_direct_headwords": [
+        "gånas",
+        "ganas"
+      ]
+    },
+    {
+      "id": "tq2-016",
+      "category": "polysemy",
+      "history": [],
+      "user_message": "How do I say \"The food at the party is free\" in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "free (no cost)",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "dibåtde"
+            },
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "dibatde"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "dibåtdi"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PR #109 polysemy: \"free\" as no cost. Source defines dibåtdi as \"free, not costing anything, gratis\"; franko is the candid sense.",
+      "must_not_direct_headwords": [
+        "franko"
+      ]
+    },
+    {
+      "id": "tq2-017",
+      "category": "polysemy",
+      "history": [],
+      "user_message": "How do I say \"You may go now\" in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "may (permission)",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "siña"
+            },
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "siña"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "siña"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PR #109 polysemy: modal \"may\". Source defines siña as \"can, be able, may\"; Måyu is the month.",
+      "must_not_direct_headwords": [
+        "Måyu",
+        "Mayu",
+        "måkmamao",
+        "Makmamao",
+        "Makmåmåo"
+      ]
+    },
+    {
+      "id": "tq2-018",
+      "category": "polysemy",
+      "history": [],
+      "user_message": "How do I say \"My birthday is in May\" in Chamorro?",
+      "tutor_intent": null,
+      "expected_behavior": "best_effort_draft",
+      "expected_router": "passage_to_chamorro",
+      "expected_retrieved_headwords": [
+        {
+          "concept": "May (month)",
+          "any_of": [
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "Måyu"
+            },
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "Mayu"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "Måyu"
+            },
+            {
+              "file": "dictionary_data/chamoru_info_dictionary.json",
+              "headword": "måkmamao"
+            },
+            {
+              "file": "dictionary_data/chamorro_english_dictionary_TOD.json",
+              "headword": "Makmamao"
+            },
+            {
+              "file": "dictionary_data/revised_and_updated_chamorro_dictionary.json",
+              "headword": "Makmåmåo"
+            }
+          ]
+        }
+      ],
+      "must_not": [
+        "send_in_english",
+        "verified_without_citation"
+      ],
+      "notes": "PR #109 polysemy: the month sense of \"may\" stays reachable when the sentence asks for it.",
+      "must_not_direct_headwords": []
+    }
+  ]
+}

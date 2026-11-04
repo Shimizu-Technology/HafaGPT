@@ -538,3 +538,42 @@ def test_say_pattern_follow_up_keeps_english_direction() -> None:
     routed = resolve_translation_routing_query("What about guma'?", history)
 
     assert translation_direction(routed) == "to_english"
+
+
+@pytest.mark.parametrize(
+    ("query", "direction", "payload"),
+    [
+        ('Translate "media" into Chamorro.', "to_chamorro", "media"),
+        ("Translate media into Chamorro.", "to_chamorro", "media"),
+        ('Translate "mango" into Chamorro.', "to_chamorro", "mango"),
+        ("Translate mango in to Chamorro", "to_chamorro", "mango"),
+        ('Translate "media" to Chamoru.', "to_chamorro", "media"),
+        ('Translate "guma\'" into English.', "to_english", "guma'"),
+        ('Translate "guma\'" in English', "to_english", "guma'"),
+    ],
+)
+def test_into_and_in_to_name_the_destination(query: str, direction: str, payload: str) -> None:
+    assert classify_translation_request(query) == "single_word_lookup"
+    assert translation_direction(query) == direction
+    assert extract_translation_payload(query) == payload
+
+
+@pytest.mark.parametrize(
+    ("query", "intent", "payload"),
+    [
+        ("Translate I love my family into Chamorro.", "passage_to_chamorro", "I love my family"),
+        ("Translate this into Chamorro:\n\nI love my family.", "passage_to_chamorro", "I love my family."),
+        ('Translate "Håfa adai" in to English', "passage_to_english", "Håfa adai"),
+    ],
+)
+def test_into_routes_passages_toward_the_named_language(query: str, intent: str, payload: str) -> None:
+    assert classify_translation_request(query) == intent
+    assert extract_translation_payload(query) == payload
+
+
+def test_into_chamorro_follow_up_keeps_the_destination() -> None:
+    history = _thread("Translate tree into Chamorro.")
+
+    routed = resolve_translation_routing_query("What about bamboo?", history)
+
+    assert translation_direction(routed) == "to_chamorro"

@@ -32,9 +32,18 @@ def no_network(monkeypatch):
 
 
 def test_suite_attestations_and_coverage():
+    v1 = tq.load_cases(tq.DEFAULT_CASES.with_name('tutor_quality_v1.json'))
+    assert len(v1) == len({c['id'] for c in v1}) == 150
+    assert {c['category'] for c in v1} == {'production', 'dictionary_lookup', 'phrasing_variant', 'verification', 'school_message', 'communicative_goal', 'absent_word', 'grammar'}
     cases = tq.load_cases()
-    assert len(cases) == len({c['id'] for c in cases}) == 150
-    assert {c['category'] for c in cases} == {'production', 'dictionary_lookup', 'phrasing_variant', 'verification', 'school_message', 'communicative_goal', 'absent_word', 'grammar'}
+    assert tq.suite_id(tq.DEFAULT_CASES) == 'tutor_quality_v2'
+    assert len(cases) == len({c['id'] for c in cases}) == 168
+    # Source-supported polysemy (will/gånas, free/franko, may/Måyu) is measured in context.
+    assert {c['id'] for c in cases if c['category'] == 'polysemy'} == {'tq2-015', 'tq2-016', 'tq2-017', 'tq2-018'}
+    # v2 keeps every v1 case byte-for-byte, so the tq1 subset stays comparable.
+    assert cases[:150] == v1
+    assert all(c['id'].startswith('tq2-') for c in cases[150:])
+    assert "You're sure about all of these words for this sentence?" in {c['user_message'] for c in cases}
     assert sum(bool(c['history']) for c in cases) >= 15
     serialized = json.dumps(cases, ensure_ascii=False)
     assert not re.search(r'[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}', serialized)
@@ -298,3 +307,122 @@ def test_retry_completions_accumulate_usage_and_cost(monkeypatch):
     assert capture.current['output_tokens'] == 10
     assert capture.current['reported_cost_usd'] == pytest.approx(.002)
     assert capture.current['completion_calls'] == 2
+
+
+def test_direct_evidence_labels_are_scored_separately_from_mentions():
+    case = next(c for c in tq.load_cases() if c.get('must_not_direct_headwords') == ['gutos'])
+    mention = ('[Definition only mentions "chicken" inside a longer description; this is not a '
+               'dictionary gloss or translation of "chicken": gutos]\nSource: X\nDefinition: snap off')
+    assert tq.score(case, None, mention)['false_direct_evidence'] == []
+    direct = '[Direct dictionary gloss for "chicken": mannok]\nAlso recorded as: gutos (X)'
+    assert tq.score(case, None, direct)['false_direct_evidence'] == ['gutos']
+    canonical = '[Exact English dictionary gloss: chicken]\nChamorro headword: gutos\nSource: X'
+    assert tq.score(case, None, canonical)['false_direct_evidence'] == ['gutos']
+
+
+def test_un_rejection_rule_flags_the_production_error_only():
+    case = next(c for c in tq.load_cases() if 'rejects_un_as_only_you' in c['must_not'])
+    flagged = tq.score(case, 'In the dictionary, un only means "you (sg.)", so un rato should not be used.', '')
+    assert 'rejects_un_as_only_you' in flagged['must_not_violations']
+    for wording in ('The dictionary says un means only "you (sg.)", so un rato is incorrect.',
+                    'Here un is just "you", so the phrase cannot be right.',
+                    'Un means only you (singular) in the dictionary.'):
+        assert 'rejects_un_as_only_you' in tq.score(case, wording, '')['must_not_violations'], wording
+    supported = tq.score(case, 'The references record un as "you (sg.)" and as "a, an, one" [Chamoru.info dictionary].', '')
+    assert 'rejects_un_as_only_you' not in supported['must_not_violations']
+    also = tq.score(case, 'The dictionary records un as "you" and also as "a, an, one" [Chamoru.info dictionary].', '')
+    assert 'rejects_un_as_only_you' not in also['must_not_violations']
+
+
+def test_used_retrieval_counts_evidence_kept_in_the_final_prompt():
+    case = tq.load_cases()[0]
+    full, kept = tq.digest('retrieved but cut by the prompt budget'), tq.digest('Chamorro headword: example')
+    base = dict(tq.score(case, None, ''), id='x', category=case['category'], expected_behavior='answer',
+                router='none', expected_router='none', latency_s=1, error=None)
+    rows = [
+        dict(base, evidence_hash=full, retained_evidence_hash=tq.EMPTY_DIGEST),  # truncated away entirely
+        dict(base, evidence_hash=full, retained_evidence_hash=kept),
+        dict(base, evidence_hash=tq.EMPTY_DIGEST, retained_evidence_hash=tq.EMPTY_DIGEST),
+        dict(base, evidence_hash=full),  # a row recorded before the retained digest existed
+    ]
+    summary = tq.summarize(rows, {})
+    assert summary['used_retrieval_cases'] == 2
+    assert summary['retrieved_evidence_cases'] == 3
+
+
+def test_a_retained_header_alone_is_not_evidence():
+    assert tq.evidence_entries('[Direct dictionary gloss]\n[Source: x]') == ''
+    assert tq.evidence_entries('[Direct dictionary gloss]\nChamorro headword: x') == 'Chamorro headword: x'
+
+
+@pytest.mark.parametrize(('reply', 'used'), [
+    ('Do not use håyu here.', False),
+    ('Avoid "håyu" in this sentence.', False),
+    ('The word is tronko, not håyu.', False),
+    ('Use håyu here.', True),
+    ('Do not use tronko. Use håyu.', True),
+    ('Do not use håyu here, although håyu is common.', True),
+])
+def test_answer_use_skips_a_headword_the_reply_only_rejects(reply, used):
+    assert tq.headword_used('håyu', reply) is used
+
+
+def test_subset_summaries_compare_suite_versions():
+    case = tq.load_cases()[0]
+    row = dict(tq.score(case, 'A supported answer [dictionary].', 'tronkon håyu'), category=case['category'],
+               expected_behavior='answer', router='none', expected_router='none', latency_s=1, error=None)
+    subsets = tq.subset_summaries([dict(row, id='tq1-001'), dict(row, id='tq2-001', retrieved_headwords=0)])
+    assert subsets['tq1']['expected_headword_recall'] == 1
+    assert subsets['tq2']['expected_headword_recall'] == 0
+    assert tq.subset_summaries([dict(row, id='tq1-001')]) == {}
+
+
+def test_answer_use_is_scored_separately_from_retrieval_presence():
+    case = next(c for c in tq.load_cases() if c['expected_retrieved_headwords'])
+    headword = case['expected_retrieved_headwords'][0]['any_of'][0]['headword']
+    unused = tq.score(case, 'A reply that never names the word.', f'Definition entry: {headword}')
+    assert unused['retrieved_headwords'] >= 1 and unused['answer_used_headwords'] == 0
+    used = tq.score(case, f'Use **{headword}** here [dictionary].', '')
+    assert used['retrieved_headwords'] == 0 and used['answer_used_headwords'] >= 1
+    assert tq.score(case, None, headword)['answer_used_headwords'] is None
+
+
+def test_non_answer_detection_widens_without_changing_the_legacy_refusal_signal():
+    case = next(c for c in tq.load_cases() if c['user_message'] == 'Review Chamorro colors')
+    colors = ('The supplied references do not include Chamorro color words, so I can’t accurately review them '
+              'from the available sources. Send me the color list or a source, and I’ll review the Guam spelling.')
+    result = tq.score(case, colors, '')
+    assert result['refusal'] is False and result['refusal_or_non_answer'] is True
+    # Asking for the requested material is enough even without a hedged "can't".
+    unhedged = 'The supplied references do not include color words. Send me the color list and I will review it.'
+    assert tq.score(case, unhedged, '')['refusal_or_non_answer'] is True
+    # The T4-r1 paid run's wording for the same non-answer.
+    no_terms = ("I don’t have any supplied Chamorro color terms to review. "
+                "Please send the color list or the specific words you want checked.")
+    assert tq.score(case, no_terms, '')['refusal'] is False
+    assert tq.score(case, no_terms, '')['refusal_or_non_answer'] is True
+    partial = ('**tronkon håyu** is supported as “tree” [Chamoru.info dictionary], but the supplied references '
+               'do not cover “all.” Send me the full sentence if you want a draft.')
+    assert tq.score(case, partial, '')['refusal_or_non_answer'] is False
+    # A supported answer that then declines part of the request is still flagged
+    # by the documented inability branch, not the coverage branch.
+    mixed = ('**tronkon håyu** is supported as “tree” [Chamoru.info dictionary]. '
+             'I cannot review the remaining words.')
+    assert tq.CANNOT_ANSWER.search(mixed) and not tq.LACKS_COVERAGE.search(mixed)
+    assert tq.score(case, mixed, '')['refusal_or_non_answer'] is True
+    assert tq.score(case, mixed, '')['refusal'] is False
+    rows = [dict(tq.score(case, text, ''), id=f'tq1-00{i}', category=case['category'], expected_behavior='answer',
+                 router='none', expected_router='none', latency_s=1, error=None)
+            for i, text in enumerate((colors, partial))]
+    summary = tq.summarize(rows, {})
+    assert summary['refusal_count'] == 0
+    assert summary['refusal_or_non_answer_count'] == 1
+    assert summary['refusal_or_non_answer_case_ids'] == ['tq1-000']
+
+
+def test_strong_chamorro_headword_labels_count_as_false_direct_evidence():
+    case = next(c for c in tq.load_cases() if c.get('must_not_direct_headwords') == ['gutos'])
+    exact = '[Exact dictionary headword "gutos": gutos]\nSource: X\nDefinition: snap off'
+    assert tq.score(case, None, exact)['false_direct_evidence'] == ['gutos']
+    lead = '[Chamorro headword spelled like "gutos" (not a translation): gutos]\nSource: X'
+    assert tq.score(case, None, lead)['false_direct_evidence'] == []

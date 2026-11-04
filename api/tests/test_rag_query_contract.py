@@ -333,7 +333,8 @@ def test_quoted_translation_instruction_does_not_override_outer_request() -> Non
 def test_guillemet_target_reaches_post_suffix_wrapper_cleanup() -> None:
     query = "Translate «håfa adai» to English."
 
-    assert extract_translation_payload(query) == "«håfa adai» to English."
+    # A final period no longer keeps the destination inside the payload.
+    assert extract_translation_payload(query) == "«håfa adai»"
     assert extract_short_lexical_target(query) == "håfa adai"
 
 

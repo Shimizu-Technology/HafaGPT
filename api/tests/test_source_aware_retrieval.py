@@ -2,6 +2,17 @@ import ast
 import json
 from pathlib import Path
 
+import pytest
+
+from api.lexical_lookup import (
+    LexicalLookup,
+    homograph_sense_context,
+    lexical_lookup_context,
+    lexical_lookup_request,
+)
+from api.verification_evidence import VerificationLookups
+from src.rag.knowledge_cards import get_knowledge_card_context, uncovered_card_clauses
+
 
 SOURCE_PATH = Path(__file__).resolve().parents[1] / "api" / "chatbot_service.py"
 SOURCE = SOURCE_PATH.read_text(encoding="utf-8")
@@ -32,6 +43,8 @@ def _load_get_rag_context(
     fake_rag: FakeRAG,
     card_context: str,
     use_rag: bool = True,
+    real_lexical: bool = False,
+    real_cards: bool = False,
 ):
     module = ast.parse(SOURCE)
     function = next(
@@ -52,6 +65,11 @@ def _load_get_rag_context(
             card_context,
             [{"name": "Reviewed source", "page": None}] if card_context else [],
         ),
+        # Per-word lookups have their own tests; these isolate card/vector policy.
+        "lexical_lookup_request": lambda _query: None,
+        "lexical_lookup_context": lambda _query, **_kwargs: LexicalLookup(),
+        "homograph_sense_context": lambda _terms, **_kwargs: LexicalLookup(),
+        "uncovered_card_clauses": uncovered_card_clauses,
         "rag": fake_rag,
         "count_tokens": lambda value: len(value.split()),
         "truncate_text": lambda value, _limit: value,
@@ -61,6 +79,14 @@ def _load_get_rag_context(
         "json": json,
         "logger": logger,
     }
+    if real_cards:
+        namespace["get_knowledge_card_context"] = get_knowledge_card_context
+    if real_lexical:
+        namespace.update(
+            lexical_lookup_request=lexical_lookup_request,
+            lexical_lookup_context=lexical_lookup_context,
+            homograph_sense_context=homograph_sense_context,
+        )
     exec(compile(ast.Module(body=[function], type_ignores=[]), str(SOURCE_PATH), "exec"), namespace)
     return namespace["get_rag_context"], logger
 
@@ -197,3 +223,112 @@ def test_guided_topic_has_governed_curriculum_even_when_generic_rag_router_skips
     context, sources = get_rag_context("Try a phrase", intent="practice", learning_topic_id="greetings", include_vector=False)
     assert "Recommended teaching term:" in context
     assert sources
+
+
+def test_bare_dictionary_word_is_looked_up_even_when_the_router_skips() -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _ = _load_get_rag_context(
+        fake_rag=fake_rag, card_context="", use_rag=False, real_lexical=True,
+    )
+
+    context, sources = get_rag_context("brown")
+
+    assert "=== PER-WORD DICTIONARY LOOKUPS ===" in context
+    assert "kulót chukulåti" in context
+    assert ("Revised and updated Chamorro dictionary", None) in sources
+    # Light mode: one vector reference after the dictionary entries.
+    assert fake_rag.calls == [("brown", 1)]
+    assert get_rag_context("good job") == ("", [])
+
+
+def test_a_failing_bare_word_probe_counts_as_no_match_instead_of_raising() -> None:
+    get_rag_context, _ = _load_get_rag_context(
+        fake_rag=FakeRAG(), card_context="", use_rag=False, real_lexical=True,
+    )
+
+    def broken_lookup(_query, **_kwargs):
+        raise RuntimeError("dictionary unavailable")
+
+    get_rag_context.__globals__["lexical_lookup_context"] = broken_lookup
+
+    assert get_rag_context("brown") == ("", [])
+
+
+def test_per_word_lookups_come_after_exact_matches_and_before_cards_and_vectors() -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _ = _load_get_rag_context(fake_rag=fake_rag, card_context="", real_lexical=True)
+
+    context, _sources = get_rag_context("I want to say bamboo")
+
+    assert context.index("canonical context") < context.index("PER-WORD") < context.index("vector context")
+
+
+def test_compound_question_keeps_vector_retrieval_for_the_uncovered_clause() -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _ = _load_get_rag_context(fake_rag=fake_rag, card_context="orthography card")
+
+    context, _sources = get_rag_context(
+        "What is the current Guam CHamoru orthography? Also explain possession in detail."
+    )
+
+    assert "orthography card" in context and context.endswith("vector context")
+    assert fake_rag.calls == [("explain possession in detail.", 3)]
+
+
+@pytest.mark.parametrize(
+    ("query", "uncovered"),
+    [
+        ("What is the current Guam CHamoru orthography and explain possession in detail?",
+         "explain possession in detail?"),
+        ("What is the current Guam CHamoru orthography? Explain possession.", "Explain possession."),
+        ("What is the current Guam CHamoru orthography, and how do I write possession?",
+         "how do I write possession?"),
+    ],
+)
+def test_real_card_matcher_keeps_vectors_for_coordinated_and_short_clauses(query, uncovered) -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _ = _load_get_rag_context(fake_rag=fake_rag, card_context="", real_cards=True)
+
+    context, _sources = get_rag_context(query)
+
+    assert "[Knowledge card: orthography.guam.current_reference]" in context
+    assert fake_rag.calls == [(uncovered, 3)]
+
+
+@pytest.mark.parametrize(
+    "query",
+    [
+        "What is the current Guam CHamoru orthography?",
+        "What is the current Guam CHamoru orthography? Explain more.",
+        "What is the current Guam CHamoru orthography? Thanks!",
+    ],
+)
+def test_real_card_still_settles_a_single_topic(query) -> None:
+    fake_rag = FakeRAG()
+    get_rag_context, _ = _load_get_rag_context(fake_rag=fake_rag, card_context="", real_cards=True)
+
+    context, _sources = get_rag_context(query)
+
+    assert "[Knowledge card: orthography.guam.current_reference]" in context
+    assert fake_rag.calls == []
+
+
+class SenseRAG(FakeRAG):
+    def dictionary_homograph_senses(self, keys):
+        senses = {"un": (("A, an, one (indefinite article).", {"source_id": "chamoru_info_dictionary"}),)}
+        return {key: senses.get(key, ()) for key in keys}
+
+
+def test_recheck_keeps_its_term_lookups_and_adds_only_collapsed_senses() -> None:
+    fake_rag = SenseRAG()
+    get_rag_context, _ = _load_get_rag_context(fake_rag=fake_rag, card_context="", real_lexical=True)
+    lookups = VerificationLookups(context="term lookups", sources=[], found=("un",))
+
+    context, _sources = get_rag_context(
+        "Are you sure?", retrieval_input="I want to say bamboo", verification_lookups=lookups,
+    )
+
+    assert context.startswith("term lookups\n\ncanonical context")
+    assert "Another recorded sense of \"un\"" in context
+    # No per-word lookup of the earlier request: the re-check flow is unchanged.
+    assert "pi'ao" not in context

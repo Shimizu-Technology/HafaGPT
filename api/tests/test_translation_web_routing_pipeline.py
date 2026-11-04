@@ -36,7 +36,7 @@ def _recorded(*turns: tuple[str, str | None]) -> ConversationHistory:
     return history
 
 
-def _pipeline_namespace(history: list[dict[str, str]]):
+def _pipeline_namespace(history: list[dict[str, str]], web_result: dict | None = None):
     namespace = deferred_stream_namespace("success")
     rag_calls: list[dict] = []
 
@@ -48,7 +48,7 @@ def _pipeline_namespace(history: list[dict[str, str]]):
         {
             "classify_translation_request": classify_translation_request,
             "resolve_translation_routing_query": resolve_translation_routing_query,
-            "web_search": Mock(return_value={"success": True, "results": ["unrelated"]}),
+            "web_search": Mock(return_value=web_result or {"success": True, "results": ["unrelated"]}),
             "format_search_results": lambda result: "WEB RESULTS",
             "get_rag_context": get_rag_context,
             "get_conversation_history": lambda conversation_id: history,
@@ -61,8 +61,9 @@ def _pipeline_namespace(history: list[dict[str, str]]):
     return namespace, rag_calls
 
 
-def _run(path: str, message: str, history: list[dict[str, str]], intent: str | None):
-    namespace, rag_calls = _pipeline_namespace(history)
+def _run(path: str, message: str, history: list[dict[str, str]], intent: str | None,
+         web_result: dict | None = None):
+    namespace, rag_calls = _pipeline_namespace(history, web_result)
     if path == "stream":
         stream = load_function("get_chatbot_response_stream", namespace)
         list(
@@ -130,6 +131,20 @@ def test_real_current_information_request_still_uses_web_search(path):
 
     namespace["web_search"].assert_called_once()
     assert rag_call["include_vector"] is False
+
+
+@pytest.mark.parametrize("path", ["stream", "nonstream"])
+@pytest.mark.parametrize("web_result", [{"success": False, "results": []}, {"success": True, "results": []}])
+def test_failed_or_empty_web_search_keeps_corpus_retrieval(path, web_result):
+    # KB audit: "current" routed this compound language question to web
+    # search, and a failed search then also removed the grammar references.
+    namespace, rag_call = _run(
+        path, "What is the current Guam CHamoru orthography? Also explain possession in detail.",
+        [], None, web_result,
+    )
+
+    namespace["web_search"].assert_called_once()
+    assert rag_call["include_vector"] is True
 
 
 STORE = 'How do you say "the store closes at five" in Chamorro?'

@@ -29,7 +29,25 @@ def should_use_rag(
     if any(re.search(pattern, user_lower) for pattern in simple_patterns):
         return False, None
 
-    if any(pattern in user_lower for pattern in ("summarize", "summary", "recap", "review")):
+    # A review of vocabulary or words is a language request, unless the words
+    # belong to an English document ("review the words of my essay").
+    if (
+        re.search(r"\breview\w*", user_lower)
+        and re.search(r"\b(?:vocab\w*|words?)\b", user_lower)
+        and not re.search(
+            r"\b(?:essay|paper|report|document|article|resume|email|letter|contract|proposal|thesis|code)s?\b",
+            user_lower,
+        )
+    ):
+        return True, "full"
+
+    # "Summarize our chat" needs no references, but "Review Chamorro colors"
+    # is a language request that happens to contain "review".
+    if any(pattern in user_lower for pattern in ("summarize", "summary", "recap", "review")) and not re.search(
+        r"\b(?:chamor(?:ro|u)|translat\w*|words?|vocab\w*|phrases?|grammar|spell\w*|"
+        r"pronounc\w*|mean(?:s|ing)?|colou?rs?|numbers?|greetings?|verbs?|nouns?)\b",
+        user_lower,
+    ):
         return False, None
 
     language_indicators = [

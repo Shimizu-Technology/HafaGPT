@@ -26,6 +26,11 @@ from .prompt_budget import assemble_system_prompt, fit_references
 from .image_translation import translate_image_pages
 from .image_translation_legacy import translate_image_pages as translate_image_pages_legacy
 from .canonical_context import get_canonical_tutor_context
+from .lexical_lookup import (
+    homograph_sense_context,
+    lexical_lookup_context,
+    lexical_lookup_request,
+)
 from .verification_evidence import VerificationLookups, verification_term_context
 from .tutor_intent import tutor_task_guidance
 from .source_citations import format_source_citations
@@ -329,7 +334,7 @@ def detect_image_context_card_ids(
 
 # Import RAG module (uses OpenAI embeddings - lightweight!)
 from src.rag.chamorro_rag import rag
-from src.rag.knowledge_cards import get_knowledge_card_context
+from src.rag.knowledge_cards import get_knowledge_card_context, uncovered_card_clauses
 from src.rag.query_classification import detect_query_type
 from src.rag.query_routing import should_use_rag
 from src.rag.retrieval_observability import build_retrieval_event
@@ -1232,6 +1237,20 @@ def get_rag_context(
     )
     if curriculum_context:
         use_rag, rag_mode = True, rag_mode or "light"
+    if not use_rag and verification_lookups is None:
+        # A bare dictionary word ("brown") is a lookup even though it has no
+        # question words for the general router to recognize. A failed probe is
+        # no match, so the request carries on as an ordinary non-RAG reply.
+        try:
+            bare_word_match = (
+                lexical_lookup_request(retrieval_query) is not None
+                and bool(lexical_lookup_context(retrieval_query).context)
+            )
+        except Exception as error:
+            logger.error(f"Bare-word lexical probe error: {error}")
+            bare_word_match = False
+        if bare_word_match:
+            use_rag, rag_mode = True, "light"
 
     if not use_rag:
         retrieval_event = build_retrieval_event(
@@ -1258,6 +1277,29 @@ def get_rag_context(
         contexts.append(canonical_context)
         sources.extend(canonical_sources)
 
+    # Every content word next, before semantic search. A re-check keeps its
+    # own exact term lookups and only gains senses those entries collapsed.
+    homographs = getattr(rag, "dictionary_homograph_senses", None)
+    try:
+        with retrieval_scope(cancelled):
+            if verification_lookups is not None:
+                lexical = homograph_sense_context(
+                    verification_lookups.found + verification_lookups.found_parts,
+                    already_supplied="\n\n".join(contexts),
+                    homographs=homographs,
+                )
+            else:
+                lexical = lexical_lookup_context(
+                    retrieval_query,
+                    already_supplied="\n\n".join(contexts),
+                    homographs=homographs,
+                )
+        if lexical.context:
+            contexts.append(lexical.context)
+            sources.extend(lexical.sources)
+    except Exception as error:
+        logger.error(f"Lexical lookup error: {error}")
+
     card_context = ""
     try:
         card_context, card_sources = get_knowledge_card_context(
@@ -1276,10 +1318,19 @@ def get_rag_context(
         # can add older, regional, or merely incidental evidence. Passage
         # translations are the exception: a scoped usage card can clarify one
         # abbreviation while vector retrieval supports the rest of the passage.
+        # A card settles only the clause it matched. In a compound question
+        # ("...orthography? Also explain possession."), the other clause still
+        # needs its own references.
+        uncovered_query = (
+            uncovered_card_clauses(retrieval_query)
+            if card_context and not contextual_card_ids
+            else ""
+        )
         if include_vector and rag is not None and (
             not card_context
             or contextual_card_ids
             or is_passage_translation(retrieval_query)
+            or uncovered_query
         ):
             # Passage translations commonly need several independent lexical and
             # grammar clues. A wider governed window prevents one broad semantic
@@ -1290,7 +1341,7 @@ def get_rag_context(
             else:
                 k = 1 if rag_mode == "light" else 3
             with retrieval_scope(cancelled):
-                vector_context, vector_sources = rag.create_context(retrieval_query, k=k)
+                vector_context, vector_sources = rag.create_context(uncovered_query or retrieval_query, k=k)
             if vector_context:
                 contexts.append(vector_context)
                 sources.extend(vector_sources)
@@ -1650,7 +1701,8 @@ def get_chatbot_response(
         conversation_length,
         contextual_card_ids=contextual_card_ids,
         retrieval_input=retrieval_message,
-        include_vector=not use_web,
+        # A failed or empty web search must not also remove the corpus.
+        include_vector=not web_results_used,
         intent=intent,
         learning_topic_id=learning_topic_id,
         cancelled=lambda: is_message_cancelled(pending_id),
@@ -2083,7 +2135,8 @@ def get_chatbot_response_stream(
         max_tokens=token_manager.budget.rag_context,
         contextual_card_ids=contextual_card_ids,
         retrieval_input=retrieval_message,
-        include_vector=not use_web,
+        # A failed or empty web search must not also remove the corpus.
+        include_vector=not web_results_used,
         intent=intent,
         learning_topic_id=learning_topic_id,
         cancelled=lambda: is_message_cancelled(pending_id),

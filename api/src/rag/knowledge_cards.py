@@ -375,6 +375,56 @@ def matching_production_cards(query: str, *, limit: int = 3) -> list[dict[str, A
     return [card for _score, card in scored[:limit]]
 
 
+# A coordinated request ("...orthography and explain possession") starts a new
+# clause at "and"/"but"/"plus"/"then" followed by a request or question word.
+_CLAUSE_BOUNDARY = re.compile(
+    r"(?<=[?.!])\s+|\s*;\s*|\n+|"
+    r",?\s+(?:and|but|plus|then)\s+(?:also\s+)?(?=(?:please\s+)?(?:explain|describe|tell|show|give|teach|"
+    r"list|define|compare|translate|help|what|how|why|when|where|which|who|can|could|would|is|are|do|does)\b)",
+    re.I,
+)
+# Words that carry no topic of their own ("Explain more.", "Thanks!").
+_CLAUSE_FILLER = frozenset("""
+explain describe tell show give teach list define more detail details please thanks thank also
+that this what about much again example examples elaborate further with some okay really great
+could would should them they there here
+""".split())
+
+
+def uncovered_card_clauses(query: str) -> str:
+    """Return the clauses of a compound question that no approved card matches.
+
+    An empty string means the request is a single clause, or every clause is
+    covered, so the matched cards remain the complete answer. A clause is
+    covered only by a card among those selected for the whole request. A short
+    clause counts when it names a topic ("Explain possession.") or an acronym.
+    """
+
+    sentences = _CLAUSE_BOUNDARY.split(query or "")
+    clauses = [
+        re.sub(r"(?i)^\s*(?:and\s+)?(?:also|additionally|plus|then)\b[\s,]*", "", sentence).strip()
+        for sentence in sentences
+    ]
+    clauses = [
+        clause for clause in clauses
+        if re.search(r"\b[A-Z]{3,}\b", clause)  # "Why SYM?"
+        or any(len(word) >= 4 and word not in _CLAUSE_FILLER for word in re.findall(r"[^\W\d_]+", clause.casefold()))
+    ]
+    if len(clauses) < 2:
+        return ""
+    # A clause is settled only by a card that is actually in the prompt: the
+    # cards chosen for the whole request, at most three.
+    selected = {card["id"] for card in matching_production_cards(query)}
+    every_card = max(len(production_cards()), 1)
+    uncovered = [
+        clause for clause in clauses
+        if not selected.intersection(card["id"] for card in matching_production_cards(clause, limit=every_card))
+    ]
+    if not uncovered or len(uncovered) == len(clauses):
+        return ""
+    return " ".join(uncovered)
+
+
 def get_knowledge_card_context(
     query: str,
     *,

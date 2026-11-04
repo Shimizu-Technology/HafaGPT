@@ -26,7 +26,9 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
-DEFAULT_CASES = Path(__file__).with_name('tutor_quality_v1.json')
+# v2 carries every v1 case unchanged plus tq2 additions; v1 stays frozen for
+# its published baselines. Summaries report the tq1 subset separately.
+DEFAULT_CASES = Path(__file__).with_name('tutor_quality_v2.json')
 # These are triage signals. A supported draft plus a precise uncertainty note can
 # still match a refusal expression; the human packet is authoritative.
 REFUSAL = re.compile(
@@ -35,6 +37,32 @@ REFUSAL = re.compile(
     r"I (?:do not|don't) have (?:a |an |any )?(?:verified|reliable|confirmed)|"
     r"no (?:verified|attested|reliable) (?:dictionary )?(?:entry|translation|word)|"
     r"(?:send|write|say) (?:it|this|that|the message) in English)\b", re.I)
+# Wider non-answer triage, reported beside the unchanged REFUSAL signal so old
+# and new runs stay comparable. It adds hedged refusals ("I can't accurately
+# review them") and replies that say the references lack the topic and ask the
+# learner to supply the very thing they asked about ("Review Chamorro colors" ->
+# "Send me the color list or a source"). An offer to check a further sentence
+# after a partial answer does not count.
+CANNOT_ANSWER = re.compile(
+    r"\bI (?:cannot|can't|won't|am unable to|couldn't|could not)(?: (?:currently|accurately|reliably|fully|confidently|properly))? "
+    r"(?:provide|translate|give|verify|confirm|review|answer|list|tell you|teach)\b", re.I)
+LACKS_COVERAGE = re.compile(
+    r"\b(?:references|sources|evidence|materials|dictionar(?:y|ies)|entries)(?: \w+){0,3} "
+    r"(?:do not|don't|does not|doesn't|did not|didn't) (?:include|contain|cover|list|show|have|give)\b|"
+    r"\bI (?:do not|don't) have (?:any |the )?(?:\w+ ){0,4}(?:terms?|words?|entries|references|sources|list)\b", re.I)
+ASKS_FOR_MATERIAL = re.compile(
+    r"\b(?:send|give|share|provide|paste|upload)(?: me)? (?:the|a|an|your|that)(?: \w+){0,3} "
+    r"(?:list|source|words?|terms?|text|sentence|message|vocabulary)\b", re.I)
+_MATERIAL_WORDS = frozenset('send give share provide paste upload list source words word terms term text sentence message vocabulary'.split())
+
+
+def asks_for_requested_material(response: str, request: str) -> bool:
+    stems = {word[:5] for word in re.findall(r'[a-z]{4,}', request.casefold())} - {'chamo'}
+    return any(word[:5] in stems
+               for match in ASKS_FOR_MATERIAL.finditer(response)
+               for word in re.findall(r'[a-z]{4,}', match.group(0).casefold()) if word not in _MATERIAL_WORDS)
+
+
 UNCERTAIN = re.compile(r"\b(?:unverified|uncertain|not (?:locally )?(?:attested|verified)|cannot verify|can't verify|couldn't verify|could not verify|couldn't find|could not find|no .{0,35}(?:entry|match)|not found|don't have|do not have)\b", re.I)
 PATTERNS = {
     'send_in_english': r"\b(?:send|text|write|say|reply)(?:\s+\w+){0,7}\s+in English\b",
@@ -42,11 +70,24 @@ PATTERNS = {
     'matching_as_monkey': r"\bmatching\b",
     'retracts_canonical_term': r"\b(?:retract|take back|withdraw)\b|(?:do not|don't) (?:verify|treat.{0,35}(?:verified|source))|(?:previous|earlier).{0,60}(?:not verified|unverified|unsupported)",
     'unresolved_school_abbreviation': r"(?:SYM|MSY).{0,100}(?:unclear|unknown|not clear|cannot|can't|not sure)|(?:cannot|can't|unclear|unknown).{0,100}(?:SYM|MSY)",
+    # The production error: "un" is only "you (sg.)", so the learner's form is wrong.
+    'rejects_un_as_only_you': r"\bun\b[^\n]{0,80}\b(?:only|just)\s+(?:means?|is)\b[^\n]{0,20}\byou\b|\bun\b[^\n]{0,20}\b(?:means?|is)\s+(?:only|just)\b[^\n]{0,20}\byou\b|(?:should(?:n't| not)|cannot|can't|don't|do not|avoid)\s+(?:be\s+)?(?:use[ds]?|using|say|saying)\b[^\n]{0,40}\bun\b",
 }
+# Evidence blocks that present a headword as the word for the requested concept,
+# including strong Chamorro headword matches ("mango'" for "mango").
+DIRECT_EVIDENCE_HEADER = re.compile(
+    r'^\[(?:Direct dictionary gloss|Exact English dictionary gloss|Exact dictionary headword|Headword matching)')
 
 
 def digest(value: str) -> str:
     return hashlib.sha256(value.encode()).hexdigest()
+
+
+EMPTY_DIGEST = digest('')
+
+
+def suite_id(path: Path) -> str:
+    return json.loads(path.read_text(encoding='utf-8')).get('suite_id', path.stem)
 
 
 def load_cases(path: Path = DEFAULT_CASES) -> list[dict]:
@@ -65,6 +106,8 @@ def load_cases(path: Path = DEFAULT_CASES) -> list[dict]:
             raise ValueError('Invalid tutor intent')
         if set(case['must_not']) - allowed_rules:
             raise ValueError('Unknown must_not rule')
+        if not all(isinstance(item, str) and item for item in case.get('must_not_direct_headwords', [])):
+            raise ValueError('Invalid must_not_direct_headwords')
         for turn in case['history']:
             if turn['role'] not in {'user', 'assistant'} or not isinstance(turn['content'], str):
                 raise ValueError('Only in-memory text history is supported')
@@ -91,12 +134,48 @@ def headword_present(headword: str, text: str) -> bool:
     return bool(re.search(r'(?<![\w\'’])' + re.escape(headword) + r'(?![\w\'’])', text, re.I))
 
 
+_REJECTED_BEFORE = re.compile(
+    r"(?i)\b(?:do\s+not|don['’]t|never|avoid|not|instead\s+of|rather\s+than)(?:\s+(?:use|using|say|saying|write|writing))?\s*[\"'“‘*`_]*$"
+)
+
+
+def headword_used(headword: str, text: str) -> bool:
+    """True when the reply uses a headword, not only rejects it ("Do not use mangga")."""
+    pattern = r'(?<![\w\'’])' + re.escape(headword) + r'(?![\w\'’])'
+    return any(not _REJECTED_BEFORE.search(text[max(0, match.start() - 40):match.start()])
+               for match in re.finditer(pattern, text, re.I))
+
+
+def evidence_entries(retained: str) -> str:
+    """Retained evidence without bracketed block headers, so a header alone is not evidence."""
+    return '\n'.join(line for line in retained.splitlines() if not line.startswith('['))
+
+
+def direct_evidence_headwords(evidence: str, headwords: list[str]) -> list[str]:
+    """Headwords that retained evidence labels as a direct gloss for the request.
+
+    A direct block names its headword after the label's last colon, on a
+    "Chamorro headword:" line, or on an "Also recorded as:" line.
+    """
+    named, in_direct_block = [], False
+    for line in evidence.splitlines():
+        if line.startswith('['):
+            in_direct_block = bool(DIRECT_EVIDENCE_HEADER.match(line))
+            if in_direct_block:
+                named.append(line.rsplit(':', 1)[-1])
+        elif in_direct_block and line.startswith(('Chamorro headword:', 'Also recorded as:')):
+            named.append(line.split(':', 1)[1])
+    return [headword for headword in headwords if any(headword_present(headword, text) for text in named)]
+
+
 def score(case: dict, response: str | None, evidence: str) -> dict:
     groups = case['expected_retrieved_headwords']
     hits = [g['concept'] for g in groups if any(headword_present(r['headword'], evidence) for r in g['any_of'])]
     result = {'expected_headwords': len(groups), 'retrieved_headwords': len(hits),
-              'retrieved_concepts': hits, 'refusal': None, 'must_not_violations': None,
-              'expected_behavior_signal': None}
+              'retrieved_concepts': hits, 'refusal': None, 'refusal_or_non_answer': None,
+              'answer_used_headwords': None, 'answer_used_concepts': None,
+              'must_not_violations': None, 'expected_behavior_signal': None,
+              'false_direct_evidence': direct_evidence_headwords(evidence, case.get('must_not_direct_headwords', []))}
     if response is None:
         return result
     # Matching only: normalize quote typography and Markdown emphasis, keeping
@@ -116,11 +195,21 @@ def score(case: dict, response: str | None, evidence: str) -> dict:
             # Absence of uncertainty is a warning, not proof of fabrication.
             violations.append(rule)
     refusal = bool(REFUSAL.search(response))
+    non_answer = refusal or bool(CANNOT_ANSWER.search(response)) or bool(
+        LACKS_COVERAGE.search(response) and asks_for_requested_material(response, case['user_message']))
+    # Retrieval recall counts a headword anywhere in the evidence; this counts
+    # only expected headwords the reply itself uses (same exact-form matching).
+    used = [g['concept'] for g in groups if any(headword_used(r['headword'], response) for r in g['any_of'])]
     behavior = case['expected_behavior']
-    result.update(refusal=refusal, must_not_violations=violations,
+    result.update(refusal=refusal, refusal_or_non_answer=non_answer,
+                  answer_used_headwords=len(used), answer_used_concepts=used, must_not_violations=violations,
                   expected_behavior_signal=bool(UNCERTAIN.search(response)) if behavior == 'refuse_absent' else
                   '?' in response if behavior == 'clarify' else not refusal)
     return result
+
+
+def has_evidence(evidence_hash: str | None) -> bool:
+    return bool(evidence_hash) and evidence_hash != EMPTY_DIGEST
 
 
 def percentile(values: list[float], quantile: float) -> float | None:
@@ -133,6 +222,9 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
     scored = [r for r in ok if r['must_not_violations'] is not None]
     expected = sum(r['expected_headwords'] for r in ok)
     hits = sum(r['retrieved_headwords'] for r in ok)
+    responded = [r for r in ok if r.get('answer_used_headwords') is not None]
+    used_total = sum(r['expected_headwords'] for r in responded)
+    used_hits = sum(r['answer_used_headwords'] for r in responded)
     categories = {}
     for category in sorted({row['category'] for row in rows}):
         category_rows = [row for row in rows if row['category'] == category]
@@ -146,6 +238,8 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
             'headword_recall': found / total if total else None,
             'answerable_responses': len(answers),
             'refusal_count': sum(row['refusal'] for row in answers),
+            'refusal_or_non_answer_count': sum(bool(row.get('refusal_or_non_answer')) for row in answers),
+            'answer_used_headword_hits': sum(row.get('answer_used_headwords') or 0 for row in usable),
             'router_misses': sum(row['router'] != row['expected_router'] for row in category_rows),
         }
     return {**metadata, 'cases': len(rows), 'completed_cases': len(ok),
@@ -154,8 +248,21 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
             'answerable_responses': len(answerable),
             'refusal_count': sum(r['refusal'] for r in answerable),
             'refusal_rate_answerable': sum(r['refusal'] for r in answerable) / len(answerable) if answerable else None,
+            'refusal_or_non_answer_count': sum(bool(r.get('refusal_or_non_answer')) for r in answerable),
+            'refusal_or_non_answer_rate_answerable': sum(bool(r.get('refusal_or_non_answer')) for r in answerable) / len(answerable) if answerable else None,
+            'refusal_or_non_answer_case_ids': [r['id'] for r in answerable if r.get('refusal_or_non_answer')],
             'expected_headword_hits': hits, 'expected_headword_total': expected,
             'expected_headword_recall': hits / expected if expected else None,
+            'answer_used_headword_hits': used_hits, 'answer_used_headword_total': used_total,
+            'answer_used_headword_rate': used_hits / used_total if used_total else None,
+            'metric_notes': {
+                'refusal_count': 'legacy REFUSAL regex, unchanged for comparison with earlier runs',
+                'refusal_or_non_answer_count': 'legacy regex plus hedged refusals and lacks-coverage replies that ask the learner for the material',
+                'expected_headword_recall': 'expected headword present anywhere in retained evidence (retrieval presence, not use)',
+                'answer_used_headword_rate': 'expected headword present in the model response, exact form',
+                'used_retrieval_cases': 'cases whose retrieved evidence lines survived into the final system prompt',
+                'retrieved_evidence_cases': 'earlier used_retrieval_cases definition: any retrieved context, before prompt budgeting',
+            },
             'must_not_violating_cases': sum(bool(r['must_not_violations']) for r in scored),
             'must_not_violations': dict(Counter(v for r in scored for v in r['must_not_violations'])),
             'response_checks_scored': len(scored),
@@ -174,13 +281,36 @@ def summarize(rows: list[dict], metadata: dict) -> dict:
             'category_metrics': categories,
             'refusal_case_ids': [r['id'] for r in answerable if r['refusal']],
             'must_not_case_ids': [r['id'] for r in scored if r['must_not_violations']],
-            'router_miss_case_ids': [r['id'] for r in rows if r['router'] != r['expected_router']]}
+            'router_miss_case_ids': [r['id'] for r in rows if r['router'] != r['expected_router']],
+            'false_direct_evidence_cases': sum(bool(r.get('false_direct_evidence')) for r in ok),
+            'false_direct_evidence_case_ids': [r['id'] for r in ok if r.get('false_direct_evidence')],
+            # Evidence that survived into the final prompt (rows from before the
+            # retained digest existed fall back to the full retrieved context).
+            'used_retrieval_cases': sum(has_evidence(r.get('retained_evidence_hash', r.get('evidence_hash'))) for r in ok),
+            # The earlier definition, kept so older runs stay comparable.
+            'retrieved_evidence_cases': sum(has_evidence(r.get('evidence_hash')) for r in ok)}
+
+
+SUBSET_KEYS = ('cases', 'completed_cases', 'answerable_responses', 'refusal_count', 'refusal_rate_answerable',
+               'refusal_or_non_answer_count', 'refusal_or_non_answer_case_ids',
+               'expected_headword_hits', 'expected_headword_total', 'expected_headword_recall',
+               'answer_used_headword_hits', 'answer_used_headword_total', 'answer_used_headword_rate',
+               'must_not_violating_cases', 'must_not_violations', 'must_not_case_ids', 'refusal_case_ids',
+               'latency_p50_s', 'latency_p95_s', 'false_direct_evidence_cases')
+
+
+def subset_summaries(rows: list[dict]) -> dict:
+    """Per-suite-version metrics: the tq1 subset is comparable with v1 baselines."""
+    prefixes = sorted({row['id'].split('-', 1)[0] for row in rows})
+    return {prefix: {key: value for key, value in summarize([r for r in rows if r['id'].startswith(prefix + '-')], {}).items()
+                     if key in SUBSET_KEYS} for prefix in prefixes} if len(prefixes) > 1 else {}
 
 
 
 def write_summary(summary: dict, output: Path) -> None:
     (output / 'summary.json').write_text(json.dumps(summary, indent=2) + '\n')
-    lines = ['# Tutor quality v1 run', '', 'Automated behavior/retrieval signals only; native review deferred.', '']
+    lines = [f"# Tutor quality run: {summary.get('suite', 'unknown suite')}", '',
+             'Automated behavior/retrieval signals only; native review deferred.', '']
     for key, value in summary.items():
         lines.append(f'- {key}: `{json.dumps(value, ensure_ascii=False)}`')
     (output / 'summary.md').write_text('\n'.join(lines) + '\n')
@@ -378,11 +508,14 @@ def main(argv=None) -> int:
         by_id = {case['id']: case for case in cases}
         for row in rows:
             checks = score(by_id[row['id']], row['response'], '')
-            for key in ['refusal', 'must_not_violations', 'expected_behavior_signal']:
+            for key in ['refusal', 'refusal_or_non_answer', 'answer_used_headwords', 'answer_used_concepts',
+                        'must_not_violations', 'expected_behavior_signal']:
                 row[key] = checks[key]
         metadata['response_scoring_harness_sha256'] = digest(Path(__file__).read_text())
         (args.output / 'cases.jsonl').write_text(''.join(json.dumps(row, ensure_ascii=False) + '\n' for row in rows))
-        write_summary(summarize(rows, metadata), args.output)
+        summary = summarize(rows, metadata)
+        summary['suite_subsets'] = subset_summaries(rows)
+        write_summary(summary, args.output)
         export_packet([args.output / 'cases.jsonl'], args.output, args.seed)
         return 0
     carried_rows, prior_metadata = [], None
@@ -415,7 +548,7 @@ def main(argv=None) -> int:
     print(json.dumps({'host': db.get('host'), 'dbname': db.get('dbname')}), flush=True)
     if db.get('host') not in {'localhost', '127.0.0.1', '::1'} or db.get('dbname') != 'chamorro_rag':
         raise SystemExit('Only the borrowed local chamorro_rag DB is permitted')
-    metadata = {'suite': 'tutor_quality_v1', 'suite_sha256': digest(args.cases.read_text()),
+    metadata = {'suite': suite_id(args.cases), 'suite_sha256': digest(args.cases.read_text()),
                 'production_pipeline_sha256': digest((ROOT / 'api/chatbot_service.py').read_text()),
                 'git_sha': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True).strip(),
                 'started_at_utc': datetime.now(timezone.utc).isoformat(),
@@ -538,7 +671,7 @@ def main(argv=None) -> int:
                                contextual_router=service.classify_translation_request(evidence.get('query', case['user_message'])),
                                latency_s=time.monotonic() - started, model=service.CHAT_MODEL,
                                response=response, error=error, web_search_suppressed=len(web_calls) > web_before, retrieval_warnings=list(retrieval_warnings), embedding_cache_misses=len(cache.misses) - misses_before,
-                               retrieval_query_hash=digest(evidence.get('query', '')), evidence_hash=digest(context))
+                               retrieval_query_hash=digest(evidence.get('query', '')), evidence_hash=digest(context), retained_evidence_hash=digest(evidence_entries(retained)))
                     if judge_client and response and not error:
                         try:
                             row['advisory_judge'] = advisory_judge(judge_client, service.LLM_MODEL_ID, case, response, args.budget_usd - capture.spent, rates)
@@ -566,6 +699,7 @@ def main(argv=None) -> int:
                             embedding_price_note='text-embedding-3-small estimate $0.02/M tokens; cache-only runs cost zero',
                             requested_cases=len(cases) + len(carried_rows), new_cases_requested=len(cases), completion='complete' if len(rows) == len(cases) + len(carried_rows) else 'budget_stopped')
             summary = summarize(rows, metadata)
+            summary['suite_subsets'] = subset_summaries(rows)
             write_summary(summary, args.output)
     if not args.retrieval_only and rows:
         export_packet([args.output / 'cases.jsonl'], args.output, args.seed)

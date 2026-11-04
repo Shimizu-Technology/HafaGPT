@@ -4,11 +4,12 @@ from __future__ import annotations
 
 import json
 import re
+import threading
 import unicodedata
-from functools import lru_cache
+from functools import lru_cache, wraps
 from pathlib import Path
 
-from .dictionary_glosses import definition_gloss_segments as _definition_gloss_segments
+from .dictionary_glosses import definition_gloss_segments as _definition_gloss_segments, is_species_entry
 from src.rag.source_policy import resolve_source
 from src.rag.source_reviews import build_registered_source_citation
 from src.rag.text_normalization import normalize_chamorro_match_text
@@ -16,6 +17,7 @@ from src.rag.translation_policy import (
     extract_translation_payload,
     extract_translation_retrieval_payload,
     is_passage_translation,
+    names_english_target,
     translation_direction,
 )
 
@@ -33,6 +35,14 @@ EXACT_DICTIONARY_FILES = (
         "revised_and_updated_chamorro_dictionary.json",
         "Revised and updated Chamorro dictionary",
     ),
+)
+# A dictionary entry is evidence of the senses it lists, not proof that a word
+# has no other use (a learner was once told "un" could not mean "a" because the
+# retrieved "un" entry was the agreement marker).
+SENSE_SCOPE_RULE = (
+    "An entry shows the senses its source records, not every use of the word. Never call a "
+    "form wrong or unusable only because its entry gives a different sense; say which senses "
+    "the references show and that they do not cover this use."
 )
 MAX_CANONICAL_MATCHES = 8
 MAX_PASSAGE_DICTIONARY_MATCHES = 24
@@ -58,13 +68,38 @@ def _normalize_exact_headword(value: str) -> str:
     return " ".join(re.sub(r"[^\w'-]+", " ", composed).split())
 
 
+def single_flight_cache(builder):
+    """Memoize a no-argument index builder so concurrent first callers build once.
+
+    ``lru_cache`` lets a request and the startup warm-up that miss together both
+    run the builder. Each builder gets its own lock because builders call one
+    another; a shared non-reentrant lock would deadlock. A builder that raises
+    caches nothing, so the next caller retries.
+    """
+
+    lock = threading.Lock()
+    built: list = []
+
+    @wraps(builder)
+    def wrapper():
+        if built:
+            return built[0]
+        with lock:
+            if not built:
+                built.append(builder())
+        return built[0]
+
+    wrapper.cache_clear = built.clear
+    return wrapper
+
+
 @lru_cache(maxsize=1)
 def _canonical_entries() -> tuple[dict, ...]:
     payload = json.loads(CANONICAL_VOCABULARY_PATH.read_text(encoding="utf-8"))
     return tuple(payload.get("entries", []))
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _exact_dictionary_data() -> tuple[tuple[str, dict], ...]:
     dictionaries = []
     for filename, display_name in EXACT_DICTIONARY_FILES:
@@ -76,12 +111,16 @@ def _exact_dictionary_data() -> tuple[tuple[str, dict], ...]:
     return tuple(dictionaries)
 
 
+_CANDIDATE_SPELLING = re.compile(r'candidate spelling to verify:\s*["“]([^"”]+)["”]', re.I)
+
+
+def spelling_coincidence_label(observed: str) -> str:
+    return (f'Chamorro headword spelled like "{observed}" (if "{observed}" is meant as English, '
+            "this entry only shares its spelling and is not a translation)")
+
+
 def _extract_requested_headword(user_input: str) -> str:
-    candidate_match = re.search(
-        r'candidate spelling to verify:\s*["“]([^"”]+)["”]',
-        user_input,
-        re.I,
-    )
+    candidate_match = _CANDIDATE_SPELLING.search(user_input)
     if candidate_match:
         return candidate_match.group(1).strip()
     if not re.search(r"\b(what does|what is|define|meaning|in english)\b", user_input, re.I):
@@ -124,7 +163,7 @@ def _extract_requested_english_gloss(user_input: str) -> str:
     return target
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _exact_english_gloss_index(
 ) -> dict[str, tuple[tuple[int, str, str, object], ...]]:
     """Index direct dictionary glosses for deterministic reverse lookup."""
@@ -142,6 +181,48 @@ def _exact_english_gloss_index(
     }
 
 
+# An unhyphenated headword whose own definition says it is bound: "(Prefix)",
+# "(possessive singular suffix)", "Suffix attached to ...". A definition that
+# only uses one ("Usually used with possessive suffix") does not count.
+_BOUND_DEFINITION = re.compile(
+    r"(?i)^\s*(?:an? )?(?:\w+ )?(?P<lead>prefix|suffix|infix)\b(?=.)|"
+    r"\((?:possessive [\w ]*)?(?P<paren>prefix|suffix|infix)\)|--\s*possess?ive (?P<dash>suffix)"
+)
+def _bound_form_kind(headword: str, definition: object) -> str:
+    """Return "prefix", "suffix", "infix", or "bound form" for a bound entry, else "".
+
+    A hyphen shows only that the form attaches to another word. The narrower
+    kind comes from the definition when it names one: "ilek-" is "Used with a
+    possessive suffix", which does not make it a prefix.
+    """
+
+    match = _BOUND_DEFINITION.search(" ".join(_format_dictionary_definition(definition).split()))
+    if match:
+        return next(kind.casefold() for kind in match.groups() if kind)
+    stripped = headword.strip()
+    return "bound form" if stripped[:1] in "-‑‐–" or stripped[-1:] in "-‑‐–" else ""
+
+
+# "c--letter of the alphabet": names the letter, and is no translation of a word.
+# Chamoru.info also abbreviates it ("C--let of the alphabet").
+_LETTER_NAME = re.compile(r"(?i)^\s*[a-zåñ]\s*-+\s*(?:letter\b|let\s+of\s+the\s+alphabet\b)")
+
+
+def _not_a_standalone_translation(headword: str, definition: object) -> str:
+    """Return why an exact gloss match cannot stand alone as the translation, if so."""
+
+    kind = _bound_form_kind(headword, definition)
+    if kind:
+        return f"{'an' if kind == 'infix' else 'a'} {kind} attached to another word"
+    if _LETTER_NAME.match(_format_dictionary_definition(definition)):
+        return "the name of a letter of the alphabet"
+    return ""
+
+
+MAX_DIRECT_GLOSS_RANK = 2
+_SPECIES_DESCRIPTION = re.compile(r"(?:an?|any|another|the|types?|kinds?|species)\b")
+
+
 def _lookup_exact_english_glosses(
     english_gloss: str,
 ) -> list[tuple[str, str, object]]:
@@ -149,6 +230,19 @@ def _lookup_exact_english_glosses(
 
     normalized_gloss = _normalize_for_match(english_gloss)
     ranked_matches = _exact_english_gloss_index().get(normalized_gloss, ())
+    if not ranked_matches:
+        return []
+    # After a species' taxon, the source usually gives its common name ("Type of
+    # plant--coffea arabica. Coffee."), and that name is the direct gloss. A
+    # sentence worded as a description ("A spiny shrub", "a type of grass") only
+    # describes its entry. Other rank-3 matches (a dash explanation's head, a
+    # letter name) stay so the block can state why they are no standalone
+    # translation.
+    if _SPECIES_DESCRIPTION.match(normalized_gloss):
+        ranked_matches = tuple(
+            match for match in ranked_matches
+            if match[0] <= MAX_DIRECT_GLOSS_RANK or not is_species_entry(match[3])
+        )
     if not ranked_matches:
         return []
     best_rank = ranked_matches[0][0]
@@ -167,7 +261,7 @@ def _lookup_exact_english_glosses(
     return matches
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _exact_dictionary_index() -> dict[str, tuple[tuple[str, str, object], ...]]:
     """Index governed local dictionaries once for deterministic passage evidence."""
 
@@ -229,7 +323,7 @@ def _spelling_candidate_key(headword: str) -> str:
     return "".join(char for char in decomposed if not unicodedata.combining(char)).replace("'", "").replace("o", "u")
 
 
-@lru_cache(maxsize=1)
+@single_flight_cache
 def _spelling_candidate_index() -> dict[str, tuple[str, ...]]:
     buckets: dict[str, list[str]] = {}
     for headword in _exact_dictionary_index():
@@ -390,6 +484,19 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
     dictionary_matches = _lookup_exact_dictionary_entries(requested_headword)
     requested_english_gloss = _extract_requested_english_gloss(user_input)
     english_gloss_matches = _lookup_exact_english_glosses(requested_english_gloss)
+    # 'What is "media" in Chamorro?' quotes an English word; the headword
+    # "media" (half) only shares its spelling. Same rule as the lexical lane:
+    # drop it beside a real gloss, otherwise label the coincidence.
+    headword_label = "Exact dictionary headword"
+    if (
+        dictionary_matches
+        and not _CANDIDATE_SPELLING.search(user_input)
+        and names_english_target(requested_headword, user_input)
+    ):
+        if english_gloss_matches:
+            dictionary_matches = []
+        else:
+            headword_label = spelling_coincidence_label(requested_headword)
     passage_dictionary_matches = _passage_dictionary_matches(user_input, match_limit=passage_match_limit)
 
     if (
@@ -404,6 +511,7 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
         "=== HÅFAGPT EXACT GOVERNED REFERENCE MATCHES ===",
         "These deterministic matches outrank non-canonical or semantically similar retrieved usage.",
         "Do not present a complete sentence as fully reference-backed merely because some component words are verified; identify the exact scope of support.",
+        SENSE_SCOPE_RULE,
         "",
     ]
     for entry in matches:
@@ -439,7 +547,7 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
     for display_name, entry_headword, definition in dictionary_matches:
         lines.extend(
             [
-                f"[Exact dictionary headword: {entry_headword}]",
+                f"[{headword_label}: {entry_headword}]",
                 f"Source: {display_name}",
                 f"Definition: {_format_dictionary_definition(definition)}",
                 "",
@@ -447,13 +555,18 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
         )
 
     for display_name, entry_headword, definition in english_gloss_matches:
+        limitation = _not_a_standalone_translation(entry_headword, definition)
         lines.extend(
             [
-                f"[Exact English dictionary gloss: {requested_english_gloss}]",
+                f"[Related dictionary entry for: {requested_english_gloss}]"
+                if limitation
+                else f"[Exact English dictionary gloss: {requested_english_gloss}]",
                 f"Chamorro headword: {entry_headword}",
                 f"Source: {display_name}",
                 f"Definition: {_format_dictionary_definition(definition)}",
-                "This is direct dictionary evidence for the requested English gloss.",
+                f"This is {limitation}, not a standalone translation."
+                if limitation
+                else "This is direct dictionary evidence for the requested English gloss.",
                 "",
             ]
         )
