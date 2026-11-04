@@ -17,7 +17,7 @@ for (const theme of ['light', 'dark'] as const) {
     await page.route('**/api/**', (route) => route.fulfill({ json: { active: false, theme_active: false } }));
     await page.addInitScript((theme) => localStorage.setItem('theme', theme), theme);
     await page.goto('/pricing');
-    for (const locator of [page.getByText('Start learning Chamorro today'), page.getByText('EARLY ADOPTER PRICING', { exact: true }), page.getByText('Save 33%'), page.getByRole('link', { name: 'support@shimizutechnology.com' })]) {
+    for (const locator of [page.getByRole('heading', { level: 1, name: 'Plans and prices' }), page.getByText(/early-adopter pricing during the beta/), page.getByText('Unlimited vocabulary browsing', { exact: true }), page.getByRole('link', { name: 'support@shimizutechnology.com' })]) {
       await expect(locator).toBeVisible();
       expect((await ratio(locator)).ratio).toBeGreaterThanOrEqual(4.5);
     }

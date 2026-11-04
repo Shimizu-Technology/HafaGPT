@@ -80,7 +80,7 @@ for (const colorScheme of ['light', 'dark'] as const) {
       await page.goto(surface.path);
       const input = page.getByRole('textbox', { name: surface.label });
       await expect(input).toBeVisible();
-      await expect(page.getByRole('link', { name: 'håfa adai', exact: true }).first()).toBeVisible();
+      await expect(page.getByRole('link', { name: /^håfa adai phrase hello$/ }).first()).toBeVisible();
       await input.focus();
       await page.locator('#root').evaluate((root, offset) => { root.scrollTop = offset; }, surface.offset);
       await expect.poll(() => page.locator('#root').evaluate(root => root.scrollTop)).toBe(surface.offset);

@@ -89,7 +89,7 @@ describe('stable vocabulary records', () => {
 
     expect(screen.getByRole('textbox', { name: 'Search all Chamorro words' }))
       .toHaveValue('water');
-    expect(screen.getByRole('link', { name: 'Open dictionary entry' }))
+    expect(screen.getByRole('link', { name: /hånum/ }))
       .toHaveAttribute(
         'href',
         '/words/revised-word-v1-stable?return_to=%2Fvocabulary%3Fq%3Dwater',
@@ -108,7 +108,7 @@ describe('stable vocabulary records', () => {
     mocks.searchUpdating = false;
     mocks.searchResults = { results: [word], query: 'water', total: 1 };
     rerender(view());
-    expect(screen.getByRole('link', { name: 'Open dictionary entry' })).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: /hånum/ })).toBeInTheDocument();
     expect(screen.getByRole('heading', { name: '1 result found' })).toBeInTheDocument();
   });
 
@@ -124,7 +124,7 @@ describe('stable vocabulary records', () => {
 
     expect(screen.getByRole('textbox', { name: 'Search in Greetings & Basics' }))
       .toHaveValue('water');
-    expect(screen.getByRole('link', { name: 'Open entry' }))
+    expect(screen.getByRole('link', { name: /hånum/ }))
       .toHaveAttribute(
         'href',
         '/words/revised-word-v1-stable?return_to=%2Fvocabulary%2Fgreetings%3Fq%3Dwater%23words',
@@ -184,7 +184,6 @@ describe('stable vocabulary records', () => {
     );
 
     expect(screen.getByText('hånum')).toBeInTheDocument();
-    expect(screen.queryByRole('link', { name: 'Open dictionary entry' }))
-      .not.toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: /hånum/ })).not.toBeInTheDocument();
   });
 });

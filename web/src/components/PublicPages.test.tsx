@@ -76,7 +76,7 @@ describe('public information pages', () => {
     expect(screen.getByRole('heading', { name: /children's privacy/i })).toBeInTheDocument();
 
     rerender(<MemoryRouter><PricingPage /></MemoryRouter>);
-    expect(screen.getByRole('heading', { name: /unlock unlimited learning/i })).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: /plans and prices/i })).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /sign up & upgrade/i })).toBeInTheDocument();
   });
 
@@ -94,7 +94,7 @@ describe('public information pages', () => {
     rerender(<MemoryRouter><PrivacyPolicy /></MemoryRouter>);
     only(/privacy policy/i);
     rerender(<MemoryRouter><PricingPage /></MemoryRouter>);
-    only(/unlock unlimited learning/i);
+    only(/plans and prices/i);
     expect(screen.queryByRole('heading', { name: 'Plans' })).not.toBeInTheDocument();
     rerender(<MemoryRouter><NotFoundPage /></MemoryRouter>);
     only(/couldn't find that page/i);

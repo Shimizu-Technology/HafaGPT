@@ -80,7 +80,7 @@ test('Home discloses the account step and links Translate, Support and Plans', a
   await expect(page.getByPlaceholder('Paste a phrase, message, or notice…')).toBeVisible();
   await expect(page.getByRole('button', { name: /send message/i })).toBeDisabled();
   // Each public page's own h1 is its title; the shell label is plain context.
-  for (const [name, title] of [['Support', 'How can we help?'], ['Plans', 'Unlock Unlimited Learning']]) {
+  for (const [name, title] of [['Support', 'How can we help?'], ['Plans', 'Plans and prices']]) {
     await page.goto('/');
     await page.getByRole('link', { name, exact: true }).click();
     await expect(page.getByRole('heading', { level: 1, name: title, exact: true })).toBeVisible();

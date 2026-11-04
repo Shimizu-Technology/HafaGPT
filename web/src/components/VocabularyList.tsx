@@ -1,8 +1,9 @@
-import { useEffect, useId, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useLocation, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowRight, ChevronDown, ChevronUp, Library, Lightbulb, Search, X, Loader2 } from 'lucide-react';
-import { useVocabularyCategories, useVocabularySearch, VocabularyWord } from '../hooks/useVocabularyQuery';
+import { Library, Lightbulb, Search, X, Loader2 } from 'lucide-react';
+import { useVocabularyCategories, useVocabularySearch } from '../hooks/useVocabularyQuery';
 import { appRoutes, currentAppPath } from '../lib/routes';
+import { DictionaryEntryList, DictionaryEntryRow } from './DictionaryEntryRow';
 import { RecordsError } from './RecordsError';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 
@@ -94,15 +95,16 @@ export function VocabularyList() {
                 </h2>
                 {searchUpdating && displayedSearch.query !== searchQuery && <p className="mb-3 text-base text-brown-600 dark:text-brown-300">Showing the last loaded results while this search finishes.</p>}
                 {searchResults.length > 0 ? (
-                  <div className="space-y-2">
+                  <DictionaryEntryList>
                     {searchResults.map((word, index) => (
-                      <SearchResultCard
+                      <DictionaryEntryRow
                         key={word.word_id ?? word.source_id ?? `${word.chamorro}-${index}`}
                         word={word}
                         returnTo={returnTo}
+                        showAudio={false}
                       />
                     ))}
-                  </div>
+                  </DictionaryEntryList>
                 ) : !searchError ? (
                   <div className="min-h-28 text-center py-8 text-brown-500 dark:text-brown-300">
                     {!searchUpdating && <>
@@ -180,75 +182,5 @@ export function VocabularyList() {
         )}
       </main>
     </LearnerPageShell>
-  );
-}
-
-// Search Result Card Component
-function SearchResultCard({ word, returnTo }: { word: VocabularyWord; returnTo: string }) {
-  const [expanded, setExpanded] = useState(false);
-  const examplesId = useId();
-  
-  return (
-    <article className="w-full rounded-2xl border border-cream-200 bg-white p-4 text-left dark:border-brown-700 dark:bg-brown-900">
-      <div className="flex items-start justify-between gap-4">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-baseline gap-2 flex-wrap">
-            {word.word_id ? (
-              <Link
-                to={appRoutes.word(word.word_id, { returnTo })}
-                className="rounded font-chamorro text-lg font-semibold text-brown-800 hover:text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-cream-100 text-lg"
-              >
-                {word.chamorro}
-              </Link>
-            ) : (
-              <h3 className="font-chamorro font-semibold text-brown-800 dark:text-cream-100 text-lg">
-                {word.chamorro}
-              </h3>
-            )}
-            {word.part_of_speech && (
-              <span className="text-xs text-brown-500 dark:text-brown-300 italic">
-                {word.part_of_speech}
-              </span>
-            )}
-          </div>
-          <p className="text-brown-600 dark:text-brown-100 mt-1">
-            {word.definition}
-          </p>
-          {word.word_id && (
-            <Link
-              to={appRoutes.word(word.word_id, { returnTo })}
-              className="mt-2 inline-flex min-h-11 items-center gap-1 rounded-xl text-sm font-semibold text-coral-700 hover:text-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500"
-            >
-              Open dictionary entry
-              <ArrowRight className="h-4 w-4" aria-hidden="true" />
-            </Link>
-          )}
-          
-        </div>
-        
-        {word.examples && word.examples.length > 0 && (
-          <button
-            type="button"
-            onClick={() => setExpanded(!expanded)}
-            aria-expanded={expanded}
-            aria-controls={examplesId}
-            className="inline-flex min-h-11 flex-none items-center gap-1 rounded-xl px-2 text-xs font-medium text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500"
-          >
-            {expanded ? <ChevronUp className="h-4 w-4" aria-hidden="true" /> : <ChevronDown className="h-4 w-4" aria-hidden="true" />}
-            {word.examples.length} example{word.examples.length !== 1 ? 's' : ''}
-          </button>
-        )}
-      </div>
-      {expanded && word.examples && word.examples.length > 0 && (
-        <div id={examplesId} className="mt-3 space-y-2 border-t border-cream-200 pt-3 dark:border-brown-700">
-          {word.examples.map((example, index) => (
-            <div key={index} className="rounded-xl bg-cream-50 p-3 dark:bg-brown-950/60">
-              <p className="font-chamorro font-medium text-brown-800 dark:text-cream-100">{example.chamorro}</p>
-              <p className="mt-1 text-sm text-brown-600 dark:text-brown-300">{example.english}</p>
-            </div>
-          ))}
-        </div>
-      )}
-    </article>
   );
 }

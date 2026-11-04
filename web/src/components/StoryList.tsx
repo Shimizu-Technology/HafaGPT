@@ -1,21 +1,5 @@
 import { Link } from 'react-router-dom';
-import {
-  BookOpen,
-  Clock,
-  ExternalLink,
-  FileText,
-  HelpCircle,
-  Landmark,
-  Library,
-  Loader2,
-  LockKeyhole,
-  Music2,
-  ShieldCheck,
-  Sparkles,
-  Theater,
-  Waves,
-} from 'lucide-react';
-import type { LucideIcon } from 'lucide-react';
+import { BookOpen, ExternalLink, Loader2, LockKeyhole, ShieldCheck, Sparkles } from 'lucide-react';
 import { STORY_CATEGORIES, getStoryCount } from '../data/storyData';
 import { useAvailableStories, AvailableStory } from '../hooks/useStoryQuery';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
@@ -23,24 +7,6 @@ import { useRestorableViewParam } from '../hooks/useRestorableViewParam';
 
 type StoryMode = 'curated' | 'lengguahita';
 const STORY_SOURCES: readonly StoryMode[] = ['curated', 'lengguahita'];
-
-// Category icons
-const CATEGORY_ICONS: Record<string, LucideIcon> = {
-  story: BookOpen,
-  lesson: Library,
-  legend: Landmark,
-  folklore: Waves,
-  cultural: Theater,
-  song: Music2,
-  beginner: BookOpen,
-  intermediate: Library,
-  advanced: Landmark,
-};
-
-function StoryCategoryIcon({ category, className = 'w-5 h-5' }: { category: string; className?: string }) {
-  const Icon = CATEGORY_ICONS[category] || BookOpen;
-  return <Icon className={className} aria-hidden="true" />;
-}
 
 // Category labels
 const CATEGORY_LABELS: Record<string, string> = {
@@ -52,12 +18,10 @@ const CATEGORY_LABELS: Record<string, string> = {
   song: 'Songs',
 };
 
-// Difficulty colors
-const DIFFICULTY_STYLES: Record<string, string> = {
-  beginner: 'bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-cream-200',
-  intermediate: 'bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-cream-200',
-  advanced: 'bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-cream-200',
-};
+// One bordered list per category; rows carry text only, so a screen shows several stories.
+const storyListClass = 'overflow-hidden rounded-2xl border border-cream-200 bg-white dark:border-brown-700 dark:bg-brown-900';
+const storyRowClass = 'block min-h-14 px-4 py-3 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset';
+const storyMetaClass = 'mt-1 block text-sm text-brown-600 first-letter:uppercase dark:text-brown-100';
 
 export function StoryList() {
   const [mode, setMode] = useRestorableViewParam('source', STORY_SOURCES, 'curated');
@@ -149,76 +113,37 @@ export function StoryList() {
             {STORY_CATEGORIES.map((category) => (
               <div key={category.id} className="space-y-3">
                 {/* Category Header */}
-                <div className="flex items-center gap-2 px-1">
-                  <div className="p-2 rounded-lg bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100">
-                    <StoryCategoryIcon category={category.id} />
-                  </div>
-                  <div>
-                    <h3 className="font-bold text-brown-800 dark:text-cream-100">
-                      {category.title}
-                    </h3>
-                    <p className="text-xs text-brown-500 dark:text-brown-300">
-                      {category.description}
-                    </p>
-                  </div>
+                <div className="px-1">
+                  <h3 className="font-bold text-brown-800 dark:text-cream-100">
+                    {category.title}
+                  </h3>
+                  <p className="text-sm text-brown-600 dark:text-brown-100">
+                    {category.description}
+                  </p>
                 </div>
 
-                {/* Story Cards */}
-                <div className="space-y-2">
+                {/* Story Rows */}
+                <ul className={storyListClass}>
                   {category.stories.map((story) => (
-                    <Link
-                      key={story.id}
-                      to={`/stories/${story.id}`}
-                      className="group block rounded-2xl border border-cream-200 bg-white p-4 transition-colors hover:border-cream-300 hover:bg-cream-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-brown-700 dark:bg-brown-900 dark:hover:border-teal-700 dark:hover:bg-brown-700"
-                    >
-                      <div className="flex items-start gap-4">
-                        {/* Story Icon */}
-                        <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-cream-100 dark:bg-brown-700">
-                          <StoryCategoryIcon category={category.id} className="w-6 h-6 text-brown-700 dark:text-brown-100" />
-                        </div>
-
-                        {/* Story Info */}
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-start justify-between gap-2">
-                            <div>
-                              <h4 className="font-bold text-brown-800 dark:text-cream-100 group-hover:text-brown-600 dark:group-hover:text-brown-400 transition-colors">
-                                {story.title}
-                              </h4>
-                              <p className="text-xs text-brown-500 dark:text-brown-300 italic">
-                                {story.titleEnglish}
-                              </p>
-                            </div>
-                            
-                            {/* Difficulty Badge */}
-                            <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${DIFFICULTY_STYLES[story.difficulty]}`}>
-                              {story.difficulty}
-                            </span>
-                          </div>
-
-                          <p className="text-sm text-brown-600 dark:text-brown-100 mt-1 line-clamp-2">
-                            {story.description}
-                          </p>
-
-                          {/* Meta Info */}
-                          <div className="flex items-center gap-4 mt-2 text-xs text-brown-500 dark:text-brown-300">
-                            <span className="flex items-center gap-1">
-                              <Clock className="w-3 h-3" />
-                              {story.readingTime} min
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <FileText className="w-3 h-3" />
-                              {story.wordCount} words
-                            </span>
-                            <span className="flex items-center gap-1">
-                              <HelpCircle className="w-3 h-3" aria-hidden="true" />
-                              {story.questions.length} questions
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    </Link>
+                    <li key={story.id} className="border-t border-cream-200 first:border-t-0 dark:border-brown-700">
+                      <Link
+                        to={`/stories/${story.id}`}
+                        className={`group ${storyRowClass} hover:bg-cream-50 dark:hover:bg-brown-700 focus-visible:ring-coral-500`}
+                      >
+                        <span className="block min-w-0 break-words font-bold text-brown-800 dark:text-cream-100">
+                          <span className="font-chamorro">{story.title}</span>
+                          <span className="ml-2 text-sm font-normal italic text-brown-600 dark:text-brown-100">{story.titleEnglish}</span>
+                        </span>
+                        <span className="mt-0.5 block text-sm text-brown-600 line-clamp-2 dark:text-brown-100">
+                          {story.description}
+                        </span>
+                        <span className={storyMetaClass}>
+                          {[story.difficulty, `${story.readingTime} min`, `${story.wordCount} words`, `${story.questions.length} questions`].join(' · ')}
+                        </span>
+                      </Link>
+                    </li>
                   ))}
-                </div>
+                </ul>
               </div>
             ))}
           </>
@@ -236,76 +161,39 @@ export function StoryList() {
               Object.entries(byCategory).map(([category, stories]) => (
                 <div key={category} className="space-y-3">
                   {/* Category Header */}
-                  <div className="flex items-center gap-2 px-1">
-                    <div className="p-2 rounded-lg bg-teal-100 dark:bg-teal-900/30 text-teal-700 dark:text-teal-300">
-                      <StoryCategoryIcon category={category} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-brown-800 dark:text-cream-100">
-                        {CATEGORY_LABELS[category] || category}
-                      </h3>
-                      <p className="text-xs text-brown-500 dark:text-brown-300">
-                        {(stories as AvailableStory[]).length} stories
-                      </p>
-                    </div>
+                  <div className="px-1">
+                    <h3 className="font-bold text-brown-800 dark:text-cream-100">
+                      {CATEGORY_LABELS[category] || category}
+                    </h3>
+                    <p className="text-sm text-brown-600 dark:text-brown-100">
+                      {(stories as AvailableStory[]).length} stories
+                    </p>
                   </div>
 
-                  {/* Story Cards */}
-                  <div className="space-y-2">
+                  {/* Story Rows */}
+                  <ul className={storyListClass}>
                     {(stories as AvailableStory[]).map((story) => (
-                      <Link
-                        key={story.id}
-                        to={`/stories/lengguahita/${story.id}`}
-                        className="group block rounded-2xl border border-cream-200 bg-white p-4 transition-colors hover:border-teal-300 hover:bg-teal-50/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-500 dark:border-brown-700 dark:bg-brown-900 dark:hover:border-teal-700 dark:hover:bg-teal-950/10"
-                      >
-                        <div className="flex items-start gap-4">
-                          {/* Story Icon */}
-                          <div className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-teal-100 dark:bg-teal-950">
-                            <StoryCategoryIcon category={story.category} className="w-6 h-6 text-teal-700 dark:text-teal-300" />
-                          </div>
-
-                          {/* Story Info */}
-                          <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <div>
-                                <h4 className="font-bold text-brown-800 dark:text-cream-100 group-hover:text-teal-600 dark:group-hover:text-teal-400 transition-colors">
-                                  {story.title}
-                                </h4>
-                                {story.titleChamorro && (
-                                  <p className="text-xs text-brown-500 dark:text-brown-300 italic">
-                                    {story.titleChamorro}
-                                  </p>
-                                )}
-                              </div>
-                              
-                              {/* Difficulty Badge */}
-                              <span className={`text-xs px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${DIFFICULTY_STYLES[story.difficulty]}`}>
-                                {story.difficulty}
-                              </span>
-                            </div>
-
-                            {story.author && (
-                              <p className="text-xs text-brown-500 dark:text-brown-300 mt-1">
-                                by {story.author}
-                              </p>
+                      <li key={story.id} className="border-t border-cream-200 first:border-t-0 dark:border-brown-700">
+                        <Link
+                          to={`/stories/lengguahita/${story.id}`}
+                          className={`group ${storyRowClass} hover:bg-teal-50/50 dark:hover:bg-teal-950/20 focus-visible:ring-teal-500`}
+                        >
+                          <span className="block min-w-0 break-words font-bold text-brown-800 dark:text-cream-100">
+                            {story.title}
+                            {story.titleChamorro && (
+                              <span className="ml-2 font-chamorro text-sm font-normal italic text-brown-600 dark:text-brown-100">{story.titleChamorro}</span>
                             )}
-
-                            {/* Meta Info */}
-                            <div className="flex items-center gap-4 mt-2 text-xs text-brown-500 dark:text-brown-300">
-                              <span className="flex items-center gap-1">
-                                <FileText className="w-3 h-3" />
-                                {story.paragraphCount} paragraphs
-                              </span>
-                              <span className="flex items-center gap-1 text-teal-600 dark:text-teal-400">
-                                <ExternalLink className="w-3 h-3" />
-                                {story.sourceName}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </Link>
+                          </span>
+                          {story.author && (
+                            <span className="mt-0.5 block text-sm text-brown-600 dark:text-brown-100">by {story.author}</span>
+                          )}
+                          <span className={storyMetaClass}>
+                            {[story.difficulty, `${story.paragraphCount} paragraphs`, story.sourceName].join(' · ')}
+                          </span>
+                        </Link>
+                      </li>
                     ))}
-                  </div>
+                  </ul>
                 </div>
               ))
             ) : (

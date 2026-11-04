@@ -1,14 +1,14 @@
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { Link, useLocation, useParams, useNavigate, useSearchParams } from 'react-router-dom';
-import { ArrowLeft, ArrowRight, ChevronDown, ChevronUp, Library, Search, X, Loader2 } from 'lucide-react';
+import { ArrowLeft, Library, Search, X, Loader2 } from 'lucide-react';
 import { useCategoryWordPages } from '../hooks/useVocabularyQuery';
-import { PronunciationButton } from './PronunciationButton';
+import { DictionaryEntryList, DictionaryEntryRow } from './DictionaryEntryRow';
 import { LearnerPageHeader, LearnerPageShell } from './LearnerPage';
 import { ContentTrustNote } from './ContentTrustNote';
 import { TTSDisclaimer } from './TTSDisclaimer';
 import { DICTIONARY_CONTENT_TRUST } from '../data/contentTrust';
 import { RecordsError } from './RecordsError';
-import { appRoutes, currentAppPath } from '../lib/routes';
+import { currentAppPath } from '../lib/routes';
 
 const PAGE_SIZE = 50;
 
@@ -18,7 +18,6 @@ export function VocabularyCategory() {
   const location = useLocation();
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const [expandedWord, setExpandedWord] = useState<number | null>(null);
   const searchQuery = searchParams.get('q') ?? '';
   
   const { data: pages, isLoading, error, refetch, fetchNextPage, hasNextPage, isFetchingNextPage, isFetching, isPlaceholderData, isFetchNextPageError } = useCategoryWordPages(categoryId, searchQuery, PAGE_SIZE);
@@ -32,8 +31,6 @@ export function VocabularyCategory() {
   const category = data?.category;
   const totalWords = data?.total ?? 0;
   const words = displayedPages?.pages.flatMap(page => page.words) ?? [];
-
-  useEffect(() => { setExpandedWord(null); }, [categoryId, searchQuery]);
 
   const setSearchQuery = (query: string) => {
     const nextParams = new URLSearchParams(searchParams);
@@ -86,10 +83,6 @@ export function VocabularyCategory() {
     );
   }
 
-  const toggleExpand = (index: number) => {
-    setExpandedWord(expandedWord === index ? null : index);
-  };
-
   return (
     <LearnerPageShell>
       <LearnerPageHeader
@@ -108,7 +101,7 @@ export function VocabularyCategory() {
       {/* Content */}
       <main className="mx-auto max-w-5xl px-4 py-5 sm:py-8">
         <ContentTrustNote trust={DICTIONARY_CONTENT_TRUST} className="mb-4" />
-        <TTSDisclaimer variant="inline" className="mb-4" />
+
         {/* Search within category */}
         <div className="mb-4">
           <div className="relative">
@@ -139,105 +132,20 @@ export function VocabularyCategory() {
         {fallback && !pages && <p className="mb-3 text-base text-brown-700 dark:text-cream-200">Last loaded results{fallback.query ? ` for “${fallback.query}”` : ''}.</p>}
         <h2 className="sr-only">Dictionary entries</h2>
         {isFetching && <p role="status" className="mb-3 text-sm text-brown-600 dark:text-brown-100">Searching…</p>}
-        <p className="mb-3 text-sm text-brown-600 dark:text-brown-100" aria-live="polite">{!isPlaceholderData && !error && `${words.length} of ${totalWords} ${searchQuery ? 'matches' : 'words'}`}</p>
-        {/* Word List */}
-        <div className="space-y-3">
-          {filteredWords.map((word, index) => {
-            const isExpanded = expandedWord === index;
-            const hasExamples = word.examples && word.examples.length > 0;
-            
-            return (
-              <article
-                key={word.word_id ?? word.source_id ?? `${word.chamorro}-${index}`}
-                className="overflow-hidden rounded-2xl border border-cream-200 bg-white dark:border-brown-700 dark:bg-brown-900"
-              >
-                {/* Main Word Row */}
-                <div className="p-4">
-                  <div className="flex items-start gap-3">
-                    {/* Speak Button */}
-                    <span className="flex-shrink-0">
-                      <PronunciationButton text={word.chamorro} className="mt-0.5 bg-coral-50 text-coral-700 hover:bg-coral-100" />
-                    </span>
-
-                    {/* Word Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-baseline gap-2 flex-wrap">
-                        {word.word_id ? (
-                          <Link
-                            to={appRoutes.word(word.word_id, { returnTo })}
-                            className="rounded font-chamorro text-lg font-semibold text-brown-800 hover:text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-cream-100 text-lg"
-                          >
-                            {word.chamorro}
-                          </Link>
-                        ) : (
-                          <h3 className="font-chamorro font-semibold text-brown-800 dark:text-cream-100 text-lg">
-                            {word.chamorro}
-                          </h3>
-                        )}
-                        {word.part_of_speech && (
-                          <span className="text-xs text-brown-500 dark:text-brown-300 italic">
-                            {word.part_of_speech}
-                          </span>
-                        )}
-                      </div>
-                      <p className="text-brown-600 dark:text-brown-100 mt-0.5">
-                        {word.definition}
-                      </p>
-                      {word.word_id && (
-                        <Link
-                          to={appRoutes.word(word.word_id, { returnTo })}
-                          className="mt-1 inline-flex min-h-11 items-center gap-1 rounded-xl text-sm font-semibold text-coral-700 hover:text-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500"
-                        >
-                          Open entry
-                          <ArrowRight className="h-4 w-4" aria-hidden="true" />
-                        </Link>
-                      )}
-                    </div>
-
-                    {/* Expand Icon */}
-                    {hasExamples && (
-                      <button
-                        type="button"
-                        onClick={() => toggleExpand(index)}
-                        aria-expanded={isExpanded}
-                        aria-controls={`category-examples-${index}`}
-                        aria-label={`${isExpanded ? 'Hide' : 'Show'} examples for ${word.chamorro}`}
-                        className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-500 hover:bg-cream-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-brown-300 dark:hover:bg-brown-700"
-                      >
-                        {isExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-brown-500 dark:text-brown-300" />
-                        ) : (
-                          <ChevronDown className="w-4 h-4 text-brown-500 dark:text-brown-300" />
-                        )}
-                      </button>
-                    )}
-                  </div>
-                </div>
-
-                {/* Expanded Content */}
-                {isExpanded && hasExamples && (
-                  <div id={`category-examples-${index}`} className="border-t border-cream-200 px-4 pb-4 pt-0 dark:border-brown-700">
-                    <div className="pt-3 space-y-2">
-                      <p className="text-xs font-medium text-brown-500 dark:text-brown-300 mb-2">
-                        Examples
-                      </p>
-                      {word.examples.map((example, idx) => (
-                        <div key={idx} className="bg-cream-50 dark:bg-brown-700/50 rounded-lg p-3">
-                          <p className="font-chamorro text-brown-800 dark:text-cream-100 font-medium">
-                            {example.chamorro}
-                          </p>
-                          <p className="text-brown-600 dark:text-brown-100 text-sm mt-1">
-                            {example.english}
-                          </p>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </article>
-            );
-          })}
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1">
+          <p className="text-sm text-brown-600 dark:text-brown-100" aria-live="polite">{!isPlaceholderData && !error && `${words.length} of ${totalWords} ${searchQuery ? 'matches' : 'words'}`}</p>
+          <TTSDisclaimer variant="inline" />
         </div>
+        {/* Word List */}
+        <DictionaryEntryList>
+          {filteredWords.map((word, index) => (
+            <DictionaryEntryRow
+              key={word.word_id ?? word.source_id ?? `${word.chamorro}-${index}`}
+              word={word}
+              returnTo={returnTo}
+            />
+          ))}
+        </DictionaryEntryList>
 
         {/* No Results */}
         {filteredWords.length === 0 && searchQuery && !isFetching && !error && (
