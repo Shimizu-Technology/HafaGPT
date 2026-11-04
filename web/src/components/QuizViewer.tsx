@@ -810,7 +810,7 @@ function QuizViewerSession() {
                           onClick={() => handleAnswer(option)}
                           aria-pressed={isSelected}
                           disabled={answerState !== 'unanswered'}
-                          className={`min-h-12 flex-1 rounded-xl p-3 text-left transition-colors sm:p-4 ${buttonClass}`}
+                          className={`selectable min-h-12 flex-1 rounded-xl p-3 text-left transition-colors sm:p-4 ${buttonClass}`}
                         >
                           <div className="flex items-center gap-2 sm:gap-3">
                           <span className="w-7 h-7 sm:w-8 sm:h-8 rounded-full bg-coral-100 flex items-center justify-center text-sm font-bold text-coral-700 flex-shrink-0">

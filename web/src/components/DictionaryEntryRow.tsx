@@ -53,7 +53,7 @@ export function DictionaryEntryRow({ word, returnTo, showAudio = true }: { word:
             onClick={() => setExpanded((value) => !value)}
             aria-expanded={expanded}
             aria-controls={expanded ? examplesId : undefined}
-            className={`${rowInteractive} w-full`}
+            className={`selectable ${rowInteractive} w-full`}
           >
             <EntryText word={word} clampMeaning={false} />
             <span className="inline-flex min-h-6 items-center gap-1 text-sm font-semibold text-coral-700 md:col-start-2">

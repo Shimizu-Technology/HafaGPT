@@ -40,7 +40,7 @@ export const MemoryCard = memo(function MemoryCard({
           : 'Reveal memory card'
       }
       className={`
-        relative w-full aspect-square cursor-pointer overflow-hidden border-0 bg-transparent p-0
+        selectable relative w-full aspect-square cursor-pointer overflow-hidden border-0 bg-transparent p-0
         focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2
         dark:focus-visible:ring-offset-brown-950
         ${disabled || isFlipped || isMatched ? 'cursor-default' : ''}

@@ -3,6 +3,11 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { describe, expect, it, vi } from 'vitest';
 import css from './index.css?raw';
 import { StoryViewer } from './components/StoryViewer';
+import dictionaryEntryRowSource from './components/DictionaryEntryRow.tsx?raw';
+import quizViewerSource from './components/QuizViewer.tsx?raw';
+import lessonQuizSource from './components/LessonQuiz.tsx?raw';
+import soundMatchSource from './components/SoundMatch.tsx?raw';
+import memoryCardSource from './components/games/MemoryCard.tsx?raw';
 
 vi.mock('@clerk/clerk-react', () => ({
   useAuth: () => ({ getToken: async () => null, isSignedIn: false }),
@@ -18,16 +23,23 @@ vi.mock('./hooks/useLearningPath', () => ({
 describe('touch baseline in index.css', () => {
   const selectNone = [...css.matchAll(/([^{}]+)\{[^{}]*user-select:\s*none/g)].map(match => match[1].trim());
 
-  it('turns user-select off for controls only', () => {
-    expect(selectNone.length).toBeGreaterThan(0);
-    for (const selector of selectNone) {
-      expect(selector).toMatch(/button|\[role="button"\]|summary|\[role="tab"\]|nav a|\.action-button|\.pressable/);
-      expect(selector).not.toMatch(/(^|[\s,(])(body|html|p|h[1-6]|li|span|div|article|main|section|\*)([\s,.:)[]|$)/);
-    }
+  it('blocks selection on navigation chrome only, never on buttons in general', () => {
+    expect(selectNone).toEqual([':where(nav a, nav button, [role="tab"])']);
   });
 
-  it('lets a control that carries content opt back in with .selectable', () => {
+  it('asks for selection explicitly with .selectable', () => {
     expect(css).toMatch(/\.selectable\s*\{[^}]*user-select:\s*text/);
+  });
+
+  it.each([
+    ['DictionaryEntryRow', dictionaryEntryRowSource, 'selectable ${rowInteractive}'],
+    ['QuizViewer', quizViewerSource, 'selectable min-h-12 flex-1 rounded-xl p-3 text-left'],
+    ['LessonQuiz', lessonQuizSource, 'selectable w-full p-4 rounded-xl border-2 text-left'],
+    ['SoundMatch audio word', soundMatchSource, 'selectable w-full py-5 rounded-2xl'],
+    ['SoundMatch answer', soundMatchSource, 'selectable p-6 sm:p-8 rounded-2xl'],
+    ['MemoryCard', memoryCardSource, 'selectable relative w-full aspect-square'],
+  ])('keeps learning text in the %s button selectable', (_name, source, classes) => {
+    expect(source).toContain(classes);
   });
 
   it('removes the tap delay on controls without blocking pan or zoom of content', () => {

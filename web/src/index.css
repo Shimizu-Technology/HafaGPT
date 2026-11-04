@@ -93,20 +93,21 @@
     scale: 0.97;
   }
 
-  /* Controls feel like controls on a phone: no double-tap-zoom delay, and a
-     long press does not select the label or open the link callout. Content
-     is never listed here. Chamorro words, tutor answers and anything a learner
-     may copy must stay selectable, so a control that also carries content
-     (an inline story word, a flashcard face) opts back in with .selectable. */
+  /* Controls feel like controls on a phone: no double-tap-zoom delay. Only
+     navigation chrome also blocks selection and the link callout on a long
+     press. Learners copy Chamorro from buttons too (quiz answers, flashcards,
+     story words), so content is never blocked by default, and .selectable
+     asks for selection explicitly because some browsers won't select button
+     text otherwise. */
   :where(button, a, [role="button"], summary, label, select) {
     touch-action: manipulation;
   }
-  :where(button, [role="button"], summary, [role="tab"], nav a, .action-button, .pressable) {
+  :where(nav a, nav button, [role="tab"]) {
     -webkit-user-select: none;
     user-select: none;
     -webkit-touch-callout: none;
   }
-  :where(button, [role="button"], summary, [role="tab"], nav a, .action-button, .pressable).selectable {
+  .selectable {
     -webkit-user-select: text;
     user-select: text;
     -webkit-touch-callout: default;
