@@ -37,7 +37,7 @@ def test_suite_attestations_and_coverage():
     assert {c['category'] for c in v1} == {'production', 'dictionary_lookup', 'phrasing_variant', 'verification', 'school_message', 'communicative_goal', 'absent_word', 'grammar'}
     cases = tq.load_cases()
     assert tq.suite_id(tq.DEFAULT_CASES) == 'tutor_quality_v2'
-    assert len(cases) == len({c['id'] for c in cases}) == 171
+    assert len(cases) == len({c['id'] for c in cases}) == 172
     # Source-supported polysemy (will/gånas, free/franko, may/Måyu) is measured in context.
     assert {c['id'] for c in cases if c['category'] == 'polysemy'} == {'tq2-015', 'tq2-016', 'tq2-017', 'tq2-018'}
     # v2 keeps every v1 case byte-for-byte, so the tq1 subset stays comparable.

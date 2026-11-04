@@ -301,3 +301,36 @@ def test_school_acronyms_do_not_match_inside_words_or_all_caps() -> None:
     for body in ("ASYMMETRY", "SYMPTOMS", "éSYM", "SYMé", "SYM_code", "FAMILY DAY TOMORROW"):
         assert school_context_card_ids(body, school_announcement=True) == ()
     assert not is_school_announcement_context("🧡 SYM! Family Day is tomorrow.")
+
+
+# Same structure as a real pasted notice: no "school message" framing, a request
+# line, the acronym opening a line and closing the message.
+PASTED_NOTICE = (
+    "What does all this say?\n\nHåfa Adai Familia!\nSYM para i pinasensian-miyu.\n\n"
+    "This gathering will help us get to know each other as a community.\n\n"
+    "Things to bring\n- Chairs\n\nImportant\n"
+    "- Students must be accompanied by a parent/guardian\n\nSYM🧡"
+)
+
+
+def test_a_pasted_notice_without_school_framing_resolves_its_acronym() -> None:
+    assert is_school_announcement_context(PASTED_NOTICE)
+    assert school_context_card_ids(PASTED_NOTICE, school_announcement=True) == (
+        "usage.guam.school.sym_signoff",
+    )
+
+
+def test_a_school_message_can_sign_off_at_the_end_of_a_line() -> None:
+    assert is_school_announcement_context("Please remind parents about Friday. Esta, SYM!")
+
+
+def test_talking_about_an_acronym_is_not_a_school_message() -> None:
+    for message in (
+        "Why do students say SYM?",
+        "SYM is a club for students.",
+        "SYM means what for my students?",
+        "Our students wrote about SYMMETRY",
+        "My class learned what MSY means",
+        "SYM para i pinasensian-miyu.",
+    ):
+        assert not is_school_announcement_context(message), message
