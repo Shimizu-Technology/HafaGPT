@@ -55,7 +55,7 @@ for (const width of [1440, 390, 360]) for (const theme of ['light', 'dark']) tes
     const finalStatus = await page.request.post(`${api}/api/chat/reconcile/${logicalId}`, { headers });
     expect((await finalStatus.json()).status).toBe('complete');
     await page.getByRole('button', { name: /Sources \(/ }).last().click();
-    await expect(page.getByText('Reviewed vocabulary', { exact: false })).toBeVisible();
+    await expect(page.getByText('Vocabulary reference', { exact: false })).toBeVisible();
     await expect(page.getByText('Sources from Guam and the Northern Mariana Islands', { exact: false })).toBeVisible();
     await page.keyboard.press('Tab');
     await page.screenshot({ path: `${output}/saved-${width}-${theme}.png` });

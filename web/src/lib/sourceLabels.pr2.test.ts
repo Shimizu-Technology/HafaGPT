@@ -6,7 +6,7 @@ describe('plain source labels shared with public reading', () => {
     expect(formatSourceLabel({ name: 'raw', source_id: 'hafagpt_canonical_evaluation', page: 12,
       locator: 'entry 4', content_role: 'reviewed_lexicon', region: 'Guam_and_CNMI_source_lineage', temporal_scope: 'modern' })).toEqual({
       label: 'HåfaGPT vocabulary list (p. 12)',
-      detail: 'entry 4 • Reviewed vocabulary • Sources from Guam and the Northern Mariana Islands • Modern usage',
+      detail: 'entry 4 • Vocabulary reference • Sources from Guam and the Northern Mariana Islands • Modern usage',
     });
   });
   it('replaces internal names for the HåfaGPT list wherever they appear', () => {

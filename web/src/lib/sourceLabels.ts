@@ -7,7 +7,7 @@ const names: Record<string, string> = {
   topping_ogo_dungca_1975: 'Topping, Ogo, and Dungca dictionary',
 };
 const descriptions: Record<string, string> = {
-  reviewed_lexicon: 'Reviewed vocabulary',
+  reviewed_lexicon: 'Vocabulary reference',
   Guam_and_CNMI_source_lineage: 'Sources from Guam and the Northern Mariana Islands',
   modern: 'Modern usage', historical: 'Historical usage',
   guam: 'Guam', cnmi: 'Northern Mariana Islands',
