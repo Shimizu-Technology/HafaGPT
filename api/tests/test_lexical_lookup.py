@@ -328,6 +328,18 @@ def test_a_quoted_word_in_a_statement_is_not_a_lookup(statement):
     assert lexical_lookup_context(statement).context == ""
 
 
+@pytest.mark.parametrize("query", [
+    'Help me understand "bread"',
+    'Help me understand "bread"?',
+    'Give me an example with "bread"',
+    'Please check "bread"',
+    'I need to understand "bread"',
+    '"bread"',
+])
+def test_a_quoted_word_in_a_question_or_request_is_a_lookup(query):
+    assert lexical_lookup_request(query) == ("bread", "either")
+
+
 def test_a_card_settles_only_the_clause_it_matched():
     query = "What is the current Guam CHamoru orthography? Also explain possession in detail."
     assert uncovered_card_clauses(query) == "explain possession in detail."
