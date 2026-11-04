@@ -1730,7 +1730,7 @@ End of Export
           sendError={failedAttempt?.reservationPending ? (
             <div role="status" className="mb-2 flex items-center gap-3 rounded-xl border border-cream-300 bg-cream-50 px-3 py-2 text-base text-brown-800 dark:border-brown-600 dark:bg-brown-900 dark:text-cream-100">
               <p className="min-w-0 flex-1">Your earlier send is still being checked. Your draft is still here.</p>
-              <button type="button" onClick={handleRetry} disabled={preparingSend || loading || replyPending} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-coral-600 px-3 text-base font-semibold text-white disabled:opacity-50">
+              <button type="button" onClick={handleRetry} disabled={preparingSend || loading || replyPending} className="inline-flex min-h-11 shrink-0 items-center gap-1.5 rounded-lg bg-action px-3 text-base font-semibold text-white hover:bg-action-hover disabled:opacity-50">
                 <RefreshCw className="h-4 w-4" aria-hidden="true" />Check again
               </button>
             </div>
@@ -1944,7 +1944,7 @@ End of Export
                 </p>
                 <button
                   onClick={() => activeConversationId && handleShareConversation(activeConversationId)}
-                  className="px-4 py-2 bg-coral-500 text-white rounded-xl hover:bg-coral-600 transition-colors font-medium"
+                  className="px-4 py-2 bg-action text-white rounded-xl hover:bg-action-hover transition-colors font-medium"
                 >
                   Retry
                 </button>

@@ -110,9 +110,9 @@ export function LessonIntro({ topic, onComplete }: LessonIntroProps) {
       {/* Continue button */}
       <button
         onClick={onComplete}
-        className="w-full py-4 bg-coral-700 dark:bg-teal-700
+        className="w-full py-4 bg-action
                    text-white font-semibold rounded-2xl
-                   hover:bg-coral-800
+                   hover:bg-action-hover
                    transition-colors flex items-center justify-center gap-2"
       >
         Start Flashcards

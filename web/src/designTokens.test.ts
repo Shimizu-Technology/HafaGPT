@@ -47,6 +47,20 @@ describe('warm dark tokens', () => {
     expect(contrast(WHITE, dark['action-hover'])).toBeGreaterThanOrEqual(4.5);
   });
 
+  it('keeps white labels on the light action hover at 4.5:1', () => {
+    expect(contrast(WHITE, root['action-hover'])).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('never puts a white label on a coral fill, which turns pale in dark mode', () => {
+    const sources = import.meta.glob(['./**/*.tsx', '!./**/*.test.tsx'], { query: '?raw', import: 'default', eager: true }) as Record<string, string>;
+    const paleFill = /(?<![\w-])(?:hover:|focus:|active:|group-hover:)?bg-coral-(?:[4-9]00|950)(?![\w-])/;
+    const offenders = Object.entries(sources).flatMap(([file, source]) =>
+      [...source.matchAll(/className=(?:"[^"]*"|\{`[^`]*`\})/g)]
+        .filter(([classes]) => /(?<![\w:-])text-white(?![\w-])/.test(classes) && paleFill.test(classes))
+        .map(([classes]) => `${file}: ${classes.replace(/\s+/g, ' ').slice(0, 120)}`));
+    expect(offenders).toEqual([]);
+  });
+
   it('shows the coral action against the dark ground as a control, not just a label', () => {
     expect(contrast(dark.action, dark.surface)).toBeGreaterThanOrEqual(3);
   });

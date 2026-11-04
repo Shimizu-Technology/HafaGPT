@@ -221,7 +221,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
 
               {/* Primary CTA - Sign Up */}
               <SignUpButton mode="modal">
-                <button className="w-full py-3.5 bg-action hover:bg-coral-600 text-white rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2">
+                <button className="w-full py-3.5 bg-action hover:bg-action-hover text-white rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2">
                   <UserPlus className="w-5 h-5" />
                   Create Free Account
                 </button>
