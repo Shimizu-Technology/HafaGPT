@@ -127,9 +127,10 @@ CHAT_MODEL=gpt-5.6-luna         # Main tutor; deepseek-v3 is the rollback contro
 ```
 
 The API refuses to start when `CHAT_MODEL` is not a configured alias or the key
-for its provider is missing (`OPENROUTER_API_KEY` for `gpt-5.6-luna`). It never
-reroutes tutor traffic to another model. On Render a failed start fails the
-deploy's health check, so the previous deploy keeps serving.
+for its provider is missing (`OPENROUTER_API_KEY` for `gpt-5.6-luna`), rather
+than switching to another model. On Render a failed start fails the deploy's
+health check, so the previous deploy keeps serving. Image requests on a model
+without vision support, such as `deepseek-v3`, still use the vision fallback.
 
 ---
 

@@ -182,3 +182,13 @@ def test_missing_openai_key_and_unknown_provider_are_named(monkeypatch) -> None:
         _llm_client_loader(monkeypatch, "gpt-4o")["get_llm_client"]()
     with pytest.raises(Exception, match="unsupported provider"):
         _llm_client_loader(monkeypatch, "odd", OPENAI_API_KEY="oa-key")["get_llm_client"]()
+
+
+def test_the_model_configuration_is_checked_when_the_module_loads():
+    tree = ast.parse(CHATBOT_SOURCE)
+    calls = [
+        node for node in tree.body
+        if isinstance(node, ast.Assign) and isinstance(node.value, ast.Call)
+        and getattr(node.value.func, 'id', '') == 'get_llm_client'
+    ]
+    assert len(calls) == 1
