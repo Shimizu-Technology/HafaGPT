@@ -397,3 +397,24 @@ def test_topic_entries_need_a_request_to_study_the_topic(request_text: str) -> N
     context, _sources = get_canonical_tutor_context(request_text)
 
     assert "[Canonical colors." not in context
+
+
+@pytest.mark.parametrize('query', [
+    'Review Chamorro colors', 'Teach me family words', 'List the numbers in Chamorro',
+    'What are the names of the colors?', 'What are the words for colors?', 'Review family in Chamorro',
+])
+def test_a_request_for_a_whole_topic_gets_its_entries(query):
+    from api.canonical_context import _normalize_for_match, _topic_entries
+    assert _topic_entries(query, _normalize_for_match(query))
+
+
+@pytest.mark.parametrize('query', [
+    'What is the word for family?', 'What is the word for food?', "What's the word for number?",
+    'Is there a word for my family?', 'Translate this word: food', 'How do I say food in Chamorro?',
+    'Words for my family reunion invitation', 'I want to learn how to greet my family',
+    'Write a note to my family about dinner: I will bring food',
+])
+def test_a_lookup_that_mentions_a_topic_does_not_get_the_whole_topic(query):
+    from api.canonical_context import _normalize_for_match, _topic_entries
+    assert _topic_entries(query, _normalize_for_match(query)) == []
+

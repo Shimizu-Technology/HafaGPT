@@ -51,15 +51,17 @@ MAX_TOPIC_ENTRIES = 12
 TOPIC_CATEGORIES = (
     ("colors", re.compile(r"\bcolou?rs?\b")),
     ("numbers", re.compile(r"\bnumbers?\b|\bcounting\b")),
-    ("family", re.compile(r"\bfamily (?:members|words|terms)\b|\brelatives\b|\bfamily\b")),
+    # Not "my family" or "family reunion", which mention a family rather than the topic.
+    ("family", re.compile(r"\bfamily (?:members|words|terms)\b|\brelatives\b|(?<!my )(?<!our )\bfamily\b(?! \w)|\bfamily in\b")),
     ("body_parts", re.compile(r"\bbody parts?\b|\bparts of (?:the|my|your) body\b")),
     ("food", re.compile(r"\bfoods?\b|\bdrinks\b")),
     ("greetings", re.compile(r"\bgreetings\b")),
     ("verbs", re.compile(r"\bcommon verbs\b|\bverbs\b")),
     ("common_phrases", re.compile(r"\b(?:common|everyday|useful) phrases\b")),
 )
+# "The word for family" is a lookup, so only a plural asks for the whole topic.
 TOPIC_REQUEST = re.compile(
-    r"\b(?:review|learn|teach|study|practice|quiz|drill|list|vocab(?:ulary)?|words?|terms|names?|describe)\b"
+    r"\b(?:review|learn|teach|study|practice|quiz|drill|list|vocab(?:ulary)?|words|terms|names|describe)\b"
 )
 # "Review my essay about colors" asks about an English document, not the topic.
 ENGLISH_DOCUMENT = re.compile(r"\b(?:essay|paper|report|document|article|resume|email|letter|contract|proposal|thesis|code)s?\b")
