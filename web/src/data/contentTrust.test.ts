@@ -11,7 +11,7 @@ import {
 
 describe('dictionary content trust', () => {
   it('names the dictionary plainly, without internal provenance words', () => {
-    const text = [DICTIONARY_CONTENT_TRUST.summary, ...DICTIONARY_CONTENT_TRUST.notes, ...DICTIONARY_CONTENT_TRUST.sources.map(source => source.name)].join(' ');
+    const text = [DICTIONARY_CONTENT_TRUST.summary, ...(DICTIONARY_CONTENT_TRUST.notes ?? []), ...DICTIONARY_CONTENT_TRUST.sources.map(source => source.name)].join(' ');
 
     expect(DICTIONARY_CONTENT_TRUST.sources[0].name).toBe('Revised Chamorro dictionary');
     expect(text).not.toMatch(/snapshot|canonical|ledger|governed/i);
