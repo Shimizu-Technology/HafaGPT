@@ -70,20 +70,20 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
         aria-modal="true"
         aria-labelledby="upgrade-prompt-title"
         tabIndex={-1}
-        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-cream-300 bg-cream-50 shadow-xl animate-scale-in dark:border-slate-700 dark:bg-slate-900"
+        className="relative max-h-[calc(100dvh-2rem)] w-full max-w-md overflow-y-auto rounded-2xl border border-cream-300 bg-cream-50 shadow-xl animate-scale-in dark:border-brown-700 dark:bg-brown-950"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Close button */}
         <button
           ref={closeButtonRef}
           onClick={onClose}
-          className="absolute top-2 right-2 min-h-11 min-w-11 flex items-center justify-center p-2 rounded-lg bg-cream-200/50 dark:bg-slate-700/50 text-brown-600 dark:text-gray-400 hover:bg-cream-300 dark:hover:bg-slate-600 transition-colors z-10"
+          className="absolute top-2 right-2 min-h-11 min-w-11 flex items-center justify-center p-2 rounded-lg bg-cream-200/50 dark:bg-brown-700/50 text-brown-600 dark:text-brown-300 hover:bg-cream-300 dark:hover:bg-brown-600 transition-colors z-10"
           aria-label="Close upgrade offer"
         >
           <X className="w-5 h-5" />
         </button>
 
-        <div className="bg-coral-700 px-6 pb-8 pt-16 text-center dark:bg-teal-700">
+        <div className="bg-action px-6 pb-8 pt-16 text-center">
           <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-white/20 mb-4">
             <Icon className="w-8 h-8 text-white" />
           </div>
@@ -105,7 +105,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
           {/* Premium pitch */}
           <div className="flex items-center gap-2 mb-4">
             <Sparkles className="w-5 h-5 text-amber-500" />
-            <span className="font-semibold text-brown-800 dark:text-white">
+            <span className="font-semibold text-brown-800 dark:text-cream-100">
               Upgrade to Premium
             </span>
           </div>
@@ -117,7 +117,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
                 <div className="flex-shrink-0 w-5 h-5 rounded-full bg-teal-100 dark:bg-teal-900/30 flex items-center justify-center mt-0.5">
                   <Check className="w-3 h-3 text-teal-700 dark:text-teal-300" />
                 </div>
-                <span className="text-sm text-brown-700 dark:text-gray-300">
+                <span className="text-sm text-brown-700 dark:text-brown-100">
                   {benefit}
                 </span>
               </li>
@@ -125,16 +125,16 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
           </ul>
 
           {/* Pricing */}
-          <div className="bg-cream-100 dark:bg-slate-800 rounded-xl p-4 mb-6">
+          <div className="bg-cream-100 dark:bg-brown-900 rounded-xl p-4 mb-6">
             <div className="flex items-baseline justify-between">
               <div>
-                <span className="text-2xl font-bold text-brown-800 dark:text-white">{PREMIUM_PRICING.monthly}</span>
-                <span className="text-brown-600 dark:text-gray-400 text-sm">/month</span>
+                <span className="text-2xl font-bold text-brown-800 dark:text-cream-100">{PREMIUM_PRICING.monthly}</span>
+                <span className="text-brown-600 dark:text-brown-300 text-sm">/month</span>
               </div>
               <div className="text-right">
-                <span className="text-sm text-brown-600 dark:text-gray-400">or</span>
-                <div className="text-brown-800 dark:text-white font-semibold">
-                  {PREMIUM_PRICING.annual}<span className="text-sm font-normal text-brown-600 dark:text-gray-400">/year</span>
+                <span className="text-sm text-brown-600 dark:text-brown-300">or</span>
+                <div className="text-brown-800 dark:text-cream-100 font-semibold">
+                  {PREMIUM_PRICING.annual}<span className="text-sm font-normal text-brown-600 dark:text-brown-300">/year</span>
                 </div>
                 <span className="text-xs text-teal-700 dark:text-teal-300">Save {PREMIUM_PRICING.annualSavings}</span>
               </div>
@@ -146,14 +146,14 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
             <Link
               to="/pricing"
               onClick={onClose}
-              className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 dark:bg-teal-700 dark:hover:bg-teal-800"
+              className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-6 font-semibold text-white hover:bg-action-hover"
             >
               <Zap className="w-5 h-5" />
               Upgrade Now
             </Link>
             <button
               onClick={onClose}
-              className="w-full px-6 py-3 text-brown-600 dark:text-gray-400 text-sm hover:text-brown-800 dark:hover:text-gray-200 transition-colors"
+              className="w-full px-6 py-3 text-brown-600 dark:text-brown-300 text-sm hover:text-brown-800 dark:hover:text-cream-200 transition-colors"
             >
               Maybe later · Come back tomorrow for more free uses
             </button>
@@ -162,7 +162,7 @@ export function UpgradePrompt({ feature, onClose, usageCount, usageLimit }: Upgr
 
         {/* Footer note */}
         <div className="px-6 pb-4 text-center">
-          <p className="text-xs text-brown-500 dark:text-gray-400">
+          <p className="text-xs text-brown-500 dark:text-brown-300">
             Your subscription helps keep HåfaGPT running for Chamorro learners.
           </p>
         </div>

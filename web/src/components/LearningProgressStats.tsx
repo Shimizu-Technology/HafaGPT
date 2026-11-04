@@ -40,12 +40,12 @@ export function LearningProgressStats() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-5 sm:p-6 border border-cream-200 dark:border-slate-700">
+      <div className="bg-white dark:bg-brown-900 rounded-2xl p-5 sm:p-6 border border-cream-200 dark:border-brown-700">
         <div className="animate-pulse">
-          <div className="h-6 w-40 bg-gray-200 dark:bg-slate-700 rounded mb-4" />
+          <div className="h-6 w-40 bg-gray-200 dark:bg-brown-700 rounded mb-4" />
           <div className="grid grid-cols-2 gap-3">
             {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="h-20 bg-gray-100 dark:bg-slate-700 rounded-xl" />
+              <div key={i} className="h-20 bg-gray-100 dark:bg-brown-700 rounded-xl" />
             ))}
           </div>
         </div>
@@ -86,10 +86,10 @@ export function LearningProgressStats() {
   ];
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-cream-200 dark:border-slate-700">
+    <div className="bg-white dark:bg-brown-900 rounded-xl sm:rounded-2xl p-4 sm:p-6 border border-cream-200 dark:border-brown-700">
       {/* Header */}
       <div className="flex items-center justify-between mb-3 sm:mb-4">
-        <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white">
+        <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-cream-100">
           Your Learning Progress
         </h2>
       </div>
@@ -99,12 +99,12 @@ export function LearningProgressStats() {
         {stats.map((stat) => (
           <div
             key={stat.label}
-            className="py-3 border-t border-cream-200 dark:border-slate-700 text-center sm:text-left"
+            className="py-3 border-t border-cream-200 dark:border-brown-700 text-center sm:text-left"
           >
-            <div className="text-xl sm:text-2xl font-bold text-brown-800 dark:text-white">
+            <div className="text-xl sm:text-2xl font-bold text-brown-800 dark:text-cream-100">
               {stat.value}
             </div>
-            <div className="text-sm text-brown-500 dark:text-gray-400 truncate">
+            <div className="text-sm text-brown-500 dark:text-brown-300 truncate">
               {stat.label}<span className="block text-xs">{stat.subtext}</span>
             </div>
           </div>
@@ -113,8 +113,8 @@ export function LearningProgressStats() {
 
       {/* Encouragement message */}
       {completedTopics > 0 && completedTopics < totalTopics && (
-        <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-coral-50 dark:bg-ocean-900/30 border border-coral-100 dark:border-ocean-700">
-          <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-300 text-center">
+        <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-coral-50 border border-coral-100">
+          <p className="text-xs sm:text-sm text-brown-600 dark:text-brown-100 text-center">
             {completedTopics < 3 && "Great start! Keep going."}
             {completedTopics >= 3 && completedTopics < 5 && "Halfway there!"}
             {completedTopics >= 5 && completedTopics < totalTopics && "Almost there!"}
@@ -124,7 +124,7 @@ export function LearningProgressStats() {
 
       {completedTopics === totalTopics && (
         <div className="mt-3 sm:mt-4 p-2 sm:p-3 rounded-lg sm:rounded-xl bg-amber-50 dark:bg-amber-900/30 border border-amber-200 dark:border-amber-700">
-          <p className="text-xs sm:text-sm text-brown-600 dark:text-gray-300 text-center">
+          <p className="text-xs sm:text-sm text-brown-600 dark:text-brown-100 text-center">
              All beginner topics completed!
           </p>
         </div>
@@ -132,7 +132,7 @@ export function LearningProgressStats() {
 
       {/* Flashcards viewed stat - hidden on mobile */}
       {flashcardsViewed > 0 && (
-        <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-brown-500 dark:text-gray-400 hidden sm:block">
+        <div className="mt-3 sm:mt-4 text-center text-xs sm:text-sm text-brown-500 dark:text-brown-300 hidden sm:block">
            {flashcardsViewed} flashcard{flashcardsViewed !== 1 ? 's' : ''} studied so far
         </div>
       )}

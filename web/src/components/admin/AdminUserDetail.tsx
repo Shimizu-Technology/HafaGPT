@@ -98,7 +98,7 @@ export function AdminUserDetail() {
     return (
       <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
-          <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400" />
+          <Loader2 className="w-8 h-8 animate-spin text-coral-500" />
         </div>
       </AdminLayout>
     );
@@ -110,9 +110,9 @@ export function AdminUserDetail() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">User not found</h2>
-            <p className="text-brown-600 dark:text-gray-400 mb-4">{error?.message || 'Unable to load user'}</p>
-            <Link to={backTo} className="text-coral-500 dark:text-ocean-400 [@media(hover:hover)]:hover:underline">
+            <h2 className="text-xl font-bold text-brown-800 dark:text-cream-100 mb-2">User not found</h2>
+            <p className="text-brown-600 dark:text-brown-300 mb-4">{error?.message || 'Unable to load user'}</p>
+            <Link to={backTo} className="text-coral-500 [@media(hover:hover)]:hover:underline">
               ← Back to Users
             </Link>
           </div>
@@ -157,29 +157,29 @@ export function AdminUserDetail() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Back button */}
-        <Link to={backTo} className="pressable flex min-h-11 items-center gap-2 text-brown-600 dark:text-gray-400 [@media(hover:hover)]:hover:text-coral-500 dark:[@media(hover:hover)]:hover:text-ocean-400 transition-colors">
+        <Link to={backTo} className="pressable flex min-h-11 items-center gap-2 text-brown-600 dark:text-brown-300 [@media(hover:hover)]:hover:text-coral-500 transition-colors">
           <ArrowLeft className="w-4 h-4" />
           Back to Users
         </Link>
         
         {/* User Header */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
             {user.image_url ? (
               <img src={user.image_url} alt={user.first_name || 'User'} className="w-20 h-20 rounded-full" />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-coral-100 dark:bg-ocean-900/30 flex items-center justify-center">
-                <span className="text-3xl font-bold text-coral-600 dark:text-ocean-400">
+              <div className="w-20 h-20 rounded-full bg-coral-100 flex items-center justify-center">
+                <span className="text-3xl font-bold text-coral-600">
                   {(user.first_name || user.email || 'U')[0].toUpperCase()}
                 </span>
               </div>
             )}
             <div className="min-w-0 w-full flex-1 break-words">
-              <h1 className="text-2xl font-bold text-brown-800 dark:text-white">
+              <h1 className="text-2xl font-bold text-brown-800 dark:text-cream-100">
                 {[user.first_name, user.last_name].filter(Boolean).join(" ").trim() || user.email || "User details"}
               </h1>
-              <p className="text-brown-600 dark:text-gray-400">{user.email || 'No email'}</p>
-              <p className="text-sm text-brown-600 dark:text-slate-300 font-mono">{user.user_id}</p>
+              <p className="text-brown-600 dark:text-brown-300">{user.email || 'No email'}</p>
+              <p className="text-sm text-brown-600 dark:text-brown-100 font-mono">{user.user_id}</p>
               
               {/* Status Badges */}
               <div className="flex flex-wrap gap-2 mt-3">
@@ -194,15 +194,15 @@ export function AdminUserDetail() {
                   </span>
                 )}
                 {user.is_whitelisted ? (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-slate-200 rounded-full text-sm font-medium">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-cream-200 rounded-full text-sm font-medium">
                     <Star className="w-4 h-4" /> Friends & Family
                   </span>
                 ) : user.is_premium ? (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-slate-200 rounded-full text-sm font-medium">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-cream-200 rounded-full text-sm font-medium">
                     <Crown className="w-4 h-4" /> Premium
                   </span>
                 ) : (
-                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-slate-800 text-gray-600 dark:text-gray-400 rounded-full text-sm font-medium">
+                  <span className="inline-flex items-center gap-1 px-3 py-1 bg-gray-100 dark:bg-brown-900 text-gray-600 dark:text-brown-300 rounded-full text-sm font-medium">
                     Free Tier
                   </span>
                 )}
@@ -213,70 +213,70 @@ export function AdminUserDetail() {
         
         {/* Stats Grid */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-brown-900 rounded-xl p-4 border border-cream-200 dark:border-brown-700">
             <div className="flex items-center gap-3 mb-2">
-              <MessageSquare className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
-              <span className="text-sm text-brown-600 dark:text-slate-300">Messages</span>
+              <MessageSquare className="w-5 h-5 text-coral-500" />
+              <span className="text-sm text-brown-600 dark:text-brown-100">Messages</span>
             </div>
-            <p className="text-2xl font-bold text-brown-800 dark:text-white">{user.total_messages}</p>
-            <p className="text-xs text-brown-600 dark:text-slate-300">Today: {user.today_chat ?? "—"}</p>
+            <p className="text-2xl font-bold text-brown-800 dark:text-cream-100">{user.total_messages}</p>
+            <p className="text-xs text-brown-600 dark:text-brown-100">Today: {user.today_chat ?? "—"}</p>
           </div>
           
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-brown-900 rounded-xl p-4 border border-cream-200 dark:border-brown-700">
             <div className="flex items-center gap-3 mb-2">
               <Gamepad2 className="w-5 h-5 text-teal-500" />
-              <span className="text-sm text-brown-600 dark:text-slate-300">Games</span>
+              <span className="text-sm text-brown-600 dark:text-brown-100">Games</span>
             </div>
-            <p className="text-2xl font-bold text-brown-800 dark:text-white">{user.total_games}</p>
-            <p className="text-xs text-brown-600 dark:text-slate-300">Today: {user.today_games ?? "—"}</p>
+            <p className="text-2xl font-bold text-brown-800 dark:text-cream-100">{user.total_games}</p>
+            <p className="text-xs text-brown-600 dark:text-brown-100">Today: {user.today_games ?? "—"}</p>
           </div>
           
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-brown-900 rounded-xl p-4 border border-cream-200 dark:border-brown-700">
             <div className="flex items-center gap-3 mb-2">
               <GraduationCap className="w-5 h-5 text-teal-500" />
-              <span className="text-sm text-brown-600 dark:text-slate-300">Quizzes</span>
+              <span className="text-sm text-brown-600 dark:text-brown-100">Quizzes</span>
             </div>
-            <p className="text-2xl font-bold text-brown-800 dark:text-white">{user.total_quizzes}</p>
-            <p className="text-xs text-brown-600 dark:text-slate-300">Today: {user.today_quizzes ?? "—"}</p>
+            <p className="text-2xl font-bold text-brown-800 dark:text-cream-100">{user.total_quizzes}</p>
+            <p className="text-xs text-brown-600 dark:text-brown-100">Today: {user.today_quizzes ?? "—"}</p>
           </div>
           
-          <div className="bg-white dark:bg-slate-800 rounded-xl p-4 border border-cream-200 dark:border-slate-700">
+          <div className="bg-white dark:bg-brown-900 rounded-xl p-4 border border-cream-200 dark:border-brown-700">
             <div className="flex items-center gap-3 mb-2">
               <MessageSquare className="w-5 h-5 text-teal-500" />
-              <span className="text-sm text-brown-600 dark:text-slate-300">Conversations</span>
+              <span className="text-sm text-brown-600 dark:text-brown-100">Conversations</span>
             </div>
-            <p className="text-2xl font-bold text-brown-800 dark:text-white">{user.total_conversations}</p>
+            <p className="text-2xl font-bold text-brown-800 dark:text-cream-100">{user.total_conversations}</p>
           </div>
         </div>
         
         {/* Account Details */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4">Account details</h2>
+        <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
+          <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4">Account details</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-brown-600 dark:text-slate-300" />
+              <Calendar className="w-5 h-5 text-brown-600 dark:text-brown-100" />
               <div>
-                <p className="text-sm text-brown-600 dark:text-slate-300">Joined</p>
-                <p className="font-medium text-brown-800 dark:text-white">{formatDate(user.created_at)}</p>
+                <p className="text-sm text-brown-600 dark:text-brown-100">Joined</p>
+                <p className="font-medium text-brown-800 dark:text-cream-100">{formatDate(user.created_at)}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Clock className="w-5 h-5 text-brown-600 dark:text-slate-300" />
+              <Clock className="w-5 h-5 text-brown-600 dark:text-brown-100" />
               <div>
-                <p className="text-sm text-brown-600 dark:text-slate-300">Last sign-in</p>
-                <p className="font-medium text-brown-800 dark:text-white">{formatDate(user.last_sign_in)}</p>
+                <p className="text-sm text-brown-600 dark:text-brown-100">Last sign-in</p>
+                <p className="font-medium text-brown-800 dark:text-cream-100">{formatDate(user.last_sign_in)}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               <Activity className="w-5 h-5 text-green-500" />
               <div>
-                <p className="text-sm text-brown-600 dark:text-slate-300">Last activity</p>
-                <p className="font-medium text-brown-800 dark:text-white">
+                <p className="text-sm text-brown-600 dark:text-brown-100">Last activity</p>
+                <p className="font-medium text-brown-800 dark:text-cream-100">
                   {user.last_activity ? (
                     <>
                       {getRelativeTime(user.last_activity) || formatDate(user.last_activity, true)}
                       {getRelativeTime(user.last_activity) && (
-                        <span className="text-xs text-brown-600 dark:text-slate-300 ml-1">
+                        <span className="text-xs text-brown-600 dark:text-brown-100 ml-1">
                           ({formatDate(user.last_activity, true)})
                         </span>
                       )}
@@ -288,21 +288,21 @@ export function AdminUserDetail() {
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <Crown className="w-5 h-5 text-brown-600 dark:text-slate-300" />
+              <Crown className="w-5 h-5 text-brown-600 dark:text-brown-100" />
               <div>
-                <p className="text-sm text-brown-600 dark:text-slate-300">Plan</p>
-                <p className="font-medium text-brown-800 dark:text-white">{user.plan_name || (user.is_premium ? 'Premium' : 'Free')}</p>
+                <p className="text-sm text-brown-600 dark:text-brown-100">Plan</p>
+                <p className="font-medium text-brown-800 dark:text-cream-100">{user.plan_name || (user.is_premium ? 'Premium' : 'Free')}</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
               {user.subscription_status === 'active' ? (
                 <CheckCircle className="w-5 h-5 text-green-500" />
               ) : (
-                <XCircle className="w-5 h-5 text-brown-600 dark:text-slate-300" />
+                <XCircle className="w-5 h-5 text-brown-600 dark:text-brown-100" />
               )}
               <div>
-                <p className="text-sm text-brown-600 dark:text-slate-300">Subscription status</p>
-                <p className="font-medium text-brown-800 dark:text-white capitalize">
+                <p className="text-sm text-brown-600 dark:text-brown-100">Subscription status</p>
+                <p className="font-medium text-brown-800 dark:text-cream-100 capitalize">
                   {user.subscription_status || (user.is_whitelisted ? 'Whitelisted' : 'None')}
                 </p>
               </div>
@@ -311,16 +311,16 @@ export function AdminUserDetail() {
         </div>
         
         {/* Learning Preferences */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
           <div className="flex items-center justify-between mb-4">
-            <h2 className="text-lg font-semibold text-brown-800 dark:text-white flex items-center gap-2">
-              <Sliders className="w-5 h-5 text-coral-500 dark:text-ocean-400" />
+            <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 flex items-center gap-2">
+              <Sliders className="w-5 h-5 text-coral-500" />
               Learning Preferences
             </h2>
             {!editingPreferences && (
               <button
                 onClick={startEditingPreferences}
-                className="min-h-11 px-2 text-sm text-coral-700 dark:text-teal-300 [@media(hover:hover)]:hover:underline"
+                className="min-h-11 px-2 text-sm text-coral-700 [@media(hover:hover)]:hover:underline"
               >
                 Edit
               </button>
@@ -330,14 +330,14 @@ export function AdminUserDetail() {
           {editingPreferences ? (
             <div className="space-y-4">
               <div>
-                <label htmlFor="admin-skill-level" className="block text-sm font-medium text-brown-700 dark:text-gray-300 mb-2">
+                <label htmlFor="admin-skill-level" className="block text-sm font-medium text-brown-700 dark:text-brown-100 mb-2">
                   Skill level
                 </label>
                 <select
                   id="admin-skill-level"
                   value={selectedSkillLevel}
                   onChange={(e) => setSelectedSkillLevel(e.target.value)}
-                  className="min-h-11 w-full p-2 rounded-lg border border-cream-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-brown-800 dark:text-white"
+                  className="min-h-11 w-full p-2 rounded-lg border border-cream-200 dark:border-brown-600 bg-white dark:bg-brown-700 text-brown-800 dark:text-cream-100"
                 >
                   <option value="beginner">🌱 Beginner</option>
                   <option value="intermediate">🌿 Intermediate</option>
@@ -345,14 +345,14 @@ export function AdminUserDetail() {
                 </select>
               </div>
               <div>
-                <label htmlFor="admin-learning-goal" className="block text-sm font-medium text-brown-700 dark:text-gray-300 mb-2">
+                <label htmlFor="admin-learning-goal" className="block text-sm font-medium text-brown-700 dark:text-brown-100 mb-2">
                   Learning goal
                 </label>
                 <select
                   id="admin-learning-goal"
                   value={selectedLearningGoal}
                   onChange={(e) => setSelectedLearningGoal(e.target.value)}
-                  className="min-h-11 w-full p-2 rounded-lg border border-cream-200 dark:border-slate-600 bg-white dark:bg-slate-700 text-brown-800 dark:text-white"
+                  className="min-h-11 w-full p-2 rounded-lg border border-cream-200 dark:border-brown-600 bg-white dark:bg-brown-700 text-brown-800 dark:text-cream-100"
                 >
                   <option value="conversation">💬 Daily Conversation</option>
                   <option value="culture">🌴 Culture & Heritage</option>
@@ -364,14 +364,14 @@ export function AdminUserDetail() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setEditingPreferences(false)}
-                  className="flex-1 px-4 py-2 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-lg [@media(hover:hover)]:hover:bg-cream-200 dark:[@media(hover:hover)]:hover:bg-slate-600 transition-colors"
+                  className="flex-1 px-4 py-2 bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 rounded-lg [@media(hover:hover)]:hover:bg-cream-200 dark:[@media(hover:hover)]:hover:bg-brown-600 transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   onClick={handleSavePreferences}
                   disabled={updatePreferences.isPending}
-                  className="flex-1 px-4 py-2 bg-coral-700 dark:bg-ocean-700 text-white rounded-lg [@media(hover:hover)]:hover:opacity-90 transition-colors flex items-center justify-center gap-2"
+                  className="flex-1 px-4 py-2 bg-action text-white rounded-lg [@media(hover:hover)]:hover:opacity-90 transition-colors flex items-center justify-center gap-2"
                 >
                   {updatePreferences.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
                   Save
@@ -380,18 +380,18 @@ export function AdminUserDetail() {
             </div>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-              <div className="p-3 bg-cream-50 dark:bg-slate-700/50 rounded-lg">
-                <p className="text-xs text-brown-600 dark:text-slate-300 mb-1">Skill level</p>
-                <p className="font-medium text-brown-800 dark:text-white">
+              <div className="p-3 bg-cream-50 dark:bg-brown-700/50 rounded-lg">
+                <p className="text-xs text-brown-600 dark:text-brown-100 mb-1">Skill level</p>
+                <p className="font-medium text-brown-800 dark:text-cream-100">
                   {user?.skill_level === 'beginner' && '🌱 Beginner'}
                   {user?.skill_level === 'intermediate' && '🌿 Intermediate'}
                   {user?.skill_level === 'advanced' && '🌳 Advanced'}
                   {!user?.skill_level && '—'}
                 </p>
               </div>
-              <div className="p-3 bg-cream-50 dark:bg-slate-700/50 rounded-lg">
-                <p className="text-xs text-brown-600 dark:text-slate-300 mb-1">Learning goal</p>
-                <p className="font-medium text-brown-800 dark:text-white">
+              <div className="p-3 bg-cream-50 dark:bg-brown-700/50 rounded-lg">
+                <p className="text-xs text-brown-600 dark:text-brown-100 mb-1">Learning goal</p>
+                <p className="font-medium text-brown-800 dark:text-cream-100">
                   {user?.learning_goal === 'conversation' && '💬 Conversation'}
                   {user?.learning_goal === 'culture' && '🌴 Culture'}
                   {user?.learning_goal === 'family' && '👨‍👩‍👧‍👦 Family'}
@@ -400,9 +400,9 @@ export function AdminUserDetail() {
                   {!user?.learning_goal && '—'}
                 </p>
               </div>
-              <div className="p-3 bg-cream-50 dark:bg-slate-700/50 rounded-lg">
-                <p className="text-xs text-brown-600 dark:text-slate-300 mb-1">Onboarding</p>
-                <p className="font-medium text-brown-800 dark:text-white">
+              <div className="p-3 bg-cream-50 dark:bg-brown-700/50 rounded-lg">
+                <p className="text-xs text-brown-600 dark:text-brown-100 mb-1">Onboarding</p>
+                <p className="font-medium text-brown-800 dark:text-cream-100">
                   {user?.onboarding_completed ? (
                     <span className="text-emerald-700 dark:text-emerald-300">✓ Completed</span>
                   ) : (
@@ -415,8 +415,8 @@ export function AdminUserDetail() {
         </div>
         
         {/* Actions */}
-        <div className="bg-white dark:bg-slate-800 rounded-xl p-6 border border-cream-200 dark:border-slate-700">
-          <h2 className="text-lg font-semibold text-brown-800 dark:text-white mb-4">Actions</h2>
+        <div className="bg-white dark:bg-brown-900 rounded-xl p-6 border border-cream-200 dark:border-brown-700">
+          <h2 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4">Actions</h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {/* Premium Actions */}
             {user.is_premium && !user.is_whitelisted ? (
@@ -432,7 +432,7 @@ export function AdminUserDetail() {
               <button
                 onClick={() => setShowConfirm('grant_premium')}
                 disabled={updateUser.isPending}
-                className="flex items-center justify-center gap-2 px-4 py-3 bg-coral-50 dark:bg-slate-700 text-coral-800 dark:text-teal-300 rounded-xl [@media(hover:hover)]:hover:bg-coral-100 dark:[@media(hover:hover)]:hover:bg-slate-600 transition-colors"
+                className="flex items-center justify-center gap-2 px-4 py-3 bg-coral-50 dark:bg-brown-700 text-coral-800 rounded-xl [@media(hover:hover)]:hover:bg-coral-100 dark:[@media(hover:hover)]:hover:bg-brown-600 transition-colors"
               >
                 <Crown className="w-5 h-5" />
                 Grant premium
@@ -517,11 +517,11 @@ export function AdminUserDetail() {
         {/* Confirmation Modal */}
         {showConfirm && (
           <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-6 max-w-md w-full shadow-xl">
-              <h3 className="text-lg font-semibold text-brown-800 dark:text-white mb-2">
+            <div className="bg-white dark:bg-brown-900 rounded-xl p-6 max-w-md w-full shadow-xl">
+              <h3 className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-2">
                 Confirm Action
               </h3>
-              <p className="text-brown-600 dark:text-gray-400 mb-6">
+              <p className="text-brown-600 dark:text-brown-300 mb-6">
                 {showConfirm === 'grant_premium' && 'Grant premium access to this user?'}
                 {showConfirm === 'revoke_premium' && 'Revoke premium access from this user? This will also remove whitelist status.'}
                 {showConfirm === 'whitelist' && 'Add this user to the Friends & Family whitelist? They will get permanent free premium access.'}
@@ -535,7 +535,7 @@ export function AdminUserDetail() {
               <div className="flex gap-3">
                 <button
                   onClick={() => setShowConfirm(null)}
-                  className="flex-1 px-4 py-2 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-lg [@media(hover:hover)]:hover:bg-cream-200 dark:[@media(hover:hover)]:hover:bg-slate-600 transition-colors"
+                  className="flex-1 px-4 py-2 bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 rounded-lg [@media(hover:hover)]:hover:bg-cream-200 dark:[@media(hover:hover)]:hover:bg-brown-600 transition-colors"
                 >
                   Cancel
                 </button>
@@ -545,7 +545,7 @@ export function AdminUserDetail() {
                   className={`flex-1 px-4 py-2 rounded-lg transition-colors flex items-center justify-center gap-2 ${
                     showConfirm.includes('ban') || showConfirm.includes('revoke') || showConfirm.includes('unwhitelist')
                       ? 'bg-red-500 [@media(hover:hover)]:hover:bg-red-600 text-white'
-                      : 'bg-coral-700 dark:bg-ocean-700 [@media(hover:hover)]:hover:opacity-90 text-white'
+                      : 'bg-action [@media(hover:hover)]:hover:opacity-90 text-white'
                   }`}
                 >
                   {updateUser.isPending && <Loader2 className="w-4 h-4 animate-spin" />}
@@ -559,9 +559,9 @@ export function AdminUserDetail() {
         {/* Update loading overlay */}
         {(updateUser.isPending || resetOnboarding.isPending || updatePreferences.isPending) && !showConfirm && (
           <div className="fixed inset-0 bg-black/20 flex items-center justify-center z-50">
-            <div className="bg-white dark:bg-slate-800 rounded-xl p-4 shadow-xl flex items-center gap-3">
-              <Loader2 className="w-5 h-5 animate-spin text-coral-500 dark:text-ocean-400" />
-              <span className="text-brown-800 dark:text-white">Updating...</span>
+            <div className="bg-white dark:bg-brown-900 rounded-xl p-4 shadow-xl flex items-center gap-3">
+              <Loader2 className="w-5 h-5 animate-spin text-coral-500" />
+              <span className="text-brown-800 dark:text-cream-100">Updating...</span>
             </div>
           </div>
         )}

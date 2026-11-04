@@ -230,18 +230,18 @@ export function ConversationPractice() {
 
   if (!isSignedIn) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 p-4">
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-950 p-4">
         <div className="max-w-2xl mx-auto pt-20 text-center">
-          <MessageCircle className="mx-auto mb-4 h-14 w-14 text-coral-700 dark:text-ocean-300" aria-hidden="true" />
-          <h1 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+          <MessageCircle className="mx-auto mb-4 h-14 w-14 text-coral-700" aria-hidden="true" />
+          <h1 className="text-2xl font-bold text-brown-900 dark:text-cream-100 mb-2">
             Sign in Required
           </h1>
-          <p className="text-slate-600 dark:text-slate-300 mb-6">
+          <p className="text-brown-600 dark:text-brown-100 mb-6">
             Please sign in to practice conversations
           </p>
           <Link
             to="/"
-            className="pressable inline-flex items-center gap-2 px-4 py-2 bg-coral-700 dark:bg-teal-700 text-white rounded-lg hover:bg-coral-800 dark:hover:bg-teal-800 transition-colors"
+            className="pressable inline-flex items-center gap-2 px-4 py-2 bg-action text-white rounded-lg hover:bg-action-hover transition-colors"
           >
             ← Back to Home
           </Link>
@@ -252,8 +252,8 @@ export function ConversationPractice() {
 
   if (!scenario) {
     return (
-      <div className="min-h-screen bg-cream-50 dark:bg-slate-900 flex items-center justify-center">
-        <h1 className="text-xl font-bold text-brown-950 dark:text-white">Loading practice…</h1>
+      <div className="min-h-screen bg-cream-50 dark:bg-brown-950 flex items-center justify-center">
+        <h1 className="text-xl font-bold text-brown-950 dark:text-cream-100">Loading practice…</h1>
       </div>
     );
   }
@@ -268,21 +268,21 @@ export function ConversationPractice() {
         <main className="learner-reading mx-auto max-w-2xl space-y-5 px-4 py-6 sm:py-8">
           <ContentTrustNote trust={CONVERSATION_CONTENT_TRUST} />
           {/* Scenario Card */}
-          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
-            <h2 className="mb-3 flex items-center gap-2 font-bold text-brown-950 dark:text-white">
-              <MessageCircle className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> Scenario
+          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900 sm:p-6">
+            <h2 className="mb-3 flex items-center gap-2 font-bold text-brown-950 dark:text-cream-100">
+              <MessageCircle className="h-5 w-5 text-coral-700" aria-hidden="true" /> Scenario
             </h2>
-            <p className="text-slate-600 dark:text-slate-300 mb-4">
+            <p className="text-brown-600 dark:text-brown-100 mb-4">
               {scenario.setting}
             </p>
             
-            <div className="flex items-center gap-3 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-              <UserRound className="h-7 w-7 text-coral-700 dark:text-ocean-300" aria-hidden="true" />
+            <div className="flex items-center gap-3 p-3 bg-cream-50 dark:bg-brown-700/50 rounded-lg">
+              <UserRound className="h-7 w-7 text-coral-700" aria-hidden="true" />
               <div>
-                <p className="font-medium text-slate-900 dark:text-white">
+                <p className="font-medium text-brown-900 dark:text-cream-100">
                   {scenario.characterName}
                 </p>
-                <p className="text-sm text-slate-600 dark:text-slate-300">
+                <p className="text-sm text-brown-600 dark:text-brown-100">
                   {scenario.characterRole}
                 </p>
               </div>
@@ -290,14 +290,14 @@ export function ConversationPractice() {
           </div>
 
           {/* Objectives */}
-          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
-            <h2 className="mb-3 flex items-center gap-2 font-bold text-brown-950 dark:text-white">
-              <Target className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> Goals for this practice
+          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900 sm:p-6">
+            <h2 className="mb-3 flex items-center gap-2 font-bold text-brown-950 dark:text-cream-100">
+              <Target className="h-5 w-5 text-coral-700" aria-hidden="true" /> Goals for this practice
             </h2>
             <ul className="space-y-2">
               {scenario.objectives.map((obj, i) => (
-                <li key={i} className="flex items-start gap-2 text-slate-600 dark:text-slate-300">
-                  <Check className="mt-0.5 h-4 w-4 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />
+                <li key={i} className="flex items-start gap-2 text-brown-600 dark:text-brown-100">
+                  <Check className="mt-0.5 h-4 w-4 flex-none text-coral-700" aria-hidden="true" />
                   {obj}
                 </li>
               ))}
@@ -305,9 +305,9 @@ export function ConversationPractice() {
           </div>
 
           {/* Useful Phrases */}
-          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
-            <h2 className="mb-3 flex items-center gap-2 font-bold text-brown-950 dark:text-white">
-              <Lightbulb className="h-5 w-5 text-coral-700 dark:text-ocean-300" aria-hidden="true" /> Useful phrases
+          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900 sm:p-6">
+            <h2 className="mb-3 flex items-center gap-2 font-bold text-brown-950 dark:text-cream-100">
+              <Lightbulb className="h-5 w-5 text-coral-700" aria-hidden="true" /> Useful phrases
             </h2>
             <div className="space-y-3">
               {scenario.usefulPhrases.map((phrase, i) => (
@@ -318,9 +318,9 @@ export function ConversationPractice() {
           </div>
 
           {savedDraft && (
-            <div className="rounded-xl border border-cream-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <p className="text-sm text-brown-600 dark:text-gray-300">{savedDraft.isComplete ? 'Your last practice is saved on this device.' : 'Continue your saved conversation on this device.'}</p>
-              <button type="button" onClick={() => { setConversation(savedDraft); setShowIntro(false); }} className="mt-3 min-h-11 rounded-lg bg-coral-700 px-4 font-semibold text-white dark:bg-ocean-700">
+            <div className="rounded-xl border border-cream-300 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+              <p className="text-sm text-brown-600 dark:text-brown-100">{savedDraft.isComplete ? 'Your last practice is saved on this device.' : 'Continue your saved conversation on this device.'}</p>
+              <button type="button" onClick={() => { setConversation(savedDraft); setShowIntro(false); }} className="mt-3 min-h-11 rounded-lg bg-action px-4 font-semibold text-white">
                 {savedDraft.isComplete ? 'Review last practice' : 'Resume conversation'}
               </button>
             </div>
@@ -328,7 +328,7 @@ export function ConversationPractice() {
           {/* Start Button */}
           <button
             onClick={() => startConversation()}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 py-4 font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action py-4 font-semibold text-white hover:bg-action-hover"
           >
             <Play className="h-5 w-5" aria-hidden="true" /> Start conversation
           </button>
@@ -343,20 +343,20 @@ export function ConversationPractice() {
       <LearnerPageShell>
         <LearnerPageHeader title="Practice complete" subtitle={scenario.title} icon={Check} backTo={conversationReturnTo} backLabel={conversationReturnLabel} maxWidthClassName="max-w-2xl" />
         <main className="learner-reading mx-auto max-w-2xl px-4 py-8">
-          <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
+          <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-900 sm:p-8">
 
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white mb-2">
+            <h2 className="text-2xl font-bold text-brown-900 dark:text-cream-100 mb-2">
               Practice recap
             </h2>
-            <p className="text-slate-600 dark:text-slate-300 mb-6">
+            <p className="text-brown-600 dark:text-brown-100 mb-6">
               {scenario.title}
             </p>
 
             <ContentTrustNote trust={CONVERSATION_CONTENT_TRUST} className="mb-6 text-left" compact />
 
             {/* Objectives Completed */}
-            <div className="text-left mb-6 p-4 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
-              <h3 className="font-semibold text-slate-900 dark:text-white mb-2">
+            <div className="text-left mb-6 p-4 bg-cream-50 dark:bg-brown-700/50 rounded-lg">
+              <h3 className="font-semibold text-brown-900 dark:text-cream-100 mb-2">
                 What you practiced
               </h3>
               <ul className="space-y-1">
@@ -364,27 +364,27 @@ export function ConversationPractice() {
                   const evidence = conversation.objectiveEvidence.find(item => item.objective === obj);
                   const completed = Boolean(evidence);
                   return (
-                    <li key={i} className={`flex items-center gap-2 text-sm ${completed ? 'text-green-700 dark:text-green-300' : 'text-slate-600 dark:text-slate-300'}`}>
+                    <li key={i} className={`flex items-center gap-2 text-sm ${completed ? 'text-green-700 dark:text-green-300' : 'text-brown-600 dark:text-brown-100'}`}>
                       {completed ? <Check className="h-4 w-4 flex-none" aria-hidden="true" /> : <Circle className="h-4 w-4 flex-none" aria-hidden="true" />}
-                      <span>{obj}<span className="mt-1 block text-xs text-slate-600 dark:text-slate-300">{evidence ? `“${evidence.quote}”${evidence.assisted ? ' · With a phrase hint' : ' · AI-observed response'}` : 'Try this goal next time'}</span>{!evidence && <button type="button" onClick={() => startConversation(obj)} aria-label={`Practice this goal: ${obj}`} className="mt-1 min-h-11 font-semibold text-coral-700 dark:text-ocean-300">Practice this goal<span className="sr-only">: {obj}</span></button>}</span>
+                      <span>{obj}<span className="mt-1 block text-xs text-brown-600 dark:text-brown-100">{evidence ? `“${evidence.quote}”${evidence.assisted ? ' · With a phrase hint' : ' · AI-observed response'}` : 'Try this goal next time'}</span>{!evidence && <button type="button" onClick={() => startConversation(obj)} aria-label={`Practice this goal: ${obj}`} className="mt-1 min-h-11 font-semibold text-coral-700">Practice this goal<span className="sr-only">: {obj}</span></button>}</span>
                     </li>
                   );
                 })}
               </ul>
             </div>
 
-            <button type="button" onClick={() => setReviewTranscript(true)} className="mb-4 min-h-11 text-sm font-semibold text-coral-700 dark:text-ocean-300">Review conversation and suggestions</button>
+            <button type="button" onClick={() => setReviewTranscript(true)} className="mb-4 min-h-11 text-sm font-semibold text-coral-700">Review conversation and suggestions</button>
             {/* Actions */}
             <div className="flex flex-col sm:flex-row gap-3">
               <button
                 onClick={restartConversation}
-                className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-cream-100 px-4 py-3 font-semibold text-brown-700 hover:bg-cream-200 dark:bg-slate-700 dark:text-slate-200 dark:hover:bg-slate-600"
+                className="flex min-h-12 flex-1 items-center justify-center gap-2 rounded-xl bg-cream-100 px-4 py-3 font-semibold text-brown-700 hover:bg-cream-200 dark:bg-brown-700 dark:text-cream-200 dark:hover:bg-brown-600"
               >
                 <RotateCcw className="h-5 w-5" aria-hidden="true" /> Try again
               </button>
               <Link replace
                 to="/practice"
-                className="pressable flex min-h-12 flex-1 items-center justify-center rounded-xl bg-coral-700 px-4 py-3 text-center font-semibold text-white hover:bg-coral-800 dark:bg-ocean-700 dark:hover:bg-ocean-800"
+                className="pressable flex min-h-12 flex-1 items-center justify-center rounded-xl bg-action px-4 py-3 text-center font-semibold text-white hover:bg-action-hover"
               >
                 More scenarios
               </Link>
@@ -415,7 +415,7 @@ export function ConversationPractice() {
                 onClick={() => setShowTranslations(!showTranslations)}
                 aria-label={showTranslations ? 'Hide translations' : 'Show translations'}
                 aria-pressed={showTranslations}
-                className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${showTranslations ? 'bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300' : 'text-brown-500 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800'}`}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${showTranslations ? 'bg-coral-100 text-coral-700' : 'text-brown-500 hover:bg-cream-200 dark:text-brown-100 dark:hover:bg-brown-900'}`}
               >
                 <Languages className="h-5 w-5" aria-hidden="true" />
               </button>
@@ -424,17 +424,17 @@ export function ConversationPractice() {
                 onClick={() => setShowPhrases(!showPhrases)}
                 aria-label={showPhrases ? 'Hide useful phrases' : 'Show useful phrases'}
                 aria-pressed={showPhrases}
-                className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${showPhrases ? 'bg-coral-100 text-coral-700 dark:bg-ocean-950 dark:text-ocean-300' : 'text-brown-500 hover:bg-cream-200 dark:text-gray-300 dark:hover:bg-slate-800'}`}
+                className={`flex h-11 w-11 items-center justify-center rounded-xl transition-colors ${showPhrases ? 'bg-coral-100 text-coral-700' : 'text-brown-500 hover:bg-cream-200 dark:text-brown-100 dark:hover:bg-brown-900'}`}
               >
                 <Lightbulb className="h-5 w-5" aria-hidden="true" />
               </button>
           </div>
         )}
         below={(
-          <div className="mx-auto max-w-2xl px-4 pb-3 text-xs text-brown-600 dark:text-gray-300">
+          <div className="mx-auto max-w-2xl px-4 pb-3 text-xs text-brown-600 dark:text-brown-100">
             <p>{storageAvailable ? 'Saved on this device. You can return later.' : 'Saving is unavailable. Keep this page open to retain your conversation.'}</p>
             {!conversation.isComplete && <p className="mt-1">Next goal: {conversation.focusObjective || scenario.objectives.find(goal => !conversation.objectivesCompleted.includes(goal)) || 'Finish your exchange'}</p>}
-            {conversation.messages.some(message => message.role === 'user') && <button type="button" disabled={isLoading} onClick={() => { setConversation(prev => ({ ...prev, isComplete: true })); setReviewTranscript(false); }} className="mt-2 min-h-11 font-semibold text-coral-700 dark:text-ocean-300">{conversation.isComplete ? 'Back to recap' : 'Finish and review'}</button>}
+            {conversation.messages.some(message => message.role === 'user') && <button type="button" disabled={isLoading} onClick={() => { setConversation(prev => ({ ...prev, isComplete: true })); setReviewTranscript(false); }} className="mt-2 min-h-11 font-semibold text-coral-700">{conversation.isComplete ? 'Back to recap' : 'Finish and review'}</button>}
           </div>
         )}
       />
@@ -450,7 +450,7 @@ export function ConversationPractice() {
                 <button
                   key={i}
                   onClick={() => { setUserInput(prev => prev + (prev ? ' ' : '') + phrase.chamorro); setHintUsed(true); }}
-                  className="min-h-11 rounded-lg border border-teal-200 bg-white px-3 py-1.5 font-chamorro text-base text-brown-900 transition-colors hover:bg-teal-100 dark:border-teal-800 dark:bg-slate-800 dark:text-gray-100 dark:hover:bg-teal-900/40"
+                  className="min-h-11 rounded-lg border border-teal-200 bg-white px-3 py-1.5 font-chamorro text-base text-brown-900 transition-colors hover:bg-teal-100 dark:border-teal-800 dark:bg-brown-900 dark:text-cream-100 dark:hover:bg-teal-900/40"
                 >
                   {phrase.chamorro}
                 </button>
@@ -473,7 +473,7 @@ export function ConversationPractice() {
           ))}
           
           {isLoading && (
-            <div className="flex items-center gap-2 text-slate-600 dark:text-slate-300">
+            <div className="flex items-center gap-2 text-brown-600 dark:text-brown-100">
               <MessageCircle className="h-4 w-4 animate-pulse" aria-hidden="true" />
               <span className="text-sm">{scenario.characterName} is typing...</span>
             </div>
@@ -484,7 +484,7 @@ export function ConversationPractice() {
       </div>
 
       {/* Input */}
-      <div className="sticky bottom-0 border-t border-cream-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800">
+      <div className="sticky bottom-0 border-t border-cream-200 bg-white px-4 py-3 dark:border-brown-700 dark:bg-brown-900">
         <div className="max-w-2xl mx-auto">
           <div className="flex gap-2">
             <input
@@ -495,7 +495,7 @@ export function ConversationPractice() {
               onKeyDown={handleKeyPress}
               aria-label="Conversation response"
               placeholder="Write in Chamorro..."
-              className="min-w-0 flex-1 rounded-xl bg-cream-100 px-4 py-3 text-base text-brown-950 placeholder-brown-500 focus:outline-none focus:ring-2 focus:ring-coral-500 dark:bg-slate-700 dark:text-white dark:placeholder-slate-300"
+              className="min-w-0 flex-1 rounded-xl bg-cream-100 px-4 py-3 text-base text-brown-950 placeholder-brown-500 focus:outline-none focus:ring-2 focus:ring-coral-500 dark:bg-brown-700 dark:text-cream-100 dark:placeholder-brown-200"
               disabled={isLoading || conversation.isComplete}
               maxLength={600}
             />
@@ -504,7 +504,7 @@ export function ConversationPractice() {
               onClick={sendMessage}
               disabled={!userInput.trim() || isLoading || conversation.isComplete}
               aria-label="Send response"
-              className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-coral-700 text-white hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-ocean-700 dark:hover:bg-ocean-800"
+              className="flex h-12 w-12 flex-none items-center justify-center rounded-xl bg-action text-white hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               <Send className="h-5 w-5" aria-hidden="true" />
             </button>
@@ -519,16 +519,16 @@ export function ConversationPractice() {
 /** Display an authored useful phrase with translation and pronunciation support. */
 function PhraseCard({ phrase }: { phrase: UsefulPhrase }) {
   return (
-    <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-slate-50 dark:bg-slate-700/50 rounded-lg">
+    <div className="flex flex-wrap items-center justify-between gap-2 p-3 bg-cream-50 dark:bg-brown-700/50 rounded-lg">
       <div>
-        <p className="font-chamorro text-lg font-medium text-slate-900 dark:text-white">
+        <p className="font-chamorro text-lg font-medium text-brown-900 dark:text-cream-100">
           {phrase.chamorro}
         </p>
-        <p className="text-sm text-slate-600 dark:text-slate-300">
+        <p className="text-sm text-brown-600 dark:text-brown-100">
           {phrase.english}
         </p>
         {phrase.pronunciation && (
-          <p className="text-xs text-slate-600 dark:text-slate-300 italic">
+          <p className="text-xs text-brown-600 dark:text-brown-100 italic">
             /{phrase.pronunciation}/
           </p>
         )}
@@ -554,7 +554,7 @@ function MessageBubble({
   if (isSystem) {
     return (
       <div className="text-center py-2">
-        <p className="text-sm text-slate-600 dark:text-slate-300 italic">
+        <p className="text-sm text-brown-600 dark:text-brown-100 italic">
           {message.chamorro}
         </p>
       </div>
@@ -570,15 +570,15 @@ function MessageBubble({
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'}`}>
       <div className={`max-w-[85%] ${isUser ? 'order-1' : ''}`}>
         {/* Name */}
-        <p className={`text-xs text-slate-600 dark:text-slate-300 mb-1 ${isUser ? 'text-right' : ''}`}>
+        <p className={`text-xs text-brown-600 dark:text-brown-100 mb-1 ${isUser ? 'text-right' : ''}`}>
           {isUser ? 'You' : characterName}
         </p>
         
         {/* Bubble */}
         <div className={`rounded-2xl px-4 py-3 ${
           isUser 
-            ? 'bg-coral-700 dark:bg-teal-700 text-white rounded-br-md'
-            : 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white rounded-bl-md border border-slate-200 dark:border-slate-600'
+            ? 'bg-action text-white rounded-br-md'
+            : 'bg-white dark:bg-brown-700 text-brown-900 dark:text-cream-100 rounded-bl-md border border-cream-200 dark:border-brown-600'
         }`}>
           {/* Chamorro text */}
           <p className="mb-1 font-chamorro text-lg">{message.chamorro}</p>
@@ -588,7 +588,7 @@ function MessageBubble({
             <p className={`text-sm mt-2 pt-2 border-t ${
               isUser 
                 ? 'border-coral-400 text-coral-100' 
-                : 'border-slate-200 dark:border-slate-600 text-slate-600 dark:text-slate-300'
+                : 'border-cream-200 dark:border-brown-600 text-brown-600 dark:text-brown-100'
             }`}>
               {message.english}
             </p>
@@ -596,7 +596,7 @@ function MessageBubble({
         </div>
 
         {!isUser && message.groundingStatus && (
-          <p className="mt-1 flex items-center gap-1 text-xs font-medium text-slate-600 dark:text-slate-300">
+          <p className="mt-1 flex items-center gap-1 text-xs font-medium text-brown-600 dark:text-brown-100">
             {message.groundingStatus === 'canonical_support' ? (
               <><BookOpenCheck className="h-3 w-3" aria-hidden="true" />Source-backed vocabulary matches included</>
             ) : message.groundingStatus === 'source_support' ? (

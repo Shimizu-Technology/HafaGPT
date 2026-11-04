@@ -50,9 +50,9 @@ export function StoryViewer() {
   if (!story) {
     return (
       <LearnerPageShell className="flex items-center justify-center p-4">
-        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-          <h1 className="text-xl text-brown-600 dark:text-gray-400 mb-4">Story not found</h1>
-          <Link replace to="/stories" className="text-coral-700 dark:text-ocean-400 hover:underline">
+        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-900">
+          <h1 className="text-xl text-brown-600 dark:text-brown-300 mb-4">Story not found</h1>
+          <Link replace to="/stories" className="text-coral-700 hover:underline">
             Back to Stories
           </Link>
         </div>
@@ -134,18 +134,18 @@ export function StoryViewer() {
   const renderReading = () => (
     <>
       {/* Story Header */}
-      <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
+      <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900">
         <div className="flex items-start gap-4">
           <div className="text-4xl">{story.icon}</div>
           <div className="flex-1">
-            <h2 tabIndex={-1} className="font-chamorro text-2xl font-semibold text-brown-800 dark:text-white">
+            <h2 tabIndex={-1} className="font-chamorro text-2xl font-semibold text-brown-800 dark:text-cream-100">
               {story.title}
             </h2>
-            <p className="text-sm text-brown-600 dark:text-gray-300 italic">
+            <p className="text-sm text-brown-600 dark:text-brown-100 italic">
               {story.titleEnglish}
             </p>
-            <div className="flex items-center gap-3 mt-2 text-xs text-brown-500 dark:text-gray-400">
-              <span className="px-2 py-0.5 rounded-full font-medium bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200">
+            <div className="flex items-center gap-3 mt-2 text-xs text-brown-500 dark:text-brown-300">
+              <span className="px-2 py-0.5 rounded-full font-medium bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-cream-200">
                 {story.difficulty}
               </span>
               <span>{story.readingTime} min read</span>
@@ -180,10 +180,10 @@ export function StoryViewer() {
       )}
 
       {/* Reading Area */}
-      <div className="mb-4 rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
+      <div className="mb-4 rounded-2xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900 sm:p-6">
         {/* Chamorro Text - Tappable Words */}
         <div className="mb-6">
-          <p className="text-sm text-brown-500 dark:text-gray-400 mb-2 font-semibold">
+          <p className="text-sm text-brown-500 dark:text-brown-300 mb-2 font-semibold">
             Tap any word to translate
           </p>
           <p className="font-chamorro text-xl leading-loose">
@@ -193,9 +193,9 @@ export function StoryViewer() {
           </p>
         </div>
 
-        <div className="border-t border-cream-200 pt-3 dark:border-slate-700">
+        <div className="border-t border-cream-200 pt-3 dark:border-brown-700">
           <button type="button" onClick={() => setShowEnglish(!showEnglish)} aria-expanded={showEnglish} aria-controls="story-english" className="min-h-11 rounded-lg px-2 text-sm font-semibold text-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-600 dark:text-ocean-300">{showEnglish ? 'Hide English' : 'Reveal English'}</button>
-          {showEnglish && <p id="story-english" className="mt-2 text-brown-700 dark:text-gray-300">{paragraph.english}</p>}
+          {showEnglish && <p id="story-english" className="mt-2 text-brown-700 dark:text-brown-100">{paragraph.english}</p>}
         </div>
       </div>
 
@@ -233,7 +233,7 @@ export function StoryViewer() {
 
       {/* Progress Bar */}
       <div className="mb-4">
-        <div className="flex items-center justify-between text-xs text-brown-500 dark:text-gray-400 mb-1">
+        <div className="flex items-center justify-between text-xs text-brown-500 dark:text-brown-300 mb-1">
           <span>Progress</span>
           <span>{currentParagraph + 1} / {story.paragraphs.length}</span>
         </div>
@@ -246,7 +246,7 @@ export function StoryViewer() {
           onClick={goToPrevParagraph}
           aria-label="Previous paragraph"
           disabled={currentParagraph === 0}
-          className="flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 text-brown-700 dark:text-gray-300 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cream-50 dark:hover:bg-slate-700 transition-colors"
+          className="flex shrink-0 items-center gap-2 whitespace-nowrap px-4 py-3 rounded-xl bg-white dark:bg-brown-900 border border-cream-200 dark:border-brown-700 text-brown-700 dark:text-brown-100 disabled:opacity-50 disabled:cursor-not-allowed hover:bg-cream-50 dark:hover:bg-brown-700 transition-colors"
         >
           <ChevronLeft className="w-5 h-5" />
           <span className="hidden sm:inline">Previous</span>
@@ -276,16 +276,16 @@ export function StoryViewer() {
   const renderQuiz = () => (
     <>
       {/* Quiz Header */}
-      <div className="bg-surface-subtle rounded-2xl p-5 border border-cream-200 dark:border-slate-700 mb-6">
+      <div className="bg-surface-subtle rounded-2xl p-5 border border-cream-200 dark:border-brown-700 mb-6">
         <div className="flex items-center gap-4">
           <div className="w-12 h-12 rounded-xl bg-action flex items-center justify-center">
             <HelpCircle className="w-6 h-6 text-white" />
           </div>
           <div>
-            <h2 tabIndex={-1} className="text-xl font-bold text-brown-800 dark:text-white">
+            <h2 tabIndex={-1} className="text-xl font-bold text-brown-800 dark:text-cream-100">
               Comprehension Check
             </h2>
-            <p className="text-sm text-brown-600 dark:text-gray-300">
+            <p className="text-sm text-brown-600 dark:text-brown-100">
               Question {currentQuestion + 1} of {questions.length}
             </p>
           </div>
@@ -293,8 +293,8 @@ export function StoryViewer() {
       </div>
 
       {/* Question Card */}
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700 mb-4">
-        <h3 id="story-question" tabIndex={-1} className="text-lg font-semibold text-brown-800 dark:text-white mb-4">
+      <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 border border-cream-200 dark:border-brown-700 mb-4">
+        <h3 id="story-question" tabIndex={-1} className="text-lg font-semibold text-brown-800 dark:text-cream-100 mb-4">
           {question.question}
         </h3>
 
@@ -322,8 +322,8 @@ export function StoryViewer() {
                       ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 dark:border-green-600'
                       : isSelected
                       ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 dark:border-red-600'
-                      : 'bg-cream-50 dark:bg-slate-700 border border-cream-200 dark:border-slate-600 '
-                    : 'bg-cream-50 dark:bg-slate-700 border border-cream-200 dark:border-slate-600 hover:border-coral-700 dark:hover:border-teal-300 hover:bg-cream-100 dark:hover:bg-slate-600'
+                      : 'bg-cream-50 dark:bg-brown-700 border border-cream-200 dark:border-brown-600 '
+                    : 'bg-cream-50 dark:bg-brown-700 border border-cream-200 dark:border-brown-600 hover:border-coral-700 hover:bg-cream-100 dark:hover:bg-brown-600'
                 }`}
               >
                 <div className="flex items-center gap-3">
@@ -333,8 +333,8 @@ export function StoryViewer() {
                         ? 'bg-green-700 text-white'
                         : isSelected
                         ? 'bg-red-700 text-white'
-                        : 'bg-cream-200 dark:bg-slate-600 text-brown-600 dark:text-gray-200'
-                      : 'bg-cream-200 dark:bg-slate-600 text-brown-600 dark:text-gray-200'
+                        : 'bg-cream-200 dark:bg-brown-600 text-brown-600 dark:text-cream-200'
+                      : 'bg-cream-200 dark:bg-brown-600 text-brown-600 dark:text-cream-200'
                   }`}>
                     {showResult && isCorrect ? (
                       <CheckCircle className="w-5 h-5" />
@@ -349,7 +349,7 @@ export function StoryViewer() {
                       ? 'text-green-800 dark:text-green-300 font-semibold'
                       : showResult && isSelected
                       ? 'text-red-800 dark:text-red-300'
-                      : 'text-brown-700 dark:text-gray-300'
+                      : 'text-brown-700 dark:text-brown-100'
                   }`}>
                     {option}
                   </span>
@@ -414,25 +414,25 @@ export function StoryViewer() {
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
             {scorePercentage >= 80 ? <Trophy className="h-7 w-7" aria-hidden="true" /> : scorePercentage >= 60 ? <ThumbsUp className="h-7 w-7" aria-hidden="true" /> : <BookOpen className="h-7 w-7" aria-hidden="true" />}
           </div>
-          <h2 tabIndex={-1} className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
+          <h2 tabIndex={-1} className="text-2xl font-bold text-brown-800 dark:text-cream-100 mb-2">
             {scorePercentage >= 80 
               ? 'Excellent!' 
               : scorePercentage >= 60 
               ? 'Good Job!' 
               : 'Keep Practicing!'}
           </h2>
-          <p className="text-brown-600 dark:text-gray-300 mb-4">
+          <p className="text-brown-600 dark:text-brown-100 mb-4">
             You got {correctAnswers} out of {totalQuestions} questions correct
           </p>
           
-          <p className="text-3xl font-bold text-brown-800 dark:text-white">{scorePercentage}%</p>
+          <p className="text-3xl font-bold text-brown-800 dark:text-cream-100">{scorePercentage}%</p>
         </div>
       </div>
 
       {answers.some(answer => !answer.correct) && (
-        <section aria-labelledby="story-mistakes" className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+        <section aria-labelledby="story-mistakes" className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
           <h3 tabIndex={-1} id="story-mistakes" className="font-bold">Review missed questions</h3>
-          {questions.filter(question => answers.some(answer => answer.questionId === question.id && !answer.correct)).map(question => <div key={question.id} className="mt-3 text-sm"><p className="font-semibold">{question.question}</p><p className="mt-1 text-brown-600 dark:text-gray-300">{question.explanation}</p></div>)}
+          {questions.filter(question => answers.some(answer => answer.questionId === question.id && !answer.correct)).map(question => <div key={question.id} className="mt-3 text-sm"><p className="font-semibold">{question.question}</p><p className="mt-1 text-brown-600 dark:text-brown-100">{question.explanation}</p></div>)}
           <button type="button" onClick={() => { setReviewIds(answers.filter(answer => !answer.correct).map(answer => answer.questionId)); setCurrentQuestion(0); setSelectedAnswer(null); setShowExplanation(false); setAnswers([]); setViewMode('quiz'); }} className="mt-4 min-h-11 rounded-xl bg-teal-700 px-4 font-semibold text-white hover:bg-teal-800">Try missed questions again</button>
         </section>
       )}
@@ -448,7 +448,7 @@ export function StoryViewer() {
 
         <button
           onClick={() => navigate('/stories', { replace: true })}
-          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-slate-800 border border-cream-200 dark:border-slate-700 text-brown-700 dark:text-gray-300 hover:bg-cream-50 dark:hover:bg-slate-700 transition-colors"
+          className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-white dark:bg-brown-900 border border-cream-200 dark:border-brown-700 text-brown-700 dark:text-brown-100 hover:bg-cream-50 dark:hover:bg-brown-700 transition-colors"
         >
           <BookOpen className="w-5 h-5" />
           <span>More Stories</span>

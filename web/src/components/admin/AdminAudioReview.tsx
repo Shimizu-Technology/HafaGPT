@@ -6,10 +6,10 @@ import { AdminLayout } from "./AdminLayout";
 
 const API_URL = import.meta.env.VITE_API_URL || "http://localhost:8000";
 const button =
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cream-300 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 dark:border-slate-600";
-const primary = `${button} border-transparent bg-coral-700 text-white [@media(hover:hover)]:hover:bg-coral-800 dark:bg-ocean-700 dark:[@media(hover:hover)]:hover:bg-ocean-800`;
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-xl border border-cream-300 px-4 py-2 text-sm font-semibold disabled:cursor-not-allowed disabled:opacity-50 dark:border-brown-600";
+const primary = `${button} border-transparent bg-action text-white [@media(hover:hover)]:hover:bg-action-hover`;
 const field =
-  "mt-1 min-h-11 w-full text-base rounded-xl border border-cream-300 bg-white px-3 py-2 text-brown-900 placeholder:text-brown-600 dark:border-slate-600 dark:bg-slate-900 dark:text-white dark:placeholder:text-slate-300";
+  "mt-1 min-h-11 w-full text-base rounded-xl border border-cream-300 bg-white px-3 py-2 text-brown-900 placeholder:text-brown-600 dark:border-brown-600 dark:bg-brown-950 dark:text-cream-100 dark:placeholder:text-brown-100";
 interface Word {
   chamorro: string;
   english: string;
@@ -141,16 +141,16 @@ export function AdminAudioReview() {
   }, [selected]);
   return (
     <AdminLayout>
-      <div className="mx-auto max-w-6xl space-y-6 text-brown-900 dark:text-white">
+      <div className="mx-auto max-w-6xl space-y-6 text-brown-900 dark:text-cream-100">
         <header>
           <h1 className="text-2xl font-bold sm:text-3xl">Pronunciation studio</h1>
-          <p className="mt-2 max-w-2xl text-brown-600 dark:text-slate-300">
+          <p className="mt-2 max-w-2xl text-brown-600 dark:text-brown-100">
             Listen, compare, and publish audio reviewed with a qualified Chamorro speaker. New candidates stay private
             until you publish them.
           </p>
         </header>
         {library.data && (
-          <p className="text-sm text-brown-600 dark:text-slate-300">
+          <p className="text-sm text-brown-600 dark:text-brown-100">
             {library.data.stats.total} words and phrases · {library.data.stats.approved} reviewed
           </p>
         )}
@@ -181,7 +181,7 @@ export function AdminAudioReview() {
         <div className="grid items-start gap-5 lg:grid-cols-[18rem_minmax(0,1fr)]">
           <section
             aria-label="Audio library"
-            className={`${selected ? "hidden lg:block" : ""} rounded-2xl border border-cream-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-800`}
+            className={`${selected ? "hidden lg:block" : ""} rounded-2xl border border-cream-300 bg-white p-4 dark:border-brown-700 dark:bg-brown-900`}
           >
             <label className="block text-sm font-semibold">
               <span className="flex items-center gap-2">
@@ -244,7 +244,7 @@ export function AdminAudioReview() {
                     onChange={(e) => setNewEnglish(e.target.value)}
                   />
                 </label>
-                <p className="text-xs text-brown-600 dark:text-slate-300">
+                <p className="text-xs text-brown-600 dark:text-brown-100">
                   Use source-backed text. Adding a pilot phrase does not publish a lesson or new learner audio.
                 </p>
                 {addItem.error && (
@@ -271,11 +271,11 @@ export function AdminAudioReview() {
                   <button
                     aria-pressed={selected?.chamorro === word.chamorro}
                     onClick={() => setSelected(word)}
-                    className={`min-h-14 w-full rounded-xl px-3 py-3 text-left [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-slate-700 ${selected?.chamorro === word.chamorro ? "bg-cream-100 dark:bg-slate-700" : ""}`}
+                    className={`min-h-14 w-full rounded-xl px-3 py-3 text-left [@media(hover:hover)]:hover:bg-cream-100 dark:[@media(hover:hover)]:hover:bg-brown-700 ${selected?.chamorro === word.chamorro ? "bg-cream-100 dark:bg-brown-700" : ""}`}
                   >
                     <span className="block font-chamorro font-semibold">{word.chamorro}</span>
-                    <span className="block text-sm text-brown-600 dark:text-slate-300">{word.english}</span>
-                    <span className="text-xs text-brown-500 dark:text-slate-400">
+                    <span className="block text-sm text-brown-600 dark:text-brown-100">{word.english}</span>
+                    <span className="text-xs text-brown-500 dark:text-brown-300">
                       {word.status === "approved" ? "Reviewed" : "Needs review"}
                     </span>
                   </button>
@@ -298,7 +298,7 @@ export function AdminAudioReview() {
                 <h2 ref={detailHeading} tabIndex={-1} className="break-words font-chamorro text-2xl font-bold outline-offset-4">
                   {selected.chamorro}
                 </h2>
-                <p className="mb-5 mt-1 text-brown-600 dark:text-slate-300">{selected.english}</p>
+                <p className="mb-5 mt-1 text-brown-600 dark:text-brown-100">{selected.english}</p>
                 <AudioComparison
                   key={selected.chamorro}
                   word={selected}
@@ -307,7 +307,7 @@ export function AdminAudioReview() {
                 />
               </>
             ) : (
-              <div className="rounded-2xl border border-dashed border-cream-300 p-8 text-brown-600 dark:border-slate-600 dark:text-slate-300">
+              <div className="rounded-2xl border border-dashed border-cream-300 p-8 text-brown-600 dark:border-brown-600 dark:text-brown-100">
                 Choose a word or phrase to hear its current audio and compare new candidates.
               </div>
             )}
@@ -429,11 +429,11 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
   const currentUrl = current ? `${path}/candidates/${current.id}/audio` : word.url;
   return (
     <div className="space-y-5">
-      <div className="rounded-2xl border border-cream-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+      <div className="rounded-2xl border border-cream-300 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <h3 className="font-semibold">Current learner audio</h3>
-            <p className="text-sm text-brown-600 dark:text-slate-300">
+            <p className="text-sm text-brown-600 dark:text-brown-100">
               {current
                 ? `Reviewed by ${current.reviewer_name} · ${current.dialect}`
                 : "Existing recording · native review pending"}
@@ -455,7 +455,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
         </p>
       )}
       <form
-        className="space-y-4 rounded-2xl border border-cream-300 bg-white p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800"
+        className="space-y-4 rounded-2xl border border-cream-300 bg-white p-4 sm:p-5 dark:border-brown-700 dark:bg-brown-900"
         onSubmit={(e) => {
           e.preventDefault();
           setMessage("");
@@ -463,7 +463,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
         }}
       >
         <h3 className="text-lg font-semibold">Create a comparison</h3>
-        <p className="text-sm text-brown-600 dark:text-slate-300">
+        <p className="text-sm text-brown-600 dark:text-brown-100">
           Generate one private candidate at a time. Each request uses provider credits.
         </p>
         <div className="grid gap-4 sm:grid-cols-2">
@@ -505,7 +505,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
               value={pronunciation}
               onChange={(e) => setPronunciation(e.target.value)}
             />
-            <span className="mt-1 block text-xs font-normal text-brown-600 dark:text-slate-300">
+            <span className="mt-1 block text-xs font-normal text-brown-600 dark:text-brown-100">
               {mode === "ipa"
                 ? "Use a transcription checked by a qualified speaker or linguist. We add the synthesis delimiters for you."
                 : "This affects spoken audio only. The Chamorro spelling stays unchanged."}
@@ -545,7 +545,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
       )}
       <div>
         <h3 className="text-lg font-semibold">Candidates</h3>
-        <p className="mb-4 text-sm text-brown-600 dark:text-slate-300">
+        <p className="mb-4 text-sm text-brown-600 dark:text-brown-100">
           Compare pronunciation first, then delivery. Publishing is a separate step after review.
         </p>
         {candidates.isLoading && <p role="status">Loading candidates…</p>}
@@ -558,7 +558,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
           </p>
         )}
         {candidates.data?.candidates.length === 0 && (
-          <p className="rounded-xl border border-dashed border-cream-300 p-5 text-sm dark:border-slate-600">
+          <p className="rounded-xl border border-dashed border-cream-300 p-5 text-sm dark:border-brown-600">
             No candidates yet. Generate audio above or add a native recording.
           </p>
         )}
@@ -566,7 +566,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
           {candidates.data?.candidates.map((candidate) => (
             <article
               key={candidate.id}
-              className="rounded-2xl border border-cream-300 bg-white p-4 sm:p-5 dark:border-slate-700 dark:bg-slate-800"
+              className="rounded-2xl border border-cream-300 bg-white p-4 sm:p-5 dark:border-brown-700 dark:bg-brown-900"
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
                 <div>
@@ -581,7 +581,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
                         ? "Pronunciation hint"
                         : "Original spelling"}
                   </h4>
-                  <p className="mt-1 text-xs text-brown-600 dark:text-slate-300">
+                  <p className="mt-1 text-xs text-brown-600 dark:text-brown-100">
                     {new Date(candidate.created_at).toLocaleString()} ·{" "}
                     {candidate.published
                       ? "Published"
@@ -602,7 +602,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
               </div>
               <details className="mt-3 text-sm">
                 <summary className="min-h-11 cursor-pointer py-3">Synthesis text and review details</summary>
-                <p className="whitespace-pre-wrap break-words rounded-lg bg-cream-50 p-3 dark:bg-slate-900">
+                <p className="whitespace-pre-wrap break-words rounded-lg bg-cream-50 p-3 dark:bg-brown-950">
                   {candidate.input_text}
                 </p>
                 {candidate.reviewer_name && (
@@ -625,7 +625,7 @@ function AudioComparison({ word, config, request }: { word: Word; config: Librar
               )}
               {candidate.status === "approved" && (
                 <div className="mt-3">
-                  <p className="mb-3 text-sm text-brown-600 dark:text-slate-300">
+                  <p className="mb-3 text-sm text-brown-600 dark:text-brown-100">
                     {candidate.published
                       ? "This is the current learner recording."
                       : "Publishing replaces the current learner recording. Earlier reviewed candidates remain available to restore."}
@@ -696,7 +696,7 @@ function CandidateReview({
       </button>
       {open && (
         <form
-          className="mt-4 space-y-4 border-t border-cream-200 pt-4 dark:border-slate-600"
+          className="mt-4 space-y-4 border-t border-cream-200 pt-4 dark:border-brown-600"
           onSubmit={(e) => {
             e.preventDefault();
             review.mutate("approved");
@@ -802,7 +802,7 @@ function CandidateReview({
               Reject with notes
             </button>
           </div>
-          <p className="text-xs text-brown-600 dark:text-slate-300">
+          <p className="text-xs text-brown-600 dark:text-brown-100">
             Approval records the review. Learners hear it only after you publish.
           </p>
         </form>
@@ -922,14 +922,14 @@ function NativeRecording({
     },
   });
   return (
-    <section className="rounded-2xl border border-cream-300 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
+    <section className="rounded-2xl border border-cream-300 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
       <button className={button} aria-expanded={open} onClick={() => setOpen(!open)} disabled={recording || starting}>
         <Mic size={16} />
         {open ? "Close native recording" : "Add a native recording"}
       </button>
       {open && (
         <div className="mt-4 space-y-4">
-          <p className="text-sm text-brown-600 dark:text-slate-300">
+          <p className="text-sm text-brown-600 dark:text-brown-100">
             Record a consenting speaker or upload a short recording (up to 60 seconds and 5 MB). It stays private until
             reviewed and published.
           </p>

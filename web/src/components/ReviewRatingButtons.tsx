@@ -41,7 +41,7 @@ interface ReviewRatingButtonsProps {
 export function ReviewRatingButtons({ onRate, disabled = false, error }: ReviewRatingButtonsProps) {
   return (
     <div className="mt-6 w-full max-w-xl" aria-label="How well did you remember?">
-      <p className="mb-3 text-center text-sm font-semibold text-brown-700 dark:text-gray-200">
+      <p className="mb-3 text-center text-sm font-semibold text-brown-700 dark:text-cream-200">
         How well did you remember?
       </p>
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4 sm:gap-3">

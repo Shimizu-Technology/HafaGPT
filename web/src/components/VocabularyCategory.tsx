@@ -55,8 +55,8 @@ export function VocabularyCategory() {
   if (isLoading) {
     return (
       <LearnerPageShell className="flex items-center justify-center">
-        <div className="flex items-center gap-3 text-brown-600 dark:text-gray-300" role="status">
-          <Loader2 className="h-6 w-6 animate-spin text-coral-700 dark:text-ocean-400" aria-hidden="true" />
+        <div className="flex items-center gap-3 text-brown-600 dark:text-brown-100" role="status">
+          <Loader2 className="h-6 w-6 animate-spin text-coral-700" aria-hidden="true" />
           <span>Loading words…</span>
         </div>
       </LearnerPageShell>
@@ -67,17 +67,17 @@ export function VocabularyCategory() {
   if (!category) {
     return (
       <LearnerPageShell className="flex items-center justify-center p-4">
-        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800">
-          <h1 className="mb-4 text-xl font-bold text-brown-950 dark:text-white">{error ? 'Dictionary category is unavailable' : 'Category not found'}</h1>
+        <div className="rounded-2xl border border-cream-200 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-900">
+          <h1 className="mb-4 text-xl font-bold text-brown-950 dark:text-cream-100">{error ? 'Dictionary category is unavailable' : 'Category not found'}</h1>
           {error && <>
-            <label className="mb-3 block text-left text-base text-brown-700 dark:text-gray-200">Search in this category
-              <input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-cream-300 bg-white px-3 text-base text-brown-900 dark:border-slate-600 dark:bg-slate-900 dark:text-white" />
+            <label className="mb-3 block text-left text-base text-brown-700 dark:text-cream-200">Search in this category
+              <input value={searchQuery} onChange={event => setSearchQuery(event.target.value)} className="mt-2 min-h-12 w-full rounded-xl border border-cream-300 bg-white px-3 text-base text-brown-900 dark:border-brown-600 dark:bg-brown-950 dark:text-cream-100" />
             </label>
             <RecordsError title="Dictionary words are unavailable" retrying={isFetching} onRetry={() => void refetch()} />
           </>}
           <button
             onClick={() => navigate('/vocabulary', { replace: true })}
-            className="min-h-11 rounded-xl bg-coral-700 dark:bg-teal-700 px-5 py-2.5 font-semibold text-white hover:bg-coral-800 dark:hover:bg-teal-800"
+            className="min-h-11 rounded-xl bg-action px-5 py-2.5 font-semibold text-white hover:bg-action-hover"
           >
             Back to Vocabulary
           </button>
@@ -99,7 +99,7 @@ export function VocabularyCategory() {
         backTo="/vocabulary"
         backLabel="Back to dictionary"
         trailing={(
-          <span className="hidden rounded-full bg-cream-100 px-3 py-1.5 text-xs font-semibold text-brown-600 dark:bg-slate-800 dark:text-gray-300 sm:inline-flex">
+          <span className="hidden rounded-full bg-cream-100 px-3 py-1.5 text-xs font-semibold text-brown-600 dark:bg-brown-900 dark:text-brown-100 sm:inline-flex">
             {error || isPlaceholderData ? 'Last loaded words' : `${totalWords} ${searchQuery ? 'matches' : 'words'}`}
           </span>
         )}
@@ -112,7 +112,7 @@ export function VocabularyCategory() {
         {/* Search within category */}
         <div className="mb-4">
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brown-500 dark:text-gray-400" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-brown-500 dark:text-brown-300" />
             <input
               aria-label={`Search in ${category.title}`}
               type="text"
@@ -120,26 +120,26 @@ export function VocabularyCategory() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder={`Search in ${category.title}...`}
-              className="min-h-12 w-full rounded-2xl border border-cream-300 bg-white py-3 pl-11 pr-11 text-base text-brown-900 placeholder-brown-500 focus:border-coral-400 focus:outline-none focus:ring-2 focus:ring-coral-500/30 dark:border-slate-700 dark:bg-slate-800 dark:text-white dark:placeholder-slate-400"
+              className="min-h-12 w-full rounded-2xl border border-cream-300 bg-white py-3 pl-11 pr-11 text-base text-brown-900 placeholder-brown-500 focus:border-coral-400 focus:outline-none focus:ring-2 focus:ring-coral-500/30 dark:border-brown-700 dark:bg-brown-900 dark:text-cream-100 dark:placeholder-brown-300"
             />
             {searchQuery && (
               <button
                 type="button"
                 onClick={() => setSearchQuery('')}
                 aria-label="Clear category search"
-                className="absolute right-1.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl hover:bg-cream-100 dark:hover:bg-slate-700"
+                className="absolute right-1.5 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl hover:bg-cream-100 dark:hover:bg-brown-700"
               >
-                <X className="w-3 h-3 text-brown-500 dark:text-gray-400" />
+                <X className="w-3 h-3 text-brown-500 dark:text-brown-300" />
               </button>
             )}
           </div>
         </div>
 
         {error && <RecordsError title={isFetchNextPageError ? 'More dictionary words are unavailable' : 'Dictionary words are unavailable'} hasData={Boolean(displayedPages)} retrying={isFetching} onRetry={() => { if (isFetchNextPageError) void fetchNextPage(); else void refetch(); }} />}
-        {fallback && !pages && <p className="mb-3 text-base text-brown-700 dark:text-gray-200">Last loaded results{fallback.query ? ` for “${fallback.query}”` : ''}.</p>}
+        {fallback && !pages && <p className="mb-3 text-base text-brown-700 dark:text-cream-200">Last loaded results{fallback.query ? ` for “${fallback.query}”` : ''}.</p>}
         <h2 className="sr-only">Dictionary entries</h2>
-        {isFetching && <p role="status" className="mb-3 text-sm text-brown-600 dark:text-gray-300">Searching…</p>}
-        <p className="mb-3 text-sm text-brown-600 dark:text-gray-300" aria-live="polite">{!isPlaceholderData && !error && `${words.length} of ${totalWords} ${searchQuery ? 'matches' : 'words'}`}</p>
+        {isFetching && <p role="status" className="mb-3 text-sm text-brown-600 dark:text-brown-100">Searching…</p>}
+        <p className="mb-3 text-sm text-brown-600 dark:text-brown-100" aria-live="polite">{!isPlaceholderData && !error && `${words.length} of ${totalWords} ${searchQuery ? 'matches' : 'words'}`}</p>
         {/* Word List */}
         <div className="space-y-3">
           {filteredWords.map((word, index) => {
@@ -149,14 +149,14 @@ export function VocabularyCategory() {
             return (
               <article
                 key={word.word_id ?? word.source_id ?? `${word.chamorro}-${index}`}
-                className="overflow-hidden rounded-2xl border border-cream-200 bg-white dark:border-slate-700 dark:bg-slate-800"
+                className="overflow-hidden rounded-2xl border border-cream-200 bg-white dark:border-brown-700 dark:bg-brown-900"
               >
                 {/* Main Word Row */}
                 <div className="p-4">
                   <div className="flex items-start gap-3">
                     {/* Speak Button */}
                     <span className="flex-shrink-0">
-                      <PronunciationButton text={word.chamorro} className="mt-0.5 bg-coral-50 text-coral-700 hover:bg-coral-100 dark:bg-ocean-900/30 dark:text-ocean-400" />
+                      <PronunciationButton text={word.chamorro} className="mt-0.5 bg-coral-50 text-coral-700 hover:bg-coral-100" />
                     </span>
 
                     {/* Word Content */}
@@ -165,28 +165,28 @@ export function VocabularyCategory() {
                         {word.word_id ? (
                           <Link
                             to={appRoutes.word(word.word_id, { returnTo })}
-                            className="rounded font-chamorro text-lg font-semibold text-brown-800 hover:text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-white dark:hover:text-ocean-300 text-lg"
+                            className="rounded font-chamorro text-lg font-semibold text-brown-800 hover:text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-cream-100 text-lg"
                           >
                             {word.chamorro}
                           </Link>
                         ) : (
-                          <h3 className="font-chamorro font-semibold text-brown-800 dark:text-white text-lg">
+                          <h3 className="font-chamorro font-semibold text-brown-800 dark:text-cream-100 text-lg">
                             {word.chamorro}
                           </h3>
                         )}
                         {word.part_of_speech && (
-                          <span className="text-xs text-brown-500 dark:text-gray-400 italic">
+                          <span className="text-xs text-brown-500 dark:text-brown-300 italic">
                             {word.part_of_speech}
                           </span>
                         )}
                       </div>
-                      <p className="text-brown-600 dark:text-gray-300 mt-0.5">
+                      <p className="text-brown-600 dark:text-brown-100 mt-0.5">
                         {word.definition}
                       </p>
                       {word.word_id && (
                         <Link
                           to={appRoutes.word(word.word_id, { returnTo })}
-                          className="mt-1 inline-flex min-h-11 items-center gap-1 rounded-xl text-sm font-semibold text-coral-700 hover:text-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-ocean-300"
+                          className="mt-1 inline-flex min-h-11 items-center gap-1 rounded-xl text-sm font-semibold text-coral-700 hover:text-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500"
                         >
                           Open entry
                           <ArrowRight className="h-4 w-4" aria-hidden="true" />
@@ -202,12 +202,12 @@ export function VocabularyCategory() {
                         aria-expanded={isExpanded}
                         aria-controls={`category-examples-${index}`}
                         aria-label={`${isExpanded ? 'Hide' : 'Show'} examples for ${word.chamorro}`}
-                        className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-500 hover:bg-cream-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-400 dark:hover:bg-slate-700"
+                        className="flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-500 hover:bg-cream-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-brown-300 dark:hover:bg-brown-700"
                       >
                         {isExpanded ? (
-                          <ChevronUp className="w-4 h-4 text-brown-500 dark:text-gray-400" />
+                          <ChevronUp className="w-4 h-4 text-brown-500 dark:text-brown-300" />
                         ) : (
-                          <ChevronDown className="w-4 h-4 text-brown-500 dark:text-gray-400" />
+                          <ChevronDown className="w-4 h-4 text-brown-500 dark:text-brown-300" />
                         )}
                       </button>
                     )}
@@ -216,17 +216,17 @@ export function VocabularyCategory() {
 
                 {/* Expanded Content */}
                 {isExpanded && hasExamples && (
-                  <div id={`category-examples-${index}`} className="border-t border-cream-200 px-4 pb-4 pt-0 dark:border-slate-700">
+                  <div id={`category-examples-${index}`} className="border-t border-cream-200 px-4 pb-4 pt-0 dark:border-brown-700">
                     <div className="pt-3 space-y-2">
-                      <p className="text-xs font-medium text-brown-500 dark:text-gray-400 mb-2">
+                      <p className="text-xs font-medium text-brown-500 dark:text-brown-300 mb-2">
                         Examples
                       </p>
                       {word.examples.map((example, idx) => (
-                        <div key={idx} className="bg-cream-50 dark:bg-slate-700/50 rounded-lg p-3">
-                          <p className="font-chamorro text-brown-800 dark:text-white font-medium">
+                        <div key={idx} className="bg-cream-50 dark:bg-brown-700/50 rounded-lg p-3">
+                          <p className="font-chamorro text-brown-800 dark:text-cream-100 font-medium">
                             {example.chamorro}
                           </p>
-                          <p className="text-brown-600 dark:text-gray-300 text-sm mt-1">
+                          <p className="text-brown-600 dark:text-brown-100 text-sm mt-1">
                             {example.english}
                           </p>
                         </div>
@@ -241,11 +241,11 @@ export function VocabularyCategory() {
 
         {/* No Results */}
         {filteredWords.length === 0 && searchQuery && !isFetching && !error && (
-          <div className="text-center py-12 text-brown-500 dark:text-gray-400">
+          <div className="text-center py-12 text-brown-500 dark:text-brown-300">
             <p>No words found matching "{searchQuery}"</p>
             <button
               onClick={() => setSearchQuery('')}
-              className="text-coral-700 dark:text-ocean-400 hover:underline mt-2 text-sm"
+              className="text-coral-700 hover:underline mt-2 text-sm"
             >
               Clear search
             </button>
@@ -258,7 +258,7 @@ export function VocabularyCategory() {
             <button
               onClick={() => void fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="px-6 py-3 bg-coral-700 dark:bg-ocean-700 text-white rounded-xl hover:bg-coral-800 dark:hover:bg-ocean-800 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+              className="px-6 py-3 bg-action text-white rounded-xl hover:bg-action-hover transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
             >
               {isFetchingNextPage ? (
                 <>
@@ -276,7 +276,7 @@ export function VocabularyCategory() {
 
         {/* All Loaded Indicator */}
         {!hasMore && !error && words.length > PAGE_SIZE && !searchQuery && (
-          <div className="mt-6 text-center text-brown-500 dark:text-gray-400 text-sm">
+          <div className="mt-6 text-center text-brown-500 dark:text-brown-300 text-sm">
             All {totalWords} words loaded
           </div>
         )}
@@ -285,7 +285,7 @@ export function VocabularyCategory() {
         <div className="mt-8 text-center">
           <Link replace
             to="/vocabulary"
-            className="pressable inline-flex items-center gap-2 px-4 py-2 text-coral-700 dark:text-ocean-400 hover:bg-coral-50 dark:hover:bg-ocean-900/30 rounded-lg transition-colors"
+            className="pressable inline-flex items-center gap-2 px-4 py-2 text-coral-700 hover:bg-coral-50 rounded-lg transition-colors"
           >
             <ArrowLeft className="w-4 h-4" />
             All Categories

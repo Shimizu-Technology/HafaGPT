@@ -26,7 +26,7 @@ export function GamePage({ children, guard, startStatus, stage }: GamePageProps)
     document.getElementById('root')?.scrollTo({ top: 0, behavior: 'instant' });
   }, [stage]);
   return <div ref={pageRef} className="game-page"><LearnerPageShell>
-    {startStatus?.pending && <p role="status" className="animate-fade-in fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-1/2 z-40 -translate-x-1/2 rounded-full bg-brown-900 px-4 py-2 text-sm font-semibold text-white shadow-lg dark:bg-slate-700">Starting your round…</p>}
+    {startStatus?.pending && <p role="status" className="animate-fade-in fixed bottom-[calc(env(safe-area-inset-bottom)+1rem)] left-1/2 z-40 -translate-x-1/2 rounded-full bg-brown-900 px-4 py-2 text-sm font-semibold text-white shadow-lg dark:bg-brown-700">Starting your round…</p>}
     {startStatus?.error && <p role="alert" className="mx-auto max-w-2xl rounded-xl bg-amber-50 p-4 text-amber-900 dark:bg-amber-950 dark:text-amber-100">{startStatus.error}</p>}
     {children}{guard?.dialog}</LearnerPageShell></div>;
 }
@@ -78,19 +78,19 @@ export function GameProgress({ current, total, score, streak = 0 }: GameProgress
     <section className="mb-6" aria-label={`Round ${current} of ${total}. Score ${score}.`}>
       <div className="mb-2 flex items-center justify-between gap-3 text-sm">
         <div className="flex items-center gap-2">
-          <span className="font-semibold text-brown-700 dark:text-gray-200">Round {current} of {total}</span>
+          <span className="font-semibold text-brown-700 dark:text-cream-200">Round {current} of {total}</span>
           {streak >= 2 && (
             <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-bold text-orange-700 dark:bg-orange-950/50 dark:text-orange-300">
               {streak} in a row
             </span>
           )}
         </div>
-        <span className="flex items-center gap-1 font-bold text-brown-950 dark:text-white">
+        <span className="flex items-center gap-1 font-bold text-brown-950 dark:text-cream-100">
           <Trophy className="h-4 w-4 text-amber-500" aria-hidden="true" /> {score}
         </span>
       </div>
-      <div className="h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-slate-700">
-        <div className="h-full rounded-full bg-coral-700 dark:bg-teal-700 transition-transform dark:bg-teal-500" style={{ width: '100%', transformOrigin: 'left', transform: `scaleX(${(progress) / 100})` }} />
+      <div className="h-2 overflow-hidden rounded-full bg-cream-200 dark:bg-brown-700">
+        <div className="h-full rounded-full bg-action transition-transform" style={{ width: '100%', transformOrigin: 'left', transform: `scaleX(${(progress) / 100})` }} />
       </div>
     </section>
   );
@@ -114,21 +114,21 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!', re
       <span className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
         <Trophy className="h-10 w-10" aria-hidden="true" />
       </span>
-      <h2 id="game-result-title" className="text-2xl font-bold text-brown-950 dark:text-white">{heading}</h2>
+      <h2 id="game-result-title" className="text-2xl font-bold text-brown-950 dark:text-cream-100">{heading}</h2>
 
       <div className="my-5 flex justify-center gap-1" role="img" aria-label={`${stars} out of 3 stars`}>
         {[1, 2, 3].map((star) => (
           <Star
             key={star}
-            className={`h-9 w-9 ${star <= stars ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-slate-600'}`}
+            className={`h-9 w-9 ${star <= stars ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-brown-600'}`}
             aria-hidden="true"
           />
         ))}
       </div>
 
-      <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
-        <p className="text-4xl font-bold text-coral-700 dark:text-teal-300">{score}</p>
-        <p className="mt-1 text-sm text-brown-500 dark:text-gray-400">points</p>
+      <div className="mb-6 rounded-2xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900">
+        <p className="text-4xl font-bold text-coral-700">{score}</p>
+        <p className="mt-1 text-sm text-brown-500 dark:text-brown-300">points</p>
       </div>
 
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
@@ -136,14 +136,14 @@ export function GameResult({ score, stars, onReplay, heading = 'Great work!', re
           type="button"
           onClick={onReplay}
           disabled={replayDisabled}
-          className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
+          className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:border-brown-600 dark:bg-brown-900 dark:text-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700"
         >
           <RotateCcw className="h-5 w-5" aria-hidden="true" /> Play again
         </button>
         <Link
           to={gameReturn.to}
           replace
-          className="pressable flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+          className="pressable flex min-h-12 items-center justify-center rounded-xl bg-action px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover"
         >
           {learningContext ? gameReturn.label : 'More games'}
         </Link>

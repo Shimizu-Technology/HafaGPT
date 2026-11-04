@@ -26,7 +26,7 @@
     <meta name="author" content="Shimizu Technology" />
     <meta name="color-scheme" content="light dark" />
     <meta name="theme-color" content="#FEFDFB" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#1C1512" media="(prefers-color-scheme: dark)" />
     
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website" />
@@ -60,7 +60,7 @@
           
           document.documentElement.classList.toggle('dark', theme === 'dark');
           document.documentElement.style.colorScheme = theme;
-          document.querySelectorAll('meta[name="theme-color"]').forEach(meta => meta.content = theme === 'dark' ? '#0f172a' : '#FEFDFB');
+          document.querySelectorAll('meta[name="theme-color"]').forEach(meta => meta.content = theme === 'dark' ? '#1C1512' : '#FEFDFB');
           // Use an opaque status bar; black-translucent would overlay page content.
           document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]').content = theme === 'dark' ? 'black' : 'default';
         } catch (e) {
@@ -68,6 +68,8 @@
         }
       })();
     </script>
+    <!-- Paint the right ground before the stylesheet arrives (matches --surface in index.css). -->
+    <style>html{background-color:#FEFDFB}html.dark{background-color:#1C1512}</style>
   </head>
   <body>
     <div id="root"></div>

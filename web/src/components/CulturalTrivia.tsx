@@ -480,14 +480,14 @@ export function CulturalTrivia() {
         />
 
         <main className="mx-auto max-w-2xl space-y-4 px-3 py-4 sm:px-4 sm:py-6">
-          <label className="flex min-h-12 items-center gap-3 rounded-xl border border-cream-300 bg-white p-4 text-brown-800 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200">
+          <label className="flex min-h-12 items-center gap-3 rounded-xl border border-cream-300 bg-white p-4 text-brown-800 dark:border-brown-600 dark:bg-brown-900 dark:text-cream-200">
             <input type="checkbox" checked={timedChallenge} onChange={event => setTimedChallenge(event.target.checked)} />
             Timed challenge (optional). Practice has no time limit.
           </label>
           {timedChallenge && (
-          <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-            <h2 className="mb-3 flex items-center gap-2 font-semibold text-brown-800 dark:text-white">
-              <Zap className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />
+          <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+            <h2 className="mb-3 flex items-center gap-2 font-semibold text-brown-800 dark:text-cream-100">
+              <Zap className="h-5 w-5 text-coral-700" aria-hidden="true" />
               Choose Difficulty
             </h2>
             <div className="grid grid-cols-3 gap-2">
@@ -497,13 +497,13 @@ export function CulturalTrivia() {
                 aria-pressed={difficulty === 'easy'}
                 className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'easy'
-                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                    ? 'bg-action text-white'
+                    : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                 }`}
               >
                 <Sparkles className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'easy' ? 'text-white' : 'text-emerald-700'}`} aria-hidden="true" />
-                <p className={`text-sm font-medium ${difficulty === 'easy' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Easy</p>
-                <p className={`text-xs ${difficulty === 'easy' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>30s</p>
+                <p className={`text-sm font-medium ${difficulty === 'easy' ? 'text-white' : 'text-brown-800 dark:text-cream-100'}`}>Easy</p>
+                <p className={`text-xs ${difficulty === 'easy' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>30s</p>
               </button>
               <button
                 type="button"
@@ -511,13 +511,13 @@ export function CulturalTrivia() {
                 aria-pressed={difficulty === 'medium'}
                 className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'medium'
-                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                    ? 'bg-action text-white'
+                    : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                 }`}
               >
                 <Zap className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'medium' ? 'text-white' : 'text-amber-700'}`} aria-hidden="true" />
-                <p className={`text-sm font-medium ${difficulty === 'medium' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Medium</p>
-                <p className={`text-xs ${difficulty === 'medium' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>20s</p>
+                <p className={`text-sm font-medium ${difficulty === 'medium' ? 'text-white' : 'text-brown-800 dark:text-cream-100'}`}>Medium</p>
+                <p className={`text-xs ${difficulty === 'medium' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>20s</p>
               </button>
               <button
                 type="button"
@@ -525,20 +525,20 @@ export function CulturalTrivia() {
                 aria-pressed={difficulty === 'hard'}
                 className={`min-h-20 rounded-xl p-3 text-center transition-colors duration-200 ${
                   difficulty === 'hard'
-                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                    ? 'bg-action text-white'
+                    : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                 }`}
               >
                 <Flame className={`mx-auto mb-1 h-5 w-5 ${difficulty === 'hard' ? 'text-white' : 'text-red-600'}`} aria-hidden="true" />
-                <p className={`text-sm font-medium ${difficulty === 'hard' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Hard</p>
-                <p className={`text-xs ${difficulty === 'hard' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>10s</p>
+                <p className={`text-sm font-medium ${difficulty === 'hard' ? 'text-white' : 'text-brown-800 dark:text-cream-100'}`}>Hard</p>
+                <p className={`text-xs ${difficulty === 'hard' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>10s</p>
               </button>
             </div>
           </section>
           )}
 
-          <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-            <h2 className="mb-3 font-semibold text-brown-800 dark:text-white">Choose a topic</h2>
+          <section className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+            <h2 className="mb-3 font-semibold text-brown-800 dark:text-cream-100">Choose a topic</h2>
             <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a trivia topic">
               {Object.entries(CATEGORY_CONFIG).map(([key, { label, icon }]) => {
                 const count = key === 'all'
@@ -556,31 +556,31 @@ export function CulturalTrivia() {
                     aria-pressed={selectedCategory === key}
                     className={`min-h-20 min-w-24 flex-none rounded-xl p-2 text-center transition-colors duration-200 ${
                       isDisabled
-                        ? 'bg-cream-50 dark:bg-slate-900 opacity-40 cursor-not-allowed'
+                        ? 'bg-cream-50 dark:bg-brown-950 opacity-40 cursor-not-allowed'
                         : selectedCategory === key
-                          ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                          : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                          ? 'bg-action text-white'
+                          : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                     }`}
                   >
                     <CategoryIcon className="mx-auto mb-1 h-5 w-5" aria-hidden="true" />
                     <p className="truncate text-xs font-medium">{label}</p>
-                    <p className={`text-xs ${selectedCategory === key && !isDisabled ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>{count} questions</p>
+                    <p className={`text-xs ${selectedCategory === key && !isDisabled ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>{count} questions</p>
                   </button>
                 );
               })}
             </div>
           </section>
 
-          <details className="rounded-2xl border border-cream-200 bg-white p-4 text-sm dark:border-slate-700 dark:bg-slate-800">
-            <summary className="cursor-pointer font-semibold text-brown-800 dark:text-white">How scoring works</summary>
-            <p className="mt-3 leading-relaxed text-brown-600 dark:text-gray-400">Correct answers earn points. Faster answers and answer streaks earn bonuses.</p>
+          <details className="rounded-2xl border border-cream-200 bg-white p-4 text-sm dark:border-brown-700 dark:bg-brown-900">
+            <summary className="cursor-pointer font-semibold text-brown-800 dark:text-cream-100">How scoring works</summary>
+            <p className="mt-3 leading-relaxed text-brown-600 dark:text-brown-300">Correct answers earn points. Faster answers and answer streaks earn bonuses.</p>
           </details>
 
           <button
             type="button"
             onClick={startGame}
             disabled={availableQuestionCount === 0 || isStarting}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isStarting ? (
               <>
@@ -595,7 +595,7 @@ export function CulturalTrivia() {
             )}
           </button>
 
-          <p className="text-center text-xs text-brown-500 dark:text-gray-300">
+          <p className="text-center text-xs text-brown-500 dark:text-brown-100">
             {formatUsageSummary(getCount('game'), getLimit('game'))}
           </p>
         </main>
@@ -617,26 +617,26 @@ export function CulturalTrivia() {
             <span className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-2xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
               <Trophy className="h-10 w-10" aria-hidden="true" />
             </span>
-            <h2 id="trivia-result-title" className="text-2xl font-bold text-brown-950 dark:text-white">Trivia complete</h2>
+            <h2 id="trivia-result-title" className="text-2xl font-bold text-brown-950 dark:text-cream-100">Trivia complete</h2>
 
             <div className="my-5 flex justify-center gap-1" aria-label={`${stars} out of 3 stars`}>
               {[1, 2, 3].map(star => (
-                <Star key={star} className={`h-9 w-9 ${star <= stars ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-slate-600'}`} aria-hidden="true" />
+                <Star key={star} className={`h-9 w-9 ${star <= stars ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-brown-600'}`} aria-hidden="true" />
               ))}
             </div>
 
             <div className="mb-5 grid grid-cols-2 gap-3">
-              <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-                <p className="text-2xl font-bold text-brown-950 dark:text-white">{score}</p>
-                <p className="text-sm text-brown-500 dark:text-gray-300">Points</p>
+              <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+                <p className="text-2xl font-bold text-brown-950 dark:text-cream-100">{score}</p>
+                <p className="text-sm text-brown-500 dark:text-brown-100">Points</p>
               </div>
-              <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-                <p className="text-2xl font-bold text-brown-950 dark:text-white">{maxStreak}</p>
-                <p className="text-sm text-brown-500 dark:text-gray-300">Best streak</p>
+              <div className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+                <p className="text-2xl font-bold text-brown-950 dark:text-cream-100">{maxStreak}</p>
+                <p className="text-sm text-brown-500 dark:text-brown-100">Best streak</p>
               </div>
             </div>
 
-            <p className="mb-6 text-brown-600 dark:text-gray-400">
+            <p className="mb-6 text-brown-600 dark:text-brown-300">
               {stars === 3
                 ? "Excellent—you know Guam well."
                 : stars === 2
@@ -649,12 +649,12 @@ export function CulturalTrivia() {
                 type="button"
                 onClick={startGame}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-4 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:border-brown-600 dark:bg-brown-900 dark:text-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700"
               >
                 <RotateCcw className="h-5 w-5" aria-hidden="true" />
                 Play again
               </button>
-              <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="min-h-12 rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
+              <button type="button" onClick={() => navigate(gameReturn.to, { replace: true })} className="min-h-12 rounded-xl bg-action px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover">
                 {gameReturn.label}
               </button>
             </div>
@@ -679,7 +679,7 @@ export function CulturalTrivia() {
         icon={Landmark}
         onBack={handleBack}
         trailing={(
-          <div className={`flex min-h-10 items-center gap-1.5 rounded-xl px-2.5 text-sm font-bold ${timeLeft <= 5 ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'bg-cream-100 text-brown-700 dark:bg-slate-700 dark:text-gray-200'}`} aria-label={timedChallenge ? `${timeLeft} seconds remaining` : 'No time limit'}>
+          <div className={`flex min-h-10 items-center gap-1.5 rounded-xl px-2.5 text-sm font-bold ${timeLeft <= 5 ? 'bg-red-100 text-red-700 dark:bg-red-950/50 dark:text-red-300' : 'bg-cream-100 text-brown-700 dark:bg-brown-700 dark:text-cream-200'}`} aria-label={timedChallenge ? `${timeLeft} seconds remaining` : 'No time limit'}>
             <Timer className="h-4 w-4" aria-hidden="true" />
             {timedChallenge ? `${timeLeft}s` : 'No time limit'}
           </div>
@@ -690,13 +690,13 @@ export function CulturalTrivia() {
         <GameProgress current={currentQuestionIndex + 1} total={questions.length} score={score} streak={streak} />
 
         {/* Question Card */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 border border-cream-200 dark:border-brown-700">
           <div className="mb-4">
-            <span className="text-xs px-2 py-1 bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-400 rounded-full capitalize">
+            <span className="text-xs px-2 py-1 bg-cream-100 dark:bg-brown-700 text-brown-600 dark:text-brown-300 rounded-full capitalize">
               {currentQuestion.category}
             </span>
           </div>
-          <h2 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mb-6">
+          <h2 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-cream-100 mb-6">
             {currentQuestion.question}
           </h2>
 
@@ -721,8 +721,8 @@ export function CulturalTrivia() {
                       : showWrong
                       ? 'bg-red-100 dark:bg-red-900/30 border-2 border-red-500 text-red-800 dark:text-red-300'
                       : isSelected
-                      ? 'bg-coral-100 dark:bg-teal-950/30 border-2 border-coral-500 dark:border-teal-400 text-brown-800 dark:text-white'
-                      : 'bg-cream-50 dark:bg-slate-700/50 border-2 border-transparent [@media(hover:hover)_and_(pointer:fine)]:hover:border-cream-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:border-slate-600 text-brown-700 dark:text-gray-300'
+                      ? 'bg-coral-100 border-2 border-coral-500 text-brown-800 dark:text-cream-100'
+                      : 'bg-cream-50 dark:bg-brown-700/50 border-2 border-transparent [@media(hover:hover)_and_(pointer:fine)]:hover:border-cream-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:border-brown-600 text-brown-700 dark:text-brown-100'
                   }`}
                 >
                   <span className={`w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold ${
@@ -730,7 +730,7 @@ export function CulturalTrivia() {
                       ? 'bg-emerald-700 text-white'
                       : showWrong
                       ? 'bg-red-700 text-white'
-                      : 'bg-cream-200 dark:bg-slate-600 text-brown-600 dark:text-gray-400'
+                      : 'bg-cream-200 dark:bg-brown-600 text-brown-600 dark:text-brown-300'
                   }`}>
                     {showCorrect ? <CheckCircle className="w-5 h-5" /> : showWrong ? <XCircle className="w-5 h-5" /> : String.fromCharCode(65 + index)}
                   </span>
@@ -748,7 +748,7 @@ export function CulturalTrivia() {
               ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800'
               : 'bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800'
           }`}>
-            <p className="text-sm text-brown-700 dark:text-gray-300">
+            <p className="text-sm text-brown-700 dark:text-brown-100">
               <Lightbulb className="mr-1 inline h-4 w-4" aria-hidden="true" />
               {currentQuestion.explanation}
             </p>
@@ -760,7 +760,7 @@ export function CulturalTrivia() {
           <button
             type="button"
             onClick={nextQuestion}
-            className="min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+            className="min-h-12 w-full rounded-xl bg-action px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover"
           >
             {currentQuestionIndex < questions.length - 1 ? 'Next Question →' : 'See Results'}
           </button>

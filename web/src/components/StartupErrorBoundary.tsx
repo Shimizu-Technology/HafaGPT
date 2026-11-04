@@ -24,21 +24,21 @@ export class StartupErrorBoundary extends Component<StartupErrorBoundaryProps, S
     if (!this.state.hasError) return this.props.children;
 
     return (
-      <main className="grid min-h-[100dvh] place-items-center bg-cream-50 px-5 text-brown-900 dark:bg-slate-950 dark:text-white">
+      <main className="grid min-h-[100dvh] place-items-center bg-cream-50 px-5 text-brown-900 dark:bg-brown-950 dark:text-cream-100">
         <section
-          className="w-full max-w-sm rounded-3xl border border-cream-300 bg-white p-7 text-center dark:border-slate-700 dark:bg-slate-900"
+          className="w-full max-w-sm rounded-3xl border border-cream-300 bg-white p-7 text-center dark:border-brown-700 dark:bg-brown-950"
           role="alert"
         >
-          <p className="text-sm font-extrabold text-coral-700 dark:text-ocean-300">
+          <p className="text-sm font-extrabold text-coral-700">
             HåfaGPT
           </p>
           <h1 className="mt-4 text-2xl font-bold tracking-tight">This browser needs a quick refresh</h1>
-          <p className="mt-3 text-sm leading-relaxed text-brown-600 dark:text-slate-300">
+          <p className="mt-3 text-sm leading-relaxed text-brown-600 dark:text-brown-100">
             We could not finish starting the app. Your account and learning progress have not been changed.
           </p>
           <button
             type="button"
-            className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 py-2.5 text-sm font-bold text-white hover:bg-coral-700 dark:bg-teal-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-ocean-700 dark:hover:bg-ocean-800 dark:focus-visible:ring-offset-slate-900"
+            className="mt-6 inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-action px-5 py-2.5 text-sm font-bold text-white hover:bg-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-brown-950"
             onClick={() => {
               if (window.__hafagptRecoverStaleBuild) {
                 void window.__hafagptRecoverStaleBuild();

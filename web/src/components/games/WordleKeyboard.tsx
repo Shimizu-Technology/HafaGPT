@@ -40,9 +40,9 @@ export const WordleKeyboard = memo(function WordleKeyboard({
       case 'present':
         return `${baseStyle} flex-1 h-11 sm:h-14 bg-yellow-700 text-white`;
       case 'absent':
-        return `${baseStyle} flex-1 h-11 sm:h-14 bg-gray-600 dark:bg-slate-600 text-white`;
+        return `${baseStyle} flex-1 h-11 sm:h-14 bg-gray-600 dark:bg-brown-600 text-white`;
       default:
-        return `${baseStyle} flex-1 h-11 sm:h-14 bg-cream-200 dark:bg-slate-600 text-brown-800 dark:text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-500`;
+        return `${baseStyle} flex-1 h-11 sm:h-14 bg-cream-200 dark:bg-brown-600 text-brown-800 dark:text-cream-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-500`;
     }
   };
 
@@ -52,8 +52,8 @@ export const WordleKeyboard = memo(function WordleKeyboard({
 
       flex flex-col items-center justify-center
       w-10 sm:w-14 h-11 sm:h-14
-      bg-cream-300 dark:bg-slate-700 text-brown-700 dark:text-gray-200
-      [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-400 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600
+      bg-cream-300 dark:bg-brown-700 text-brown-700 dark:text-cream-200
+      [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-400 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600
     `;
   };
 

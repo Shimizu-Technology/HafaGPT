@@ -119,8 +119,8 @@ export function SharedConversation() {
     return (
       <PublicPage title="Shared conversation" subtitle="A read-only conversation from HåfaGPT" icon={MessageSquare} showFooter={false}>
         <div role="status" className="flex min-h-64 flex-col items-center justify-center gap-4 text-center">
-          <Loader2 className="h-9 w-9 animate-spin text-coral-700 motion-reduce:animate-none dark:text-teal-300" aria-hidden="true" />
-          <p className="font-medium text-brown-600 dark:text-gray-300">Loading conversation…</p>
+          <Loader2 className="h-9 w-9 animate-spin text-coral-700 motion-reduce:animate-none" aria-hidden="true" />
+          <p className="font-medium text-brown-600 dark:text-brown-100">Loading conversation…</p>
         </div>
       </PublicPage>
     );
@@ -129,15 +129,15 @@ export function SharedConversation() {
   if (error) {
     return (
       <PublicPage title="Shared conversation" subtitle="A read-only conversation from HåfaGPT" icon={MessageSquare}>
-        <div className="mx-auto max-w-lg rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-slate-700 dark:bg-slate-800 sm:p-8">
+        <div className="mx-auto max-w-lg rounded-3xl border border-cream-200 bg-white p-6 text-center dark:border-brown-700 dark:bg-brown-900 sm:p-8">
           <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"><MessageSquare className="h-7 w-7" aria-hidden="true" /></span>
-          <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-white">{error.kind === 'unavailable' ? 'This share link is unavailable' : 'Unable to load conversation'}</h2>
-          <p role="alert" className="mt-2 text-base leading-relaxed text-brown-600 dark:text-gray-300">{error.message}</p>
+          <h2 className="mt-4 text-xl font-bold text-brown-950 dark:text-cream-100">{error.kind === 'unavailable' ? 'This share link is unavailable' : 'Unable to load conversation'}</h2>
+          <p role="alert" className="mt-2 text-base leading-relaxed text-brown-600 dark:text-brown-100">{error.message}</p>
           <div className="mt-6 flex flex-col justify-center gap-2 sm:flex-row">
-            {error.kind === 'transient' && <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">
+            {error.kind === 'transient' && <button type="button" onClick={() => setRetryCount((count) => count + 1)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-action px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover">
               <RefreshCw className="h-4 w-4" aria-hidden="true" /> Try again
             </button>}
-            <Link to="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 px-5 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 dark:border-slate-600 dark:text-gray-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700">Go to HåfaGPT</Link>
+            <Link to="/" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 px-5 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 dark:border-brown-600 dark:text-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700">Go to HåfaGPT</Link>
           </div>
         </div>
       </PublicPage>
@@ -157,9 +157,9 @@ export function SharedConversation() {
   return (
     <>
     <PublicPage title="Shared conversation" subtitle={data.title} icon={MessageSquare} maxWidthClassName="max-w-4xl">
-      <section className="mb-5 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-        <h2 className="break-words text-xl font-bold text-brown-950 dark:text-white">{data.title}</h2>
-        <div className="mt-2 flex flex-wrap gap-4 text-xs text-brown-500 dark:text-gray-400">
+      <section className="mb-5 rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+        <h2 className="break-words text-xl font-bold text-brown-950 dark:text-cream-100">{data.title}</h2>
+        <div className="mt-2 flex flex-wrap gap-4 text-xs text-brown-500 dark:text-brown-300">
           <span>Shared conversation · read only</span>
           <span className="flex items-center gap-1.5"><Calendar className="h-3.5 w-3.5" aria-hidden="true" />{formatDate(data.created_at)}</span>
           <span className="flex items-center gap-1.5"><Eye className="h-3.5 w-3.5" aria-hidden="true" />{data.view_count} {data.view_count === 1 ? 'view' : 'views'}</span>
@@ -175,18 +175,18 @@ export function SharedConversation() {
               <div
                 className={`max-w-[90%] sm:max-w-[75%] rounded-2xl px-3 sm:px-4 py-2.5 sm:py-3 ${
                   message.role === 'user'
-                    ? 'bg-coral-700 dark:bg-ocean-700 text-white'
+                    ? 'bg-action text-white'
                     : message.role === 'system'
-                    ? 'bg-cream-200 dark:bg-slate-800 text-brown-600 dark:text-gray-400 text-base italic text-center mx-auto'
-                    : 'bg-cream-50 dark:bg-slate-800 text-brown-800 dark:text-gray-100 border border-cream-300 dark:border-slate-700 '
+                    ? 'bg-cream-200 dark:bg-brown-900 text-brown-600 dark:text-brown-300 text-base italic text-center mx-auto'
+                    : 'bg-cream-50 dark:bg-brown-900 text-brown-800 dark:text-cream-100 border border-cream-300 dark:border-brown-700 '
                 }`}
               >
                 {message.role === 'assistant' && (
-                  <div className="flex flex-wrap items-center gap-2 mb-2 pb-2 border-b border-cream-200 dark:border-slate-700">
-                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-coral-100 text-coral-700 dark:bg-teal-950/60 dark:text-teal-300">
+                  <div className="flex flex-wrap items-center gap-2 mb-2 pb-2 border-b border-cream-200 dark:border-brown-700">
+                    <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-coral-100 text-coral-700">
                       <MessageSquare className="h-3.5 w-3.5" aria-hidden="true" />
                     </span>
-                    <span className="text-xs sm:text-sm font-medium text-coral-700 dark:text-ocean-400">
+                    <span className="text-xs sm:text-sm font-medium text-coral-700">
                       HåfaGPT
                     </span>
                     {message.used_rag && (
@@ -268,35 +268,35 @@ export function SharedConversation() {
                       components={{
                         // Paragraphs
                         p: ({ children }) => (
-                          <p className="text-base leading-relaxed my-2 first:mt-0 last:mb-0 text-brown-800 dark:text-gray-100">
+                          <p className="text-base leading-relaxed my-2 first:mt-0 last:mb-0 text-brown-800 dark:text-cream-100">
                             {children}
                           </p>
                         ),
                         // Headers
                         h1: ({ children }) => (
-                          <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0 pb-2 border-b border-cream-300 dark:border-slate-600">
+                          <h1 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-cream-100 mt-4 mb-2 first:mt-0 pb-2 border-b border-cream-300 dark:border-brown-600">
                             {children}
                           </h1>
                         ),
                         h2: ({ children }) => (
-                          <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-white mt-4 mb-2 first:mt-0">
+                          <h2 className="text-base sm:text-lg font-bold text-brown-800 dark:text-cream-100 mt-4 mb-2 first:mt-0">
                             {children}
                           </h2>
                         ),
                         h3: ({ children }) => (
-                          <h3 className="text-base font-semibold text-brown-800 dark:text-white mt-3 mb-1.5 first:mt-0">
+                          <h3 className="text-base font-semibold text-brown-800 dark:text-cream-100 mt-3 mb-1.5 first:mt-0">
                             {children}
                           </h3>
                         ),
                         // Text formatting
                         strong: ({ children }) => (
-                          <strong className="font-bold text-brown-900 dark:text-white">
+                          <strong className="font-bold text-brown-900 dark:text-cream-100">
                             {children}
                           </strong>
                         ),
                         em: ({ children }) => <em className="italic">{children}</em>,
                         a: ({ href, children }) => (
-                          <a href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-coral-700 underline underline-offset-2 dark:text-teal-300">
+                          <a href={href} target="_blank" rel="noopener noreferrer" className="font-medium text-coral-700 underline underline-offset-2">
                             {children}
                           </a>
                         ),
@@ -316,7 +316,7 @@ export function SharedConversation() {
                         ),
                         // Code blocks
                         pre: ({ children }) => (
-                          <pre className="my-3 max-w-full overflow-x-auto rounded-lg bg-cream-200 p-3 dark:bg-slate-700 sm:p-4">
+                          <pre className="my-3 max-w-full overflow-x-auto rounded-lg bg-cream-200 p-3 dark:bg-brown-700 sm:p-4">
                             {children}
                           </pre>
                         ),
@@ -324,57 +324,57 @@ export function SharedConversation() {
                           const isInline = !className;
                           if (isInline) {
                             return (
-                              <code className="bg-cream-200 dark:bg-slate-700 px-1.5 py-0.5 rounded text-base font-mono break-words">
+                              <code className="bg-cream-200 dark:bg-brown-700 px-1.5 py-0.5 rounded text-base font-mono break-words">
                                 {children}
                               </code>
                             );
                           }
                           return (
-                            <code className="text-base font-mono block whitespace-pre-wrap break-words text-brown-800 dark:text-gray-100">
+                            <code className="text-base font-mono block whitespace-pre-wrap break-words text-brown-800 dark:text-cream-100">
                               {children}
                             </code>
                           );
                         },
                         // Blockquotes
                         blockquote: ({ children }) => (
-                          <blockquote className="border-l-4 border-teal-400 dark:border-ocean-500 pl-4 my-2 italic text-brown-700 dark:text-gray-300">
+                          <blockquote className="border-l-4 border-teal-400 dark:border-ocean-500 pl-4 my-2 italic text-brown-700 dark:text-brown-100">
                             {children}
                           </blockquote>
                         ),
                         // Horizontal rule
                         hr: () => (
-                          <hr className="my-4 border-cream-300 dark:border-slate-600" />
+                          <hr className="my-4 border-cream-300 dark:border-brown-600" />
                         ),
                         // Tables
                         table: ({ children }) => (
-                          <div className="my-3 overflow-x-auto rounded-lg border border-cream-200 dark:border-slate-700">
+                          <div className="my-3 overflow-x-auto rounded-lg border border-cream-200 dark:border-brown-700">
                             <table className="min-w-full text-base">
                               {children}
                             </table>
                           </div>
                         ),
                         thead: ({ children }) => (
-                          <thead className="bg-cream-100 dark:bg-slate-700 border-b border-cream-200 dark:border-slate-600">
+                          <thead className="bg-cream-100 dark:bg-brown-700 border-b border-cream-200 dark:border-brown-600">
                             {children}
                           </thead>
                         ),
                         tbody: ({ children }) => (
-                          <tbody className="divide-y divide-cream-200 dark:divide-slate-700">
+                          <tbody className="divide-y divide-cream-200 dark:divide-brown-700">
                             {children}
                           </tbody>
                         ),
                         tr: ({ children }) => (
-                          <tr className="[@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700/50 transition-colors duration-150 motion-reduce:transition-none">
+                          <tr className="[@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700/50 transition-colors duration-150 motion-reduce:transition-none">
                             {children}
                           </tr>
                         ),
                         th: ({ children }) => (
-                          <th className="px-3 py-2 text-left font-semibold text-brown-800 dark:text-white text-base">
+                          <th className="px-3 py-2 text-left font-semibold text-brown-800 dark:text-cream-100 text-base">
                             {children}
                           </th>
                         ),
                         td: ({ children }) => (
-                          <td className="px-3 py-2 text-brown-700 dark:text-gray-300 text-base">
+                          <td className="px-3 py-2 text-brown-700 dark:text-brown-100 text-base">
                             {children}
                           </td>
                         ),
@@ -385,11 +385,11 @@ export function SharedConversation() {
                   </div>
                 )}
                 {message.sources && message.sources.length > 0 && (
-                  <div className="mt-2 sm:mt-3 pt-2 border-t border-cream-200 dark:border-slate-700">
-                    <p className="mb-1 text-xs text-brown-500 dark:text-gray-400">Sources:</p>
+                  <div className="mt-2 sm:mt-3 pt-2 border-t border-cream-200 dark:border-brown-700">
+                    <p className="mb-1 text-xs text-brown-500 dark:text-brown-300">Sources:</p>
                     <div className="flex flex-wrap gap-1">
                       {message.sources.map((source, i) => {
-                        const className = "rounded bg-cream-100 px-2 py-1 text-xs text-brown-600 dark:bg-slate-700 dark:text-gray-300";
+                        const className = "rounded bg-cream-100 px-2 py-1 text-xs text-brown-600 dark:bg-brown-700 dark:text-brown-100";
                         const label = `${source.name}${typeof source.page === 'number' ? ` (p.${source.page})` : ''}`;
                         return source.url ? (
                           <a
@@ -414,32 +414,32 @@ export function SharedConversation() {
             </div>
           ))}
           {data.messages.length === 0 && (
-            <div className="rounded-2xl border border-dashed border-cream-300 bg-white p-8 text-center dark:border-slate-700 dark:bg-slate-800">
-              <MessageSquare className="mx-auto h-7 w-7 text-brown-500 dark:text-gray-400" aria-hidden="true" />
-              <h2 className="mt-3 font-bold text-brown-950 dark:text-white">No messages were shared</h2>
-              <p className="mt-1 text-base text-brown-600 dark:text-gray-300">This link is active, but the shared conversation is empty.</p>
+            <div className="rounded-2xl border border-dashed border-cream-300 bg-white p-8 text-center dark:border-brown-700 dark:bg-brown-900">
+              <MessageSquare className="mx-auto h-7 w-7 text-brown-500 dark:text-brown-300" aria-hidden="true" />
+              <h2 className="mt-3 font-bold text-brown-950 dark:text-cream-100">No messages were shared</h2>
+              <p className="mt-1 text-base text-brown-600 dark:text-brown-100">This link is active, but the shared conversation is empty.</p>
             </div>
           )}
         </div>
 
-        <div className="mt-6 rounded-3xl border border-coral-200 bg-coral-50 p-5 text-center dark:border-teal-900 dark:bg-teal-950/20 sm:mt-8 sm:p-7">
-          <h2 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white mb-2">
+        <div className="mt-6 rounded-3xl border border-coral-200 bg-coral-50 p-5 text-center sm:mt-8 sm:p-7">
+          <h2 className="text-lg sm:text-xl font-bold text-brown-800 dark:text-cream-100 mb-2">
             Learn Chamorro with AI
           </h2>
-          <p className="text-base text-brown-600 dark:text-gray-300 mb-4">
+          <p className="text-base text-brown-600 dark:text-brown-100 mb-4">
             HåfaGPT is your AI-powered guide to the Chamorro language and Guam culture.
           </p>
           <div className="flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-3">
             <Link
               to="/chat"
-              className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-6 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800 sm:w-auto"
+              className="pressable flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-6 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover sm:w-auto"
             >
               <MessageSquare className="w-4 h-4 sm:w-5 sm:h-5" />
               Start Chatting
             </Link>
             <Link
               to="/"
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-6 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 dark:border-slate-600 dark:bg-slate-800 dark:text-gray-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700 sm:w-auto"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl border border-cream-300 bg-white px-6 font-semibold text-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-50 dark:border-brown-600 dark:bg-brown-900 dark:text-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700 sm:w-auto"
             >
               <ExternalLink className="w-4 h-4 sm:w-5 sm:h-5" />
               Explore Features

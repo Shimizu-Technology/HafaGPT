@@ -332,13 +332,13 @@ export function PicturePairs() {
         {gameState === 'setup' && (
           <div className="animate-fade-in">
             <div className="mb-6">
-              <h2 className="text-2xl font-bold text-brown-950 dark:text-white">Choose your matching game</h2>
-              <p className="mt-2 text-brown-600 dark:text-gray-300">No reading needed: find matching pictures and hear each Chamorro word.</p>
+              <h2 className="text-2xl font-bold text-brown-950 dark:text-cream-100">Choose your matching game</h2>
+              <p className="mt-2 text-brown-600 dark:text-brown-100">No reading needed: find matching pictures and hear each Chamorro word.</p>
             </div>
 
             {/* Category Selection */}
-            <div className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <h3 className="mb-3 text-sm font-semibold text-brown-700 dark:text-gray-300">Topic</h3>
+            <div className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+              <h3 className="mb-3 text-sm font-semibold text-brown-700 dark:text-brown-100">Topic</h3>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                 {GAME_CATEGORIES.map(category => (
                   <button
@@ -347,8 +347,8 @@ export function PicturePairs() {
                     aria-pressed={selectedCategory.id === category.id}
                     className={`p-3 rounded-xl border-2 transition-colors ${
                       selectedCategory.id === category.id
-                        ? 'border-coral-700 bg-coral-700 text-white dark:border-teal-700 dark:bg-teal-700'
-                        : 'border-cream-200 text-brown-700 dark:text-gray-300 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
+                        ? 'border-coral-700 bg-action text-white'
+                        : 'border-cream-200 text-brown-700 dark:text-brown-100 dark:border-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
                     }`}
                   >
                     <span className="text-2xl block mb-1">{category.icon}</span>
@@ -359,8 +359,8 @@ export function PicturePairs() {
             </div>
 
             {/* Difficulty Selection */}
-            <div className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <h3 className="mb-3 text-sm font-semibold text-brown-700 dark:text-gray-300">Number of pairs</h3>
+            <div className="mb-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+              <h3 className="mb-3 text-sm font-semibold text-brown-700 dark:text-brown-100">Number of pairs</h3>
               <div className="grid grid-cols-3 gap-2">
                 {(Object.entries(DIFFICULTY_CONFIG) as [Difficulty, typeof DIFFICULTY_CONFIG.easy][]).map(([key, config]) => (
                   <button
@@ -369,8 +369,8 @@ export function PicturePairs() {
                     aria-pressed={difficulty === key}
                     className={`p-3 rounded-xl border-2 transition-colors ${
                       difficulty === key
-                        ? 'border-coral-700 bg-coral-700 text-white dark:border-teal-700 dark:bg-teal-700'
-                        : 'border-cream-200 text-brown-700 dark:text-gray-300 dark:border-slate-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
+                        ? 'border-coral-700 bg-action text-white'
+                        : 'border-cream-200 text-brown-700 dark:text-brown-100 dark:border-brown-700 [@media(hover:hover)_and_(pointer:fine)]:hover:border-teal-300'
                     }`}
                   >
                     <span className="text-xl block mb-1">
@@ -390,14 +390,14 @@ export function PicturePairs() {
             <GamePaceControl {...pace} />
             <button
               onClick={startGame}
-              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+              className="flex min-h-14 w-full items-center justify-center gap-2 rounded-xl bg-action px-5 font-bold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover"
              disabled={startStatus.pending}>
               <Play className="w-6 h-6" />
               Start Game
             </button>
 
             {/* Games remaining */}
-            <p className="text-center text-sm text-brown-500 dark:text-gray-400 mt-3">
+            <p className="text-center text-sm text-brown-500 dark:text-brown-300 mt-3">
               {formatUsageSummary(getCount('game'), getLimit('game'))}
             </p>
           </div>
@@ -407,12 +407,12 @@ export function PicturePairs() {
         {gameState === 'playing' && (
           <div className="animate-fade-in">
             {/* Stats Bar */}
-            <div className="flex flex-wrap items-center justify-between gap-3 mb-4 bg-white dark:bg-slate-800 rounded-xl p-3">
+            <div className="flex flex-wrap items-center justify-between gap-3 mb-4 bg-white dark:bg-brown-900 rounded-xl p-3">
               <div className="flex flex-wrap items-center gap-3">
-                <div className="flex items-center gap-1 text-brown-600 dark:text-gray-300">
+                <div className="flex items-center gap-1 text-brown-600 dark:text-brown-100">
                   <span className="text-sm font-bold">Moves: {moves}</span>
                 </div>
-                <div className="flex items-center gap-1 text-brown-600 dark:text-gray-300">
+                <div className="flex items-center gap-1 text-brown-600 dark:text-brown-100">
                   <Timer className="w-4 h-4" />
                   <span className="text-sm font-bold">{formatTime(elapsedTime)}</span>
                 </div>
@@ -439,15 +439,15 @@ export function PicturePairs() {
                       isFlipped
                         ? isMatched
                           ? 'bg-green-100 dark:bg-green-900/30 border-2 border-green-500 scale-95'
-                          : 'bg-white dark:bg-slate-700 border-2 border-teal-400 rotate-0'
-                        : 'bg-coral-700 border-2 border-coral-400 text-coral-700 dark:bg-teal-700 dark:border-ocean-400 dark:text-teal-700 cursor-pointer'
+                          : 'bg-white dark:bg-brown-700 border-2 border-teal-400 rotate-0'
+                        : 'bg-action border-2 border-coral-400 text-coral-700 cursor-pointer'
                     }`}
                     style={{
                       perspective: '1000px',
                     }}
                   >
                     {isFlipped ? (
-                      <span className="flex flex-col items-center gap-1 p-2"><span className="text-3xl sm:text-4xl">{card.word.emoji}</span><span className="w-full break-words text-base font-semibold text-brown-900 dark:text-white">{card.word.chamorro}</span><span className="text-xs text-brown-700 dark:text-gray-200">Read / hear</span></span>
+                      <span className="flex flex-col items-center gap-1 p-2"><span className="text-3xl sm:text-4xl">{card.word.emoji}</span><span className="w-full break-words text-base font-semibold text-brown-900 dark:text-cream-100">{card.word.chamorro}</span><span className="text-xs text-brown-700 dark:text-cream-200">Read / hear</span></span>
                     ) : (
                       <span className="flex h-full items-center justify-center"><BrandMark tone="inverse" className="h-12 w-12 sm:h-16 sm:w-16" /></span>
                     )}
@@ -460,13 +460,13 @@ export function PicturePairs() {
               const first = cards.find(card => card.id === flippedCards[0]);
               const second = cards.find(card => card.id === flippedCards[1]);
               return first?.pairId !== second?.pairId;
-            })() && <button type="button" onClick={() => { setFlippedCards([]); setIsChecking(false); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white dark:bg-teal-700">Next — hide these cards</button>}
+            })() && <button type="button" onClick={() => { setFlippedCards([]); setIsChecking(false); }} className="mt-4 min-h-12 w-full rounded-xl bg-action px-4 font-bold text-white">Next — hide these cards</button>}
 
             {/* Restart Button */}
             <div className="flex justify-center mt-4">
               <button
                 onClick={() => guard.requestLeave(() => { clearTimers(); setGameState('setup'); })}
-                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-600 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors"
+                className="flex items-center gap-2 px-4 py-2 rounded-xl bg-cream-100 dark:bg-brown-700 text-brown-600 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600 transition-colors"
               >
                 <RotateCcw className="w-4 h-4" />
                 Change Settings
@@ -482,7 +482,7 @@ export function PicturePairs() {
               <Trophy className="w-12 h-12 text-teal-600" />
             </div>
 
-            <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
+            <h2 className="text-2xl font-bold text-brown-800 dark:text-cream-100 mb-2">
               Håfa Adai! Great Job!
             </h2>
 
@@ -495,26 +495,26 @@ export function PicturePairs() {
                   className={`w-10 h-10 ${
                     star <= finalStars
                       ? 'text-amber-400 fill-amber-400'
-                      : 'text-cream-300 dark:text-slate-600'
+                      : 'text-cream-300 dark:text-brown-600'
                   }`}
                 />
               ))}
             </div>
 
             {/* Stats */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 mb-6">
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 mb-6">
               <div className="grid grid-cols-3 gap-4 text-center">
                 <div>
                   <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{moves}</p>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">Moves</p>
+                  <p className="text-xs text-brown-500 dark:text-brown-300">Moves</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{formatTime(elapsedTime)}</p>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">Time</p>
+                  <p className="text-xs text-brown-500 dark:text-brown-300">Time</p>
                 </div>
                 <div>
                   <p className="text-2xl font-bold text-teal-600 dark:text-teal-400">{finalScore}</p>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-xs text-brown-500 dark:text-brown-300">Score</p>
                 </div>
               </div>
             </div>
@@ -524,7 +524,7 @@ export function PicturePairs() {
               <button
                 onClick={startGame}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 bg-coral-700 dark:bg-teal-700 text-white rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                className="flex-1 py-3 bg-action text-white rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
@@ -532,7 +532,7 @@ export function PicturePairs() {
               <button
                 disabled={resultUnresolved || startStatus.pending}
                 onClick={() => guard.requestLeave(() => { clearTimers(); setGameState('setup'); })}
-                className="flex-1 py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors"
+                className="flex-1 py-3 bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600 transition-colors"
               >
                 Settings
               </button>

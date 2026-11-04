@@ -21,7 +21,7 @@ class AccountMenuBoundary extends Component<{ children: ReactNode; onRetry: () =
 
   render() {
     if (!this.state.hasError) return this.props.children;
-    const control = 'flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-300 dark:hover:bg-slate-800';
+    const control = 'flex h-11 w-11 flex-none items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-brown-100 dark:hover:bg-brown-900';
     return (
       <>
         <Link to="/settings" aria-label="Account and settings" className={control}>

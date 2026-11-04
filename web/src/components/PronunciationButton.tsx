@@ -49,7 +49,7 @@ function PronunciationPlayback({
         )}
         {showLabel && <span>{isSpeaking ? 'Stop' : isBusy ? 'Stop loading' : label}</span>}
       </button>
-      <span className="max-w-64 break-words text-right text-xs leading-snug text-brown-600 dark:text-gray-400" aria-live="polite">
+      <span className="max-w-64 break-words text-right text-xs leading-snug text-brown-600 dark:text-brown-300" aria-live="polite">
         {speechError ? `${speechError} Ask a grown-up to read this with you.` : playbackSource === 'device' ? 'Device voice approximation' : playbackSource === 'reviewed' ? 'Reviewed speaker audio' : playbackSource === 'generated' ? 'AI-generated audio · pronunciation may vary' : ''}
       </span>
     </div>

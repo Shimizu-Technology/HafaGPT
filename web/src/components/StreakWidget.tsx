@@ -6,8 +6,8 @@ export function StreakWidget() {
 
   if (isLoading) {
     return (
-      <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200/50 dark:border-slate-700/50 animate-pulse">
-        <div className="h-20 bg-cream-100 dark:bg-slate-700 rounded-lg" />
+      <div className="bg-white dark:bg-brown-900 rounded-2xl p-4 border border-cream-200/50 dark:border-brown-700/50 animate-pulse">
+        <div className="h-20 bg-cream-100 dark:bg-brown-700 rounded-lg" />
       </div>
     );
   }
@@ -21,7 +21,7 @@ export function StreakWidget() {
 
 
   return (
-    <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200/50 dark:border-slate-700/50">
+    <div className="bg-white dark:bg-brown-900 rounded-2xl p-4 border border-cream-200/50 dark:border-brown-700/50">
       {/* Header with streak count */}
       <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
@@ -31,7 +31,7 @@ export function StreakWidget() {
               <span className="text-2xl font-bold text-ink">
                 {current_streak}
               </span>
-              <span className="text-sm text-brown-500 dark:text-gray-400">
+              <span className="text-sm text-brown-500 dark:text-brown-300">
                 day{current_streak !== 1 ? 's' : ''}
               </span>
             </div>
@@ -56,69 +56,69 @@ export function StreakWidget() {
 
       {/* Today's progress */}
       <div className="space-y-2">
-        <p className="text-sm font-semibold text-brown-600 dark:text-gray-400">
+        <p className="text-sm font-semibold text-brown-600 dark:text-brown-300">
           Today's activity
         </p>
         
         <div className="grid grid-cols-3 gap-2">
           {/* Chat */}
-          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-cream-50 dark:bg-slate-700/50">
+          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-cream-50 dark:bg-brown-700/50">
             {today_activities.chat > 0 ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             ) : (
-              <Circle className="w-4 h-4 text-cream-300 dark:text-gray-600" />
+              <Circle className="w-4 h-4 text-cream-300 dark:text-brown-600" />
             )}
             <MessageSquare className={`w-3.5 h-3.5 ${
               today_activities.chat > 0 
                 ? 'text-muted'
-                : 'text-brown-500 dark:text-gray-400'
+                : 'text-brown-500 dark:text-brown-300'
             }`} />
             <span className={`text-xs font-medium ${
               today_activities.chat > 0 
                 ? 'text-muted'
-                : 'text-brown-500 dark:text-gray-400'
+                : 'text-brown-500 dark:text-brown-300'
             }`}>
               {today_activities.chat}
             </span>
           </div>
 
           {/* Games */}
-          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-cream-50 dark:bg-slate-700/50">
+          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-cream-50 dark:bg-brown-700/50">
             {today_activities.games > 0 ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             ) : (
-              <Circle className="w-4 h-4 text-cream-300 dark:text-gray-600" />
+              <Circle className="w-4 h-4 text-cream-300 dark:text-brown-600" />
             )}
             <Gamepad2 className={`w-3.5 h-3.5 ${
               today_activities.games > 0 
                 ? 'text-muted'
-                : 'text-brown-500 dark:text-gray-400'
+                : 'text-brown-500 dark:text-brown-300'
             }`} />
             <span className={`text-xs font-medium ${
               today_activities.games > 0 
                 ? 'text-muted'
-                : 'text-brown-500 dark:text-gray-400'
+                : 'text-brown-500 dark:text-brown-300'
             }`}>
               {today_activities.games}
             </span>
           </div>
 
           {/* Quizzes */}
-          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-cream-50 dark:bg-slate-700/50">
+          <div className="flex items-center gap-1.5 p-2 rounded-lg bg-cream-50 dark:bg-brown-700/50">
             {today_activities.quizzes > 0 ? (
               <CheckCircle2 className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
             ) : (
-              <Circle className="w-4 h-4 text-cream-300 dark:text-gray-600" />
+              <Circle className="w-4 h-4 text-cream-300 dark:text-brown-600" />
             )}
             <GraduationCap className={`w-3.5 h-3.5 ${
               today_activities.quizzes > 0 
                 ? 'text-muted'
-                : 'text-brown-500 dark:text-gray-400'
+                : 'text-brown-500 dark:text-brown-300'
             }`} />
             <span className={`text-xs font-medium ${
               today_activities.quizzes > 0 
                 ? 'text-muted'
-                : 'text-brown-500 dark:text-gray-400'
+                : 'text-brown-500 dark:text-brown-300'
             }`}>
               {today_activities.quizzes}
             </span>
@@ -127,7 +127,7 @@ export function StreakWidget() {
 
         {/* Encouragement message */}
         {totalTodayActivities === 0 && (
-          <p className="text-xs text-center text-brown-500 dark:text-gray-400 mt-2">
+          <p className="text-xs text-center text-brown-500 dark:text-brown-300 mt-2">
             {current_streak > 0
               ? 'Chat, play, or take a quiz to keep your streak.'
               : 'Complete an activity to start your streak.'

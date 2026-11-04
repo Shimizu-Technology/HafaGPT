@@ -96,24 +96,24 @@ function SettingsChoice<T extends string | number>({
       aria-pressed={selected}
       onClick={() => onSelect(id)}
       disabled={disabled}
-      className={`flex min-h-16 w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 dark:focus-visible:ring-teal-400 dark:focus-visible:ring-offset-slate-900 ${
+      className={`flex min-h-16 w-full items-center gap-3 rounded-xl border-2 p-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-60 dark:focus-visible:ring-offset-brown-950 ${
         selected
-          ? 'border-coral-500 bg-coral-50 dark:border-teal-400 dark:bg-teal-950/30'
-          : 'border-cream-200 bg-white hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700'
+          ? 'border-coral-500 bg-coral-50'
+          : 'border-cream-200 bg-white hover:border-coral-300 dark:border-brown-700 dark:bg-brown-900'
       }`}
     >
       <span className={`flex h-10 w-10 flex-none items-center justify-center rounded-lg ${
         selected
-          ? 'bg-coral-100 text-coral-700 dark:bg-teal-900 dark:text-teal-200'
-          : 'bg-cream-100 text-brown-600 dark:bg-slate-700 dark:text-gray-300'
+          ? 'bg-coral-100 text-coral-700'
+          : 'bg-cream-100 text-brown-600 dark:bg-brown-700 dark:text-brown-100'
       }`}>
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block text-sm font-bold text-brown-950 dark:text-white">{title}</span>
-        <span className="mt-0.5 block text-xs leading-snug text-brown-600 dark:text-gray-300">{description}</span>
+        <span className="block text-sm font-bold text-brown-950 dark:text-cream-100">{title}</span>
+        <span className="mt-0.5 block text-xs leading-snug text-brown-600 dark:text-brown-100">{description}</span>
       </span>
-      {selected && <Check className="h-5 w-5 flex-none text-coral-700 dark:text-teal-300" aria-hidden="true" />}
+      {selected && <Check className="h-5 w-5 flex-none text-coral-700" aria-hidden="true" />}
     </button>
   );
 }
@@ -130,10 +130,10 @@ function SettingsSection({
   children: ReactNode;
 }) {
   return (
-    <section className="rounded-3xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
-      <p className="text-sm font-semibold text-coral-700 dark:text-teal-300">{eyebrow}</p>
-      <h2 className="mt-1 text-xl font-bold text-brown-950 dark:text-white">{title}</h2>
-      <p className="mt-1 text-sm leading-relaxed text-brown-600 dark:text-gray-400">{description}</p>
+    <section className="rounded-3xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900 sm:p-6">
+      <p className="text-sm font-semibold text-coral-700">{eyebrow}</p>
+      <h2 className="mt-1 text-xl font-bold text-brown-950 dark:text-cream-100">{title}</h2>
+      <p className="mt-1 text-sm leading-relaxed text-brown-600 dark:text-brown-300">{description}</p>
       <div className="mt-5 space-y-6">{children}</div>
     </section>
   );
@@ -235,12 +235,12 @@ export function SettingsPage() {
 
       <main className="mx-auto max-w-3xl space-y-5 px-4 py-5 sm:py-8">
         {showOnboardingReminder && (
-          <section aria-labelledby="setup-reminder-title" className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-            <h2 id="setup-reminder-title" className="font-bold text-brown-950 dark:text-white">Make learning fit you</h2>
-            <p className="mt-2 text-base text-brown-600 dark:text-gray-300">Setup is optional. Choose your learning settings below, or save the current choices when you are ready.</p>
+          <section aria-labelledby="setup-reminder-title" className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+            <h2 id="setup-reminder-title" className="font-bold text-brown-950 dark:text-cream-100">Make learning fit you</h2>
+            <p className="mt-2 text-base text-brown-600 dark:text-brown-100">Setup is optional. Choose your learning settings below, or save the current choices when you are ready.</p>
             <div className="mt-3 flex flex-wrap gap-2">
-              <button type="button" onClick={() => void handleSave()} disabled={isSaving || isLoadingXP || hasUnloadedGoalDraft} className="min-h-11 rounded-xl px-4 font-semibold text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300">Save these settings</button>
-              <button type="button" onClick={dismissOnboardingReminder} className="min-h-11 rounded-xl px-4 font-semibold text-brown-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-200">Dismiss setup reminder</button>
+              <button type="button" onClick={() => void handleSave()} disabled={isSaving || isLoadingXP || hasUnloadedGoalDraft} className="min-h-11 rounded-xl px-4 font-semibold text-coral-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500">Save these settings</button>
+              <button type="button" onClick={dismissOnboardingReminder} className="min-h-11 rounded-xl px-4 font-semibold text-brown-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-cream-200">Dismiss setup reminder</button>
             </div>
           </section>
         )}
@@ -250,7 +250,7 @@ export function SettingsPage() {
           description="Choose who is learning and how much reading support to show. HåfaGPT does not need a child’s name, age, or school."
         >
           <fieldset>
-            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-gray-100">How you are learning</legend>
+            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-cream-100">How you are learning</legend>
             <div className="grid gap-2 sm:grid-cols-3">
               {LEARNER_MODE_OPTIONS.map((option) => (
                 <SettingsChoice
@@ -266,7 +266,7 @@ export function SettingsPage() {
           </fieldset>
 
           <fieldset>
-            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-gray-100">Reading support</legend>
+            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-cream-100">Reading support</legend>
             <div className="grid gap-2 sm:grid-cols-3">
               {READING_SUPPORT_OPTIONS.map((option) => (
                 <SettingsChoice
@@ -288,7 +288,7 @@ export function SettingsPage() {
           description="These choices shape recommendations while keeping every lesson, story, game, and tool available."
         >
           <fieldset>
-            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-gray-100">Chamorro confidence</legend>
+            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-cream-100">Chamorro confidence</legend>
             <div className="grid gap-2 sm:grid-cols-3">
               {CONFIDENCE_OPTIONS.map((option) => (
                 <SettingsChoice
@@ -304,7 +304,7 @@ export function SettingsPage() {
           </fieldset>
 
           <fieldset>
-            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-gray-100">Primary goal</legend>
+            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-cream-100">Primary goal</legend>
             <div className="grid gap-2 sm:grid-cols-2">
               {LEARNING_GOAL_OPTIONS.map((option) => (
                 <SettingsChoice
@@ -320,7 +320,7 @@ export function SettingsPage() {
           </fieldset>
 
           <fieldset>
-            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-gray-100">Preferred daily session</legend>
+            <legend className="mb-2 text-sm font-bold text-brown-800 dark:text-cream-100">Preferred daily session</legend>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
               {DAILY_GOAL_OPTIONS.map((option) => (
                 <SettingsChoice
@@ -353,20 +353,20 @@ export function SettingsPage() {
             </span>
             <span className="min-w-0 flex-1">
               <span className="block text-sm font-semibold text-amber-700 dark:text-amber-300">Learning progress</span>
-              <span className="block font-bold text-brown-950 dark:text-white">
+              <span className="block font-bold text-brown-950 dark:text-cream-100">
                 Level {xpData.level} · {getLevelInfo(xpData.level).title}
               </span>
-              <span className="block text-xs text-brown-600 dark:text-gray-400">{xpData.total_xp.toLocaleString()} total XP</span>
+              <span className="block text-xs text-brown-600 dark:text-brown-300">{xpData.total_xp.toLocaleString()} total XP</span>
             </span>
             <span className="text-sm font-semibold text-amber-800 group-hover:underline dark:text-amber-200">View</span>
           </Link>
         ) : isLoadingXP ? (
-          <div className="h-24 animate-pulse rounded-2xl bg-cream-200 motion-reduce:animate-none dark:bg-slate-800" aria-label="Loading learning progress" />
+          <div className="h-24 animate-pulse rounded-2xl bg-cream-200 motion-reduce:animate-none dark:bg-brown-900" aria-label="Loading learning progress" />
         ) : null}
 
-        <section className="rounded-3xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800 sm:p-6">
-          <h2 className="text-xl font-bold text-brown-950 dark:text-white">Appearance</h2>
-          <p className="mt-2 text-base text-brown-600 dark:text-gray-300">Follow your device or choose an appearance. Changes save automatically.</p>
+        <section className="rounded-3xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900 sm:p-6">
+          <h2 className="text-xl font-bold text-brown-950 dark:text-cream-100">Appearance</h2>
+          <p className="mt-2 text-base text-brown-600 dark:text-brown-100">Follow your device or choose an appearance. Changes save automatically.</p>
           <div className="mt-4 grid gap-2 sm:grid-cols-3" role="group" aria-label="Appearance">
             {([
               { value: 'system', title: 'System', icon: Monitor },
@@ -375,45 +375,45 @@ export function SettingsPage() {
             ] as const).map(({ value, title, icon: Icon }) => (
               <button key={value} type="button" aria-pressed={preference === value}
                 onClick={() => { void setTheme(value); }}
-                className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 px-4 text-base font-semibold ${preference === value ? 'border-coral-600 bg-coral-50 text-coral-800 dark:border-teal-400 dark:bg-teal-950/30 dark:text-teal-200' : 'border-cream-200 text-brown-800 dark:border-slate-600 dark:text-gray-200'}`}>
+                className={`flex min-h-12 items-center justify-center gap-2 rounded-xl border-2 px-4 text-base font-semibold ${preference === value ? 'border-coral-600 bg-coral-50 text-coral-800' : 'border-cream-200 text-brown-800 dark:border-brown-600 dark:text-cream-200'}`}>
                 <Icon className="h-5 w-5" aria-hidden="true" />{title}
               </button>
             ))}
           </div>
         </section>
 
-        <section className="overflow-hidden rounded-3xl border border-cream-200 bg-white dark:border-slate-700 dark:bg-slate-800">
-          <h2 className="px-4 pt-4 text-lg font-bold text-brown-950 dark:text-white sm:px-6 sm:pt-5">Help and privacy</h2>
-          <div className="mt-2 divide-y divide-cream-100 dark:divide-slate-700">
+        <section className="overflow-hidden rounded-3xl border border-cream-200 bg-white dark:border-brown-700 dark:bg-brown-900">
+          <h2 className="px-4 pt-4 text-lg font-bold text-brown-950 dark:text-cream-100 sm:px-6 sm:pt-5">Help and privacy</h2>
+          <div className="mt-2 divide-y divide-cream-100 dark:divide-brown-700">
             <Link
               to="/support"
-              className="flex min-h-14 items-center gap-3 px-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50 sm:px-6"
+              className="flex min-h-14 items-center gap-3 px-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-brown-700/50 sm:px-6"
             >
-              <HelpCircle className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />
-              <span className="font-semibold text-brown-800 dark:text-gray-200">Help & support</span>
+              <HelpCircle className="h-5 w-5 text-coral-700" aria-hidden="true" />
+              <span className="font-semibold text-brown-800 dark:text-cream-200">Help & support</span>
             </Link>
             <Link
               to="/privacy"
-              className="flex min-h-14 items-center gap-3 px-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50 sm:px-6"
+              className="flex min-h-14 items-center gap-3 px-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-brown-700/50 sm:px-6"
             >
-              <Shield className="h-5 w-5 text-coral-700 dark:text-teal-300" aria-hidden="true" />
-              <span className="font-semibold text-brown-800 dark:text-gray-200">Privacy policy</span>
+              <Shield className="h-5 w-5 text-coral-700" aria-hidden="true" />
+              <span className="font-semibold text-brown-800 dark:text-cream-200">Privacy policy</span>
             </Link>
           </div>
         </section>
       </main>
 
       {(hasChanges || draft) && (
-        <div className="fixed above-bottom-nav left-0 right-0 z-40 border-t border-cream-200 bg-white/95 p-3 sm:pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(69,47,37,0.08)] backdrop-blur-xl dark:border-slate-700 dark:bg-slate-900/95">
+        <div className="fixed above-bottom-nav left-0 right-0 z-40 border-t border-cream-200 bg-white/95 p-3 sm:pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-8px_24px_rgba(69,47,37,0.08)] backdrop-blur-xl dark:border-brown-700 dark:bg-brown-950/95">
           <div className="mx-auto max-w-3xl">
-            <p role="status" className="mb-2 text-sm text-brown-700 dark:text-gray-200">Unsaved choices stay here as you move around the app. Save before closing or reloading.</p>
+            <p role="status" className="mb-2 text-sm text-brown-700 dark:text-cream-200">Unsaved choices stay here as you move around the app. Save before closing or reloading.</p>
             {saveError && <p role="alert" className="mb-2 text-sm font-semibold text-red-700 dark:text-red-300">{saveError}</p>}
             <div className="flex flex-wrap items-center justify-between gap-3">
               <button
                 type="button"
                 onClick={handleReset}
                 disabled={isSaving}
-                className="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 font-semibold text-brown-600 hover:bg-cream-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-slate-800"
+                className="inline-flex min-h-11 items-center gap-2 rounded-xl px-4 font-semibold text-brown-600 hover:bg-cream-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-brown-100 dark:hover:bg-brown-900"
               >
                 <RotateCcw className="h-4 w-4" aria-hidden="true" />
                 Discard changes
@@ -422,7 +422,7 @@ export function SettingsPage() {
                 type="button"
                 onClick={handleSave}
                 disabled={isSaving || isLoadingXP || hasUnloadedGoalDraft}
-                className="inline-flex min-h-12 min-w-0 flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-coral-700 px-5 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-50 dark:bg-teal-700 dark:hover:bg-teal-800"
+                className="inline-flex min-h-12 min-w-0 flex-1 sm:flex-none items-center justify-center gap-2 rounded-xl bg-action px-5 font-semibold text-white hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:cursor-wait disabled:opacity-50"
               >
                 <Save className="h-4 w-4" aria-hidden="true" />
                 {isSaving ? 'Saving…' : 'Save changes'}

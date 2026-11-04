@@ -344,7 +344,7 @@ export function Hangman() {
     ];
 
     return (
-      <svg viewBox="0 0 300 220" className="w-full max-w-[200px] h-auto text-brown-700 dark:text-gray-300">
+      <svg viewBox="0 0 300 220" className="w-full max-w-[200px] h-auto text-brown-700 dark:text-brown-100">
         {/* Gallows */}
         <line x1="60" y1="200" x2="240" y2="200" stroke="currentColor" strokeWidth="4" />
         <line x1="100" y1="200" x2="100" y2="20" stroke="currentColor" strokeWidth="4" />
@@ -367,17 +367,17 @@ export function Hangman() {
 
         <main className="mx-auto max-w-2xl space-y-5 px-4 py-5 sm:py-8">
           {/* Game Description */}
-          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-800">
-            <p className="text-brown-600 dark:text-gray-400 text-sm">
+          <div className="rounded-2xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900">
+            <p className="text-brown-600 dark:text-brown-300 text-sm">
               See the English meaning, then guess the Chamorro word one letter at a time.
               Complete as many words as you can before running out of guesses!
             </p>
           </div>
 
           {/* Mode Selection */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700">
-            <h3 className="font-semibold text-brown-800 dark:text-white mb-4 flex items-center gap-2">
-              <BookOpen className="w-5 h-5 text-coral-700 dark:text-teal-400" />
+          <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 border border-cream-200 dark:border-brown-700">
+            <h3 className="font-semibold text-brown-800 dark:text-cream-100 mb-4 flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-coral-700" />
               Choose Mode
             </h3>
             <div className="grid grid-cols-2 gap-3">
@@ -386,39 +386,39 @@ export function Hangman() {
                 aria-pressed={settings.mode === 'beginner'}
                 className={`p-4 rounded-xl text-center transition-colors duration-200 ${
                   settings.mode === 'beginner'
-                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                    ? 'bg-action text-white'
+                    : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                 }`}
               >
                 <div className="flex items-center justify-center mb-2">
-                  <Sparkles className={`w-6 h-6 ${settings.mode === 'beginner' ? 'text-white' : 'text-coral-700 dark:text-teal-400'}`} />
+                  <Sparkles className={`w-6 h-6 ${settings.mode === 'beginner' ? 'text-white' : 'text-coral-700'}`} />
                 </div>
-                <p className={`font-medium ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Beginner</p>
-                <p className={`text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Common words</p>
+                <p className={`font-medium ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-800 dark:text-cream-100'}`}>Beginner</p>
+                <p className={`text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>Common words</p>
               </button>
               <button
                 onClick={() => setSettings(s => ({ ...s, mode: 'challenge', category: challengeCategories[0]?.id || 'greetings' }))}
                 aria-pressed={settings.mode === 'challenge'}
                 className={`p-4 rounded-xl text-center transition-colors duration-200 ${
                   settings.mode === 'challenge'
-                    ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                    : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                    ? 'bg-action text-white'
+                    : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                 }`}
               >
                 <div className="flex items-center justify-center mb-2">
                   <Trophy className={`w-6 h-6 ${settings.mode === 'challenge' ? 'text-white' : 'text-teal-700'}`} />
                 </div>
-                <p className={`font-medium ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-800 dark:text-white'}`}>Challenge</p>
-                <p className={`text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Full dictionary</p>
+                <p className={`font-medium ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-800 dark:text-cream-100'}`}>Challenge</p>
+                <p className={`text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>Full dictionary</p>
               </button>
             </div>
           </div>
 
           {/* Category Selection */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700">
-            <h3 className="font-semibold text-brown-800 dark:text-white mb-4">Choose Topic</h3>
+          <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 border border-cream-200 dark:border-brown-700">
+            <h3 className="font-semibold text-brown-800 dark:text-cream-100 mb-4">Choose Topic</h3>
             {isLoading ? (
-              <div className="text-center py-4 text-brown-500 dark:text-gray-300">Loading categories...</div>
+              <div className="text-center py-4 text-brown-500 dark:text-brown-100">Loading categories...</div>
             ) : (
               <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a topic">
                 {currentCategories.map(catId => {
@@ -438,17 +438,17 @@ export function Hangman() {
                       aria-pressed={settings.category === catId}
                       className={`min-w-24 flex-none p-3 rounded-xl transition-colors duration-200 text-center ${
                         isDisabled
-                          ? 'bg-cream-50 dark:bg-slate-900 opacity-50 cursor-not-allowed'
+                          ? 'bg-cream-50 dark:bg-brown-950 opacity-50 cursor-not-allowed'
                           : settings.category === catId
-                            ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                            : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                            ? 'bg-action text-white'
+                            : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                       }`}
                     >
                       <div className="flex items-center justify-center">
                       <span className="text-xl">{icon}</span>
                       </div>
-                      <p className={`text-xs font-medium mt-1 ${settings.category === catId && !isDisabled ? 'text-white' : 'text-brown-700 dark:text-gray-300'}`}>{name}</p>
-                      <p className={`text-xs mt-0.5 ${isDisabled ? 'text-red-400' : settings.category === catId ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>
+                      <p className={`text-xs font-medium mt-1 ${settings.category === catId && !isDisabled ? 'text-white' : 'text-brown-700 dark:text-brown-100'}`}>{name}</p>
+                      <p className={`text-xs mt-0.5 ${isDisabled ? 'text-red-400' : settings.category === catId ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>
                         {wordCount} word{wordCount !== 1 ? 's' : ''}
                       </p>
                     </button>
@@ -462,7 +462,7 @@ export function Hangman() {
           <button
             onClick={startGame}
             disabled={availableWords.length < MIN_WORDS_TO_PLAY || isStarting}
-            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+            className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isStarting ? (
               <>
@@ -478,7 +478,7 @@ export function Hangman() {
           </button>
 
           {/* Daily limit indicator */}
-          <p className="text-center text-xs text-brown-500 dark:text-gray-300">
+          <p className="text-center text-xs text-brown-500 dark:text-brown-100">
             {formatUsageSummary(getCount('game'), getLimit('game'))}
           </p>
       </main>
@@ -497,34 +497,34 @@ export function Hangman() {
         <GamePageHeader title="Word Guess" subtitle="See how many Chamorro words you can uncover." icon={Target} />
 
         <main className="max-w-2xl mx-auto px-4 py-8">
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border border-cream-200 dark:border-slate-700 text-center">
-            <div className={`mb-4 h-20 w-20 mx-auto flex items-center justify-center rounded-2xl ${gameState === 'won' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-cream-100 text-brown-600 dark:bg-slate-700 dark:text-gray-200'}`}>{gameState === 'won' ? <Trophy className="h-10 w-10" aria-hidden="true" /> : <RotateCcw className="h-10 w-10" aria-hidden="true" />}</div>
-            <h2 className="text-2xl font-bold text-brown-800 dark:text-white mb-2">
+          <div className="bg-white dark:bg-brown-900 rounded-2xl p-8 border border-cream-200 dark:border-brown-700 text-center">
+            <div className={`mb-4 h-20 w-20 mx-auto flex items-center justify-center rounded-2xl ${gameState === 'won' ? 'bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300' : 'bg-cream-100 text-brown-600 dark:bg-brown-700 dark:text-cream-200'}`}>{gameState === 'won' ? <Trophy className="h-10 w-10" aria-hidden="true" /> : <RotateCcw className="h-10 w-10" aria-hidden="true" />}</div>
+            <h2 className="text-2xl font-bold text-brown-800 dark:text-cream-100 mb-2">
               {gameState === 'won' ? 'Great Job!' : 'Game Over!'}
             </h2>
 
             {gameState === 'lost' && (
-              <p className="text-brown-600 dark:text-gray-400 mb-4">
-                The word was: <span className="font-chamorro text-lg font-semibold text-coral-700 dark:text-teal-400">{currentWord}</span>
+              <p className="text-brown-600 dark:text-brown-300 mb-4">
+                The word was: <span className="font-chamorro text-lg font-semibold text-coral-700">{currentWord}</span>
               </p>
             )}
 
             {/* Stars */}
             <div className="flex justify-center gap-2 mb-6" role="img" aria-label={`${stars} out of 3 stars`}>
               {[1, 2, 3].map(star => (
-                <Star key={star} aria-hidden="true" className={`h-10 w-10 ${star <= stars ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-slate-600"}`} />
+                <Star key={star} aria-hidden="true" className={`h-10 w-10 ${star <= stars ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-brown-600"}`} />
               ))}
             </div>
 
             {/* Stats */}
             <div className="grid grid-cols-2 gap-4 mb-6">
-              <div className="bg-cream-50 dark:bg-slate-700/50 rounded-xl p-4">
-                <p className="text-2xl font-bold text-brown-800 dark:text-white">{wordsCompleted}</p>
-                <p className="text-sm text-brown-500 dark:text-gray-300">Words</p>
+              <div className="bg-cream-50 dark:bg-brown-700/50 rounded-xl p-4">
+                <p className="text-2xl font-bold text-brown-800 dark:text-cream-100">{wordsCompleted}</p>
+                <p className="text-sm text-brown-500 dark:text-brown-100">Words</p>
               </div>
-              <div className="bg-cream-50 dark:bg-slate-700/50 rounded-xl p-4">
-                <p className="text-2xl font-bold text-brown-800 dark:text-white">{totalScore}</p>
-                <p className="text-sm text-brown-500 dark:text-gray-300">Score</p>
+              <div className="bg-cream-50 dark:bg-brown-700/50 rounded-xl p-4">
+                <p className="text-2xl font-bold text-brown-800 dark:text-cream-100">{totalScore}</p>
+                <p className="text-sm text-brown-500 dark:text-brown-100">Score</p>
               </div>
             </div>
 
@@ -533,7 +533,7 @@ export function Hangman() {
               <button
                 onClick={startGame}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+                className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover"
               >
                 <RotateCcw className="w-5 h-5" />
                 Play Again
@@ -541,13 +541,13 @@ export function Hangman() {
               <button
                 disabled={resultUnresolved || startStatus.pending}
                 onClick={() => setGameState('setup')}
-                className="w-full py-3 bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors"
+                className="w-full py-3 bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600 transition-colors"
               >
                 Change Settings
               </button>
               <Link
                 to={gameReturn.to} replace
-                className="block w-full py-3 bg-cream-50 dark:bg-slate-800 text-brown-600 dark:text-gray-400 rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700 transition-colors"
+                className="block w-full py-3 bg-cream-50 dark:bg-brown-900 text-brown-600 dark:text-brown-300 rounded-xl font-medium [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700 transition-colors"
               >
                 {gameReturn.label}
               </Link>
@@ -573,7 +573,7 @@ export function Hangman() {
             onClick={() => {
               guard.requestLeave(() => setGameState('setup'));
             }}
-            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700"
+            className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-brown-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700"
             aria-label="Change game settings"
           >
             <Settings2 className="h-5 w-5" aria-hidden="true" />
@@ -583,23 +583,23 @@ export function Hangman() {
 
       <main className="max-w-lg mx-auto px-4 py-6 space-y-4">
         {/* Hangman Figure */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700 flex justify-center">
+        <div className="bg-white dark:bg-brown-900 rounded-2xl p-4 border border-cream-200 dark:border-brown-700 flex justify-center">
           {renderHangman()}
         </div>
 
         {/* Lives remaining */}
         <div className="flex justify-center gap-1" role="img" aria-label={`${MAX_WRONG_GUESSES - wrongGuesses} of ${MAX_WRONG_GUESSES} lives left`}>
           {Array.from({ length: MAX_WRONG_GUESSES }).map((_, i) => (
-            <Heart key={i} aria-hidden="true" className={`h-6 w-6 ${i < MAX_WRONG_GUESSES - wrongGuesses ? 'fill-red-600 text-red-600 dark:fill-red-400 dark:text-red-400' : 'text-cream-300 dark:text-slate-600'}`} />
+            <Heart key={i} aria-hidden="true" className={`h-6 w-6 ${i < MAX_WRONG_GUESSES - wrongGuesses ? 'fill-red-600 text-red-600 dark:fill-red-400 dark:text-red-400' : 'text-cream-300 dark:text-brown-600'}`} />
           ))}
         </div>
 
         {/* Word Display */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 border border-cream-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 border border-cream-200 dark:border-brown-700">
           {/* Hint */}
           <div className="flex items-center justify-center gap-2 mb-4">
-            <HelpCircle className="w-4 h-4 text-coral-700 dark:text-teal-400" />
-            <p className="text-brown-600 dark:text-gray-400 text-center">{currentHint}</p>
+            <HelpCircle className="w-4 h-4 text-coral-700" />
+            <p className="text-brown-600 dark:text-brown-300 text-center">{currentHint}</p>
           </div>
 
           {/* Word blanks */}
@@ -609,10 +609,10 @@ export function Hangman() {
                 key={index}
                 className={`w-10 h-12 sm:w-12 sm:h-14 flex items-center justify-center text-xl sm:text-2xl font-bold rounded-lg ${
                   letter === '_'
-                    ? 'bg-cream-100 dark:bg-slate-700 border-2 border-dashed border-cream-300 dark:border-slate-600'
+                    ? 'bg-cream-100 dark:bg-brown-700 border-2 border-dashed border-cream-300 dark:border-brown-600'
                     : isWordComplete
                     ? 'bg-green-100 dark:bg-green-900/30 text-green-600 dark:text-green-400'
-                    : 'bg-coral-100 dark:bg-teal-950/30 text-coral-700 dark:text-teal-400'
+                    : 'bg-coral-100 text-coral-700'
                 }`}
               >
                 {letter === '_' ? '' : letter}
@@ -641,7 +641,7 @@ export function Hangman() {
         </div>
 
         {/* Keyboard */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700">
+        <div className="bg-white dark:bg-brown-900 rounded-2xl p-4 border border-cream-200 dark:border-brown-700">
           <div className="flex flex-wrap justify-center gap-1.5 sm:gap-2">
             {CHAMORRO_ALPHABET.map(letter => {
               const isGuessed = guessedLetters.includes(letter);
@@ -659,8 +659,8 @@ export function Hangman() {
                       : isWrong
                       ? 'bg-red-400 text-white opacity-50'
                       : isGuessed
-                      ? 'bg-gray-300 dark:bg-slate-600 text-gray-500 cursor-not-allowed'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-800 dark:text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-950/30 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:text-teal-400'
+                      ? 'bg-gray-300 dark:bg-brown-600 text-gray-500 cursor-not-allowed'
+                      : 'bg-cream-100 dark:bg-brown-700 text-brown-800 dark:text-cream-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-100 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600'
                   }`}
                 >
                   {letter}
@@ -669,7 +669,7 @@ export function Hangman() {
             })}
           </div>
         </div>
-        {isWordComplete && <button type="button" onClick={() => { pickNewWord(); }} className="mt-4 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800">Next word</button>}
+        {isWordComplete && <button type="button" onClick={() => { pickNewWord(); }} className="mt-4 min-h-12 w-full rounded-xl bg-action px-4 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover">Next word</button>}
       </main>
     </GamePage>
   );

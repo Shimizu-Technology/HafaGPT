@@ -89,9 +89,9 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
               className="fixed inset-0 z-40 sm:hidden" 
               onClick={() => setShowTooltip(false)} 
             />
-            <div id={disclosureId} role="note" className="absolute z-50 bottom-full right-0 mb-2 w-72 p-3 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700 rounded-lg shadow-xl">
+            <div id={disclosureId} role="note" className="absolute z-50 bottom-full right-0 mb-2 w-72 p-3 bg-white dark:bg-brown-900 border border-amber-200 dark:border-amber-700 rounded-lg shadow-xl">
               {/* Arrow */}
-              <div className="absolute -bottom-1.5 right-4 w-3 h-3 bg-white dark:bg-slate-800 border-b border-r border-amber-200 dark:border-amber-700 rotate-45" />
+              <div className="absolute -bottom-1.5 right-4 w-3 h-3 bg-white dark:bg-brown-900 border-b border-r border-amber-200 dark:border-amber-700 rotate-45" />
               
               <div className="relative">
                 <div className="flex items-start justify-between gap-2 mb-2">
@@ -102,12 +102,12 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
                   <button 
                     onClick={() => setShowTooltip(false)}
                     aria-label="Close audio pronunciation note"
-                    className="p-1 hover:bg-cream-100 dark:hover:bg-slate-700 rounded"
+                    className="p-1 hover:bg-cream-100 dark:hover:bg-brown-700 rounded"
                   >
                     <X className="w-4 h-4 text-brown-500" />
                   </button>
                 </div>
-                <div className="text-xs text-brown-600 dark:text-gray-400 space-y-2">
+                <div className="text-xs text-brown-600 dark:text-brown-300 space-y-2">
                   <p className="font-medium text-amber-700 dark:text-amber-400">{shortText}</p>
                   <p>{disclosure}</p>
                 </div>
@@ -142,9 +142,9 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
             className="fixed inset-0 z-40 sm:hidden" 
             onClick={() => setShowTooltip(false)} 
           />
-          <div id={disclosureId} role="note" className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-4 bg-white dark:bg-slate-800 border border-amber-200 dark:border-amber-700 rounded-xl shadow-xl">
+          <div id={disclosureId} role="note" className="absolute z-50 bottom-full left-1/2 -translate-x-1/2 mb-2 w-80 p-4 bg-white dark:bg-brown-900 border border-amber-200 dark:border-amber-700 rounded-xl shadow-xl">
             {/* Arrow */}
-            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-slate-800 border-b border-r border-amber-200 dark:border-amber-700 rotate-45" />
+            <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-3 h-3 bg-white dark:bg-brown-900 border-b border-r border-amber-200 dark:border-amber-700 rotate-45" />
             
             <div className="relative">
               <div className="flex items-start justify-between gap-2 mb-3">
@@ -157,14 +157,14 @@ export function TTSDisclaimer({ variant = 'tooltip', className = '' }: TTSDiscla
                 <button 
                   onClick={(e) => { e.stopPropagation(); setShowTooltip(false); }}
                   aria-label="Close audio quality note"
-                  className="p-1 hover:bg-cream-100 dark:hover:bg-slate-700 rounded sm:hidden"
+                  className="p-1 hover:bg-cream-100 dark:hover:bg-brown-700 rounded sm:hidden"
                 >
                   <X className="w-4 h-4 text-brown-500" />
                 </button>
               </div>
               
               <div className="space-y-3">
-                <p className="text-xs text-brown-600 dark:text-gray-400 leading-relaxed">
+                <p className="text-xs text-brown-600 dark:text-brown-300 leading-relaxed">
                   {disclosure}
                 </p>
                 

@@ -30,13 +30,13 @@ export function BottomNav() {
   if (!routeHasAppBar(pathname)) return null;
   const immersive = pathname !== '/flashcards/my-decks' && ['/quiz/', '/flashcards/', '/stories/', '/practice/', '/games/', '/learn/'].some(path => pathname.startsWith(path));
   return (
-    <div data-app-bar hidden={keyboardHidden} aria-hidden={keyboardHidden || undefined} {...(keyboardHidden ? { inert: '' } : {})} className={`${keyboardHidden ? '!hidden' : ''} border-cream-200 bg-white/95 dark:border-slate-700 dark:bg-slate-900/95 sm:relative sm:border-b ${immersive ? 'hidden sm:block' : 'fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-sm safe-area-bottom sm:block sm:border-t-0'}`}>
+    <div data-app-bar hidden={keyboardHidden} aria-hidden={keyboardHidden || undefined} {...(keyboardHidden ? { inert: '' } : {})} className={`${keyboardHidden ? '!hidden' : ''} border-cream-200 bg-white/95 dark:border-brown-700 dark:bg-brown-950/95 sm:relative sm:border-b ${immersive ? 'hidden sm:block' : 'fixed bottom-0 left-0 right-0 z-40 border-t backdrop-blur-sm safe-area-bottom sm:block sm:border-t-0'}`}>
       <div className="mx-auto max-w-5xl sm:flex sm:min-h-14 sm:items-center sm:gap-6 sm:px-4">
         {/* On wider screens this bar is the app's only masthead: the mark and
             name, the four destinations, then theme and account. The brand link
             and the controls sit outside the Primary landmark so it keeps four
             destinations. */}
-        <Link to="/" aria-label="HåfaGPT home" className="hidden min-h-11 flex-none items-center gap-2.5 rounded-xl pr-2 text-lg font-bold text-brown-950 dark:text-white sm:flex">
+        <Link to="/" aria-label="HåfaGPT home" className="hidden min-h-11 flex-none items-center gap-2.5 rounded-xl pr-2 text-lg font-bold text-brown-950 dark:text-cream-100 sm:flex">
           <BrandMark className="h-8 w-8" seasonal={seasonal} />
           <span aria-hidden="true">HåfaGPT</span>
         </Link>
@@ -44,7 +44,7 @@ export function BottomNav() {
           {destinations.map(({ to, label, icon: Icon, paths }) => {
             const active = paths.some(path => path === '/' ? pathname === '/' : pathname === path || pathname.startsWith(`${path}/`));
             return (
-              <Link key={to} to={to} aria-current={active ? 'page' : undefined} className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-[2px] py-1 text-center [overflow-wrap:anywhere] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 sm:flex-row sm:gap-2 sm:text-sm ${active ? 'text-coral-700 dark:text-ocean-300 sm:bg-coral-50 sm:dark:bg-ocean-950' : 'text-brown-600 hover:bg-cream-100 dark:text-gray-300 dark:hover:bg-slate-800'}`}>
+              <Link key={to} to={to} aria-current={active ? 'page' : undefined} className={`flex min-h-11 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-[2px] py-1 text-center [overflow-wrap:anywhere] text-xs font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 sm:flex-row sm:gap-2 sm:text-sm ${active ? 'text-coral-700 sm:bg-coral-50' : 'text-brown-600 hover:bg-cream-100 dark:text-brown-100 dark:hover:bg-brown-900'}`}>
                 <Icon className="h-[20px] w-[20px] flex-none" aria-hidden="true" />{label}
               </Link>
             );
@@ -55,12 +55,12 @@ export function BottomNav() {
               while Clerk or the menu chunk loads, and for guests, so nothing moves. */}
           <div data-slot="settings" className="h-11 w-11 flex-none">
             {user && (
-              <Link to="/settings" aria-label="Learning settings" className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-300 dark:hover:bg-slate-800">
+              <Link to="/settings" aria-label="Learning settings" className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-brown-100 dark:hover:bg-brown-900">
                 <Settings className="h-5 w-5" aria-hidden="true" />
               </Link>
             )}
           </div>
-          <button type="button" onClick={toggleTheme} aria-label="Toggle theme" className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-300 dark:hover:bg-slate-800">
+          <button type="button" onClick={toggleTheme} aria-label="Toggle theme" className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-brown-100 dark:hover:bg-brown-900">
             {theme === 'light' ? <Moon className="h-5 w-5" aria-hidden="true" /> : <Sun className="h-5 w-5" aria-hidden="true" />}
           </button>
           {wide ? <AccountSlot /> : <div data-slot="account" className="h-11 w-[5.5rem] flex-none" />}

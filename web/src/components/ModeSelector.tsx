@@ -20,12 +20,12 @@ interface ModeSelectorProps {
 export function ModeSelector({ intent, onIntentChange, disabled, layout = 'default' }: ModeSelectorProps & { layout?: 'default' | 'compact' }) {
   const compact = layout === 'compact';
   return (
-    <div className={compact ? '' : 'border-t border-cream-200/80 px-3 py-2 dark:border-slate-800 sm:px-6'}>
+    <div className={compact ? '' : 'border-t border-cream-200/80 px-3 py-2 dark:border-brown-900 sm:px-6'}>
       <div className={compact ? 'w-full' : 'mx-auto w-full max-w-3xl'}>
-        <div className="grid w-full min-w-0 grid-cols-3 gap-1 rounded-xl bg-cream-200/70 p-1 dark:bg-slate-800" role="group" aria-label="Tutor task">
+        <div className="grid w-full min-w-0 grid-cols-3 gap-1 rounded-xl bg-cream-200/70 p-1 dark:bg-brown-900" role="group" aria-label="Tutor task">
           {TASKS.map(({ id, label, icon: Icon }) => (
             <button key={id} type="button" disabled={disabled} onClick={() => onIntentChange(id)} aria-pressed={intent === id}
-              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition-colors sm:text-sm ${intent === id ? 'bg-coral-700 text-white dark:bg-teal-700' : 'text-brown-600 hover:bg-white/60 dark:text-gray-400 dark:hover:bg-slate-700/60'} disabled:opacity-50`}>
+              className={`flex min-h-11 items-center justify-center gap-1.5 rounded-lg px-2 py-2 text-xs font-semibold transition-colors sm:text-sm ${intent === id ? 'bg-action text-white' : 'text-brown-600 hover:bg-white/60 dark:text-brown-300 dark:hover:bg-brown-700/60'} disabled:opacity-50`}>
               <Icon className="h-4 w-4" aria-hidden="true" />{label}
             </button>
           ))}
@@ -81,24 +81,24 @@ export function TaskMenu({ intent, onIntentChange, disabled }: ModeSelectorProps
       <button ref={buttonRef} type="button" disabled={disabled} onClick={() => setOpen(value => !value)}
         aria-haspopup="menu" aria-expanded={open} aria-controls={open ? menuId : undefined}
         aria-label={`Task: ${current.label}. Change task`}
-        className="flex h-11 min-w-0 items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium text-brown-700 hover:bg-cream-100 disabled:opacity-40 dark:text-gray-200 dark:hover:bg-slate-800">
+        className="flex h-11 min-w-0 items-center gap-1.5 rounded-xl px-2.5 text-sm font-medium text-brown-700 hover:bg-cream-100 disabled:opacity-40 dark:text-cream-200 dark:hover:bg-brown-900">
         <CurrentIcon className="h-4 w-4 shrink-0" aria-hidden="true" />
         <span className="truncate">{current.label}</span>
         <ChevronDown className={`h-3.5 w-3.5 shrink-0 transition-transform ${open ? 'rotate-180' : ''}`} aria-hidden="true" />
       </button>
       {open && (
         <div id={menuId} role="menu" aria-label="Tutor task" onKeyDown={onMenuKeyDown}
-          className="absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-3rem)] rounded-xl border border-cream-300 bg-white p-1 shadow-lg dark:border-slate-700 dark:bg-slate-900">
+          className="absolute bottom-full left-0 z-50 mb-2 w-64 max-w-[calc(100vw-3rem)] rounded-xl border border-cream-300 bg-white p-1 shadow-lg dark:border-brown-700 dark:bg-brown-950">
           {TASKS.map(({ id, label, detail, icon: Icon }, index) => (
             <button key={id} ref={element => { itemRefs.current[index] = element; }} type="button" role="menuitemradio"
               aria-checked={intent === id} onClick={() => choose(id)}
-              className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-cream-100 focus:bg-cream-100 focus:outline-none dark:hover:bg-slate-800 dark:focus:bg-slate-800">
-              <Icon className="h-4 w-4 shrink-0 text-brown-600 dark:text-gray-300" aria-hidden="true" />
+              className="flex min-h-11 w-full items-center gap-3 rounded-lg px-3 py-2 text-left hover:bg-cream-100 focus:bg-cream-100 focus:outline-none dark:hover:bg-brown-900 dark:focus:bg-brown-900">
+              <Icon className="h-4 w-4 shrink-0 text-brown-600 dark:text-brown-100" aria-hidden="true" />
               <span className="min-w-0 flex-1">
-                <span className="block text-sm font-semibold text-brown-900 dark:text-white">{label}</span>
-                <span className="block text-xs text-brown-600 dark:text-gray-400">{detail}</span>
+                <span className="block text-sm font-semibold text-brown-900 dark:text-cream-100">{label}</span>
+                <span className="block text-xs text-brown-600 dark:text-brown-300">{detail}</span>
               </span>
-              {intent === id && <Check className="h-4 w-4 shrink-0 text-coral-700 dark:text-ocean-300" aria-hidden="true" />}
+              {intent === id && <Check className="h-4 w-4 shrink-0 text-coral-700" aria-hidden="true" />}
             </button>
           ))}
         </div>

@@ -26,29 +26,60 @@
 @layer base {
   :root {
     --action: 184 55 48; /* coral-700 */
-    --action-hover: 150 48 46;
+    --action-hover: 150 48 46; /* coral-800 */
     --on-action: 255 255 255;
-    --surface: 254 253 251;
-    --surface-subtle: 255 248 240;
+    --surface: 254 253 251; /* cream-50 */
+    --surface-subtle: 255 248 240; /* cream-100 */
     --ink: 28 21 18;
     --muted: 90 68 48;
     --focus-role: 61 114 115;
     --danger: 185 28 28;
     --danger-hover: 153 27 27;
 
+    /* The coral scale is token-backed so dark mode can re-key it by role
+       (tints, borders, text) without per-component overrides. Light values
+       are the original palette. */
+    --coral-50: 254 243 241;
+    --coral-100: 252 231 227;
+    --coral-200: 249 207 199;
+    --coral-300: 245 165 152;
+    --coral-400: 241 123 106;
+    --coral-500: 232 93 75;
+    --coral-600: 216 70 57;
+    --coral-700: 184 55 48;
+    --coral-800: 150 48 46;
+    --coral-900: 123 43 44;
+    --coral-950: 69 21 23;
+
     /* Motion tokens (mirrored in tailwind.config.js transitionTimingFunction). */
     --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
     --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
     --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
   }
+  /* Warm dark mode. The same hibiscus identity as light: cream text on the
+     brown scale, coral for action and accent, teal for secondary. Ground is
+     brown-950, cards brown-900, raised and hover surfaces brown-700. */
   .dark {
-    --action: 61 114 115; /* teal-700 */
-    --action-hover: 53 93 94;
-    --surface: 15 23 42;
-    --surface-subtle: 30 41 59;
-    --ink: 255 255 255;
-    --muted: 209 213 219;
-    --focus-role: 136 213 214;
+    --action: 205 72 65; /* coral that keeps white text at 4.5:1 or better */
+    --action-hover: 184 55 48; /* coral-700 */
+    --surface: 28 21 18; /* brown-950 */
+    --surface-subtle: 42 31 26; /* brown-900 */
+    --ink: 255 248 240; /* cream-100 */
+    --muted: 212 191 176; /* brown-200 */
+    --focus-role: 136 213 214; /* teal-300 */
+
+    /* Coral by role: 50-300 are tints and borders over brown, 400-900 are
+       accents and text lightened for contrast on brown. Fills use --action. */
+    --coral-50: 61 37 31;
+    --coral-100: 72 41 34;
+    --coral-200: 91 47 39;
+    --coral-300: 114 55 45;
+    --coral-400: 146 65 53;
+    --coral-500: 241 123 106;
+    --coral-600: 249 207 199;
+    --coral-700: 245 165 152;
+    --coral-800: 249 207 199;
+    --coral-900: 252 231 227;
   }
 
   /* Press feedback for everything pressable. Uses the independent `scale`
@@ -70,7 +101,7 @@
   }
 
   * {
-    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 dark:focus-visible:ring-ocean-300 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-gray-900;
+    @apply focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-teal-700 dark:focus-visible:ring-ocean-300 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-brown-950;
   }
 
   body {
@@ -79,6 +110,10 @@
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     -webkit-text-size-adjust: 100%;
+  }
+
+  html {
+    background-color: rgb(var(--surface));
   }
 
   html, body, #root {
@@ -96,12 +131,12 @@
   }
   .action-button > svg { flex-shrink: 0; }
   .action-primary { @apply bg-action text-on-action; }
-  .action-secondary { @apply border border-brown-300 bg-surface-subtle text-ink dark:border-slate-500; }
+  .action-secondary { @apply border border-brown-300 bg-surface-subtle text-ink dark:border-brown-500; }
   .action-quiet { @apply text-muted; }
   .action-danger { @apply bg-danger text-white; }
   @media (hover: hover) and (pointer: fine) {
     .action-primary:enabled:hover { @apply bg-action-hover; }
-    .action-secondary:enabled:hover, .action-quiet:enabled:hover { @apply bg-cream-200 dark:bg-slate-700; }
+    .action-secondary:enabled:hover, .action-quiet:enabled:hover { @apply bg-cream-200 dark:bg-brown-700; }
     .action-danger:enabled:hover { @apply bg-danger-hover; }
   }
   /* Scoped body floor: metadata may stay 12px; lesson/story/practice prose is 16px. */
@@ -139,15 +174,15 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
-    @apply bg-cream-100 dark:bg-slate-900;
+    @apply bg-cream-100 dark:bg-brown-950;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-cream-300 dark:bg-slate-700 rounded-full;
+    @apply bg-cream-300 dark:bg-brown-600 rounded-full;
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-    @apply bg-cream-400 dark:bg-slate-600;
+    @apply bg-cream-400 dark:bg-brown-500;
   }
 
   /* Fade colors only while the theme changes, so taps and hovers respond instantly. */

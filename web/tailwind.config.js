@@ -27,18 +27,19 @@ export default {
         danger: 'rgb(var(--danger) / <alpha-value>)',
         'danger-hover': 'rgb(var(--danger-hover) / <alpha-value>)',
         // New tropical color palette inspired by HafaGPT icon
+        // Token-backed so dark mode can re-key it by role (index.css).
         coral: {
-          50: '#FEF3F1',
-          100: '#FCE7E3',
-          200: '#F9CFC7',
-          300: '#F5A598',
-          400: '#F17B6A',
-          500: '#E85D4B',  // Main coral - from icon circle
-          600: '#D84639',
-          700: '#B83730',
-          800: '#96302E',
-          900: '#7B2B2C',
-          950: '#451517',
+          50: 'rgb(var(--coral-50) / <alpha-value>)',
+          100: 'rgb(var(--coral-100) / <alpha-value>)',
+          200: 'rgb(var(--coral-200) / <alpha-value>)',
+          300: 'rgb(var(--coral-300) / <alpha-value>)',
+          400: 'rgb(var(--coral-400) / <alpha-value>)',
+          500: 'rgb(var(--coral-500) / <alpha-value>)',
+          600: 'rgb(var(--coral-600) / <alpha-value>)',
+          700: 'rgb(var(--coral-700) / <alpha-value>)',
+          800: 'rgb(var(--coral-800) / <alpha-value>)',
+          900: 'rgb(var(--coral-900) / <alpha-value>)',
+          950: 'rgb(var(--coral-950) / <alpha-value>)',
         },
         teal: {
           50: '#F0F9F9',

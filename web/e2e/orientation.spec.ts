@@ -11,7 +11,7 @@ test('system appearance stays live until a visitor makes an explicit choice', as
   await expect(page.getByRole('heading', { name: 'How can we help?', exact: true })).toBeVisible();
   await expect(page.locator('html')).toHaveClass(/dark/);
   expect(await page.evaluate(() => localStorage.getItem('theme'))).toBeNull();
-  await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute('content', '#0f172a');
+  await expect(page.locator('meta[name="theme-color"]').first()).toHaveAttribute('content', '#1C1512');
   await page.emulateMedia({ colorScheme: 'light' });
   await expect(page.locator('html')).not.toHaveClass(/dark/);
   expect(await page.evaluate(() => localStorage.getItem('theme'))).toBeNull();
@@ -20,7 +20,7 @@ test('system appearance stays live until a visitor makes an explicit choice', as
   expect(await page.evaluate(() => localStorage.getItem('theme'))).toBe('dark');
   await page.reload();
   await expect(page.locator('html')).toHaveClass(/dark/);
-  await expect(page.locator('meta[name="theme-color"]').last()).toHaveAttribute('content', '#0f172a');
+  await expect(page.locator('meta[name="theme-color"]').last()).toHaveAttribute('content', '#1C1512');
 });
 
 for (const colorScheme of ['light', 'dark'] as const) {

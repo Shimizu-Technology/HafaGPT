@@ -495,8 +495,8 @@ export function WordCatch() {
       <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Word Catch" subtitle="Catch matching Chamorro and English word pairs." icon={MousePointerClick} />
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-teal-500 dark:border-t-transparent" />
-          <p className="text-brown-600 dark:text-gray-400">Loading games...</p>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-t-transparent" />
+          <p className="text-brown-600 dark:text-brown-300">Loading games...</p>
         </div>
       </GamePage>
     );
@@ -511,10 +511,10 @@ export function WordCatch() {
         onBack={handleBack}
         trailing={(gameState === 'playing' || gameState === 'paused') ? (
           <>
-            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
+            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-brown-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
               {gameState === 'paused' ? <Play className="h-5 w-5" aria-hidden="true" /> : <Pause className="h-5 w-5" aria-hidden="true" />}
             </button>
-            <button type="button" onClick={() => { guard.requestLeave(resetGame); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700" aria-label="Change game settings">
+            <button type="button" onClick={() => { guard.requestLeave(resetGame); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-brown-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700" aria-label="Change game settings">
               <Settings2 className="h-5 w-5" aria-hidden="true" />
             </button>
           </>
@@ -526,8 +526,8 @@ export function WordCatch() {
         {gameState === 'setup' && (
           <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
             {/* Mode Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Mode</h3>
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-brown-700">
+              <h3 className="text-sm font-bold text-brown-800 dark:text-cream-100 mb-2">Choose Mode</h3>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setSettings((s) => ({
@@ -539,14 +539,14 @@ export function WordCatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                      ? 'bg-action text-white'
+                      : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                     }
                   `}
                 >
                   <Sparkles className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Common phrases</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>Common phrases</span>
                 </button>
                 <button
                   onClick={() => setSettings((s) => ({ ...s, mode: 'challenge' }))}
@@ -554,21 +554,21 @@ export function WordCatch() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                      ? 'bg-action text-white'
+                      : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                     }
                   `}
                 >
-                  <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-700 dark:text-teal-400'}`} />
+                  <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-700'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Full dictionary</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>Full dictionary</span>
                 </button>
               </div>
             </div>
 
             {/* Category Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Topic</h3>
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-brown-700">
+              <h3 className="text-sm font-bold text-brown-800 dark:text-cream-100 mb-2">Choose Topic</h3>
               <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a topic">
                 {availableCategories.map((catId) => (
                   <button
@@ -578,8 +578,8 @@ export function WordCatch() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                        ? 'bg-action text-white'
+                        : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                       }
                     `}
                   >
@@ -593,9 +593,9 @@ export function WordCatch() {
             </div>
 
             {/* How to Play */}
-            <details className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <summary className="cursor-pointer text-sm font-bold text-brown-800 dark:text-white">How to play</summary>
-              <ul className="mt-3 space-y-1.5 text-xs text-brown-600 dark:text-gray-400">
+            <details className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+              <summary className="cursor-pointer text-sm font-bold text-brown-800 dark:text-cream-100">How to play</summary>
+              <ul className="mt-3 space-y-1.5 text-xs text-brown-600 dark:text-brown-300">
                 <li className="flex items-center gap-2">
                   <Check className="h-4 w-4 flex-none text-emerald-700 dark:text-emerald-400" aria-hidden="true" /> Tap pairs with matching meanings
                 </li>
@@ -606,7 +606,7 @@ export function WordCatch() {
                   <Zap className="h-4 w-4 flex-none text-amber-600 dark:text-amber-400" aria-hidden="true" /> Build combos for bonus points
                 </li>
                 <li className="flex items-center gap-2">
-                  <Timer className="h-4 w-4 flex-none text-coral-700 dark:text-teal-400" aria-hidden="true" /> 60 seconds - catch as many as you can!
+                  <Timer className="h-4 w-4 flex-none text-coral-700" aria-hidden="true" /> 60 seconds - catch as many as you can!
                 </li>
               </ul>
             </details>
@@ -616,7 +616,7 @@ export function WordCatch() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughWords}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -639,7 +639,7 @@ export function WordCatch() {
         {(gameState === 'playing' || gameState === 'paused') && (
           <div className="relative">
             {/* Stats Bar */}
-            <div className="flex items-center justify-between mb-3 sm:mb-4 bg-white dark:bg-slate-800 rounded-xl p-3 border border-cream-200 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 bg-white dark:bg-brown-900 rounded-xl p-3 border border-cream-200 dark:border-brown-700">
               <div className="flex items-center gap-2">
                 {/* Lives */}
                 <div role="img" aria-label={`${lives} lives remaining`} className="flex items-center gap-0.5">
@@ -647,7 +647,7 @@ export function WordCatch() {
                     <Heart
                       key={i}
                       className={`w-5 h-5 sm:w-6 sm:h-6 ${
-                        i < lives ? 'text-red-500 fill-red-500' : 'text-brown-200 dark:text-slate-600'
+                        i < lives ? 'text-red-500 fill-red-500' : 'text-brown-200 dark:text-brown-600'
                       }`}
                     />
                   ))}
@@ -655,18 +655,18 @@ export function WordCatch() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-coral-700 dark:text-teal-400">{score}</p>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-lg sm:text-xl font-bold text-coral-700">{score}</p>
+                  <p className="text-xs text-brown-500 dark:text-brown-300">Score</p>
                 </div>
                 <div className="text-center">
-                  <p className="inline-flex items-center gap-1 text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{combo}<Flame className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" /></p>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">Combo</p>
+                  <p className="inline-flex items-center gap-1 text-lg sm:text-xl font-bold text-brown-800 dark:text-cream-100">{combo}<Flame className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" /></p>
+                  <p className="text-xs text-brown-500 dark:text-brown-300">Combo</p>
                 </div>
                 <div className="text-center">
-                  <p className={`text-lg sm:text-xl font-bold ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-brown-800 dark:text-white'}`}>
+                  <p className={`text-lg sm:text-xl font-bold ${timeLeft <= 10 ? 'text-red-500 animate-pulse' : 'text-brown-800 dark:text-cream-100'}`}>
                     {pace.challenge ? `${timeLeft}s` : 'No timer'}
                   </p>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">Time</p>
+                  <p className="text-xs text-brown-500 dark:text-brown-300">Time</p>
                 </div>
               </div>
             </div>
@@ -674,7 +674,7 @@ export function WordCatch() {
             {/* Game Area */}
             <div
               ref={gameAreaRef}
-              className="relative bg-cream-100 dark:bg-slate-800 rounded-2xl border border-cream-300 dark:border-slate-600 h-[55vh] sm:h-[60vh] overflow-hidden"
+              className="relative bg-cream-100 dark:bg-brown-900 rounded-2xl border border-cream-300 dark:border-brown-600 h-[55vh] sm:h-[60vh] overflow-hidden"
             >
               {/* Flying Pairs */}
               {(pace.challenge ? flyingPairs : flyingPairs.slice(0, 1)).map(pair => (
@@ -692,7 +692,7 @@ export function WordCatch() {
                       ? pair.isCorrect
                         ? 'bg-emerald-700 text-white'
                         : 'bg-red-700 text-white'
-                      : 'bg-white dark:bg-slate-800 text-brown-900 dark:text-white border-2 border-teal-400 dark:border-teal-600 '
+                      : 'bg-white dark:bg-brown-900 text-brown-900 dark:text-cream-100 border-2 border-teal-400 dark:border-teal-600 '
                     }
                   `}
                   style={{
@@ -717,7 +717,7 @@ export function WordCatch() {
                     <p className="text-2xl font-bold text-white mb-4">Paused</p>
                     <button
                       onClick={togglePause}
-                      className="px-6 py-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800 transition-colors"
+                      className="px-6 py-3 rounded-xl bg-action text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover transition-colors"
                     >
                       Resume
                     </button>
@@ -735,9 +735,9 @@ export function WordCatch() {
                 </div>
               )}
             </div>
-            {!pace.challenge && <div className="mt-4 space-y-3 text-brown-900 dark:text-white">
+            {!pace.challenge && <div className="mt-4 space-y-3 text-brown-900 dark:text-cream-100">
               <p>Tap the pair if the meaning matches, or choose Not a match.</p>
-              {roundFeedback ? <div role="status"><p>{roundFeedback}</p><button type="button" onClick={() => { setRoundFeedback(null); simulationRef.current.clear(); setFlyingPairs([]); }} disabled={gameState === 'paused'} className="mt-3 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white dark:bg-teal-700">Next pair</button></div> : <button type="button" disabled={gameState === 'paused' || !flyingPairs.length} onClick={() => {
+              {roundFeedback ? <div role="status"><p>{roundFeedback}</p><button type="button" onClick={() => { setRoundFeedback(null); simulationRef.current.clear(); setFlyingPairs([]); }} disabled={gameState === 'paused'} className="mt-3 min-h-12 w-full rounded-xl bg-action px-4 font-bold text-white">Next pair</button></div> : <button type="button" disabled={gameState === 'paused' || !flyingPairs.length} onClick={() => {
                 const pair = flyingPairs[0];
                 if (!pair) return;
                 caughtIdsRef.current.add(pair.id);
@@ -745,8 +745,8 @@ export function WordCatch() {
                 setRoundFeedback(pair.isCorrect ? `These do match: ${pair.chamorro} means ${pair.english}.` : 'Good choice. These meanings don’t match.');
                 if (pair.isCorrect) { comboRef.current = 0; setCombo(0); setMissed(count => count + 1); }
                 setFlyingPairs(pairs => pairs.map(item => ({ ...item, caught: true })));
-              }} className="min-h-12 w-full rounded-xl border border-brown-400 px-4 font-semibold dark:border-slate-500">Not a match</button>}
-              <button type="button" onClick={() => setGameState('complete')} className="min-h-12 w-full rounded-xl border border-brown-400 px-4 font-semibold dark:border-slate-500">Finish round</button>
+              }} className="min-h-12 w-full rounded-xl border border-brown-400 px-4 font-semibold dark:border-brown-500">Not a match</button>}
+              <button type="button" onClick={() => setGameState('complete')} className="min-h-12 w-full rounded-xl border border-brown-400 px-4 font-semibold dark:border-brown-500">Finish round</button>
             </div>}
           </div>
         )}
@@ -762,10 +762,10 @@ export function WordCatch() {
             </div>
 
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-1">
+              <h2 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-cream-100 mb-1">
                 {timeLeft === 0 ? "Time's Up!" : 'Game Over!'}
               </h2>
-              <p className="text-brown-600 dark:text-gray-400">
+              <p className="text-brown-600 dark:text-brown-300">
                 You caught {caught} correct {caught === 1 ? 'pair' : 'pairs'}!
               </p>
             </div>
@@ -773,24 +773,24 @@ export function WordCatch() {
             {/* Stars */}
             <div className="flex justify-center gap-2" role="img" aria-label={`${getStars()} out of 3 stars`}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <Star key={i} aria-hidden="true" className={`h-8 w-8 sm:h-10 sm:w-10 ${i < getStars() ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-slate-600"}`} />
+                <Star key={i} aria-hidden="true" className={`h-8 w-8 sm:h-10 sm:w-10 ${i < getStars() ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-brown-600"}`} />
               ))}
             </div>
 
             {/* Stats */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-4 border border-cream-200 dark:border-brown-700">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
-                  <p className="text-2xl sm:text-3xl font-bold text-coral-700 dark:text-teal-400">{score}</p>
-                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-coral-700">{score}</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-brown-300">Score</p>
                 </div>
                 <div>
-                  <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white">{caught}</p>
-                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Caught</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-cream-100">{caught}</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-brown-300">Caught</p>
                 </div>
                 <div>
-                  <p className="inline-flex items-center gap-1 text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white">{maxCombo}<Flame className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" /></p>
-                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Max Combo</p>
+                  <p className="inline-flex items-center gap-1 text-2xl sm:text-3xl font-bold text-brown-800 dark:text-cream-100">{maxCombo}<Flame className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-hidden="true" /></p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-brown-300">Max Combo</p>
                 </div>
               </div>
             </div>
@@ -800,7 +800,7 @@ export function WordCatch() {
               <button
                 onClick={playAgain}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold transition-colors duration-200 flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-action text-white font-bold transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 Play Again
@@ -808,7 +808,7 @@ export function WordCatch() {
               <button
                 onClick={resetGame}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 Settings
@@ -817,7 +817,7 @@ export function WordCatch() {
 
             <Link
               to={gameReturn.to} replace
-              className="inline-block text-coral-700 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:text-teal-300 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-sm"
+              className="inline-block text-coral-700 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-sm"
             >
               {gameReturn.label}
             </Link>

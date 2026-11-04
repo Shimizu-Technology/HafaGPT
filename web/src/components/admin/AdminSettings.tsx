@@ -87,8 +87,8 @@ export function AdminSettings() {
       <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
-            <Loader2 className="w-8 h-8 animate-spin text-coral-500 dark:text-ocean-400 mx-auto mb-4" />
-            <p className="text-brown-600 dark:text-gray-400">Loading settings...</p>
+            <Loader2 className="w-8 h-8 animate-spin text-coral-500 mx-auto mb-4" />
+            <p className="text-brown-600 dark:text-brown-300">Loading settings...</p>
           </div>
         </div>
       </AdminLayout>
@@ -101,8 +101,8 @@ export function AdminSettings() {
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center">
             <AlertCircle className="w-12 h-12 text-red-500 mx-auto mb-4" />
-            <h2 className="text-xl font-bold text-brown-800 dark:text-white mb-2">Error loading settings</h2>
-            <p className="text-brown-600 dark:text-gray-400">{error.message}</p>
+            <h2 className="text-xl font-bold text-brown-800 dark:text-cream-100 mb-2">Error loading settings</h2>
+            <p className="text-brown-600 dark:text-brown-300">{error.message}</p>
           </div>
         </div>
       </AdminLayout>
@@ -115,11 +115,11 @@ export function AdminSettings() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white flex items-center gap-3">
-              <Settings className="w-8 h-8 text-coral-500 dark:text-ocean-400" />
+            <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-cream-100 flex items-center gap-3">
+              <Settings className="w-8 h-8 text-coral-500" />
               Settings
             </h1>
-            <p className="text-brown-600 dark:text-gray-400 mt-1">
+            <p className="text-brown-600 dark:text-brown-300 mt-1">
               Configure site-wide settings
             </p>
           </div>
@@ -130,7 +130,7 @@ export function AdminSettings() {
             className={`px-5 py-2.5 rounded-xl font-medium flex items-center gap-2 transition-colors ${
               hasChanges && !themeValidationError
                 ? 'bg-action text-on-action [@media(hover:hover)]:hover:bg-action-hover'
-                : 'bg-cream-200 dark:bg-slate-700 text-brown-600 dark:text-slate-300 cursor-not-allowed'
+                : 'bg-cream-200 dark:bg-brown-700 text-brown-600 dark:text-brown-100 cursor-not-allowed'
             }`}
           >
             {updateSettings.isPending ? (
@@ -153,25 +153,25 @@ export function AdminSettings() {
         )}
         
         {/* Promo Settings Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-cream-200 dark:border-slate-700  overflow-hidden">
-          <div className="px-6 py-4 border-b border-cream-200 dark:border-slate-700 bg-cream-50 dark:bg-slate-800">
-            <h2 className="text-lg font-bold text-brown-800 dark:text-white flex items-center gap-2">
-              <Gift className="w-5 h-5 text-coral-700 dark:text-teal-300" />
+        <div className="bg-white dark:bg-brown-900 rounded-2xl border border-cream-200 dark:border-brown-700  overflow-hidden">
+          <div className="px-6 py-4 border-b border-cream-200 dark:border-brown-700 bg-cream-50 dark:bg-brown-900">
+            <h2 className="text-lg font-bold text-brown-800 dark:text-cream-100 flex items-center gap-2">
+              <Gift className="w-5 h-5 text-coral-700" />
               Holiday promo settings
             </h2>
-            <p className="text-sm text-brown-600 dark:text-slate-300 mt-1">
+            <p className="text-sm text-brown-600 dark:text-brown-100 mt-1">
               Control the holiday promotional period for unlimited access
             </p>
           </div>
           
           <div className="p-6 space-y-6">
             {/* Promo Enabled Toggle */}
-            <div className="flex items-center justify-between p-4 bg-cream-50 dark:bg-slate-700/50 rounded-xl">
+            <div className="flex items-center justify-between p-4 bg-cream-50 dark:bg-brown-700/50 rounded-xl">
               <div>
-                <label htmlFor="promo-enabled" className="font-medium text-brown-800 dark:text-white">
+                <label htmlFor="promo-enabled" className="font-medium text-brown-800 dark:text-cream-100">
                   Enable promotional period
                 </label>
-                <p className="text-sm text-brown-600 dark:text-slate-300 mt-0.5">
+                <p className="text-sm text-brown-600 dark:text-brown-100 mt-0.5">
                   When enabled, all users get unlimited access
                 </p>
               </div>
@@ -179,8 +179,8 @@ export function AdminSettings() {
                 id="promo-enabled"
                 type="button"
                 onClick={() => setPromoEnabled(!promoEnabled)}
-                className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-coral-700 focus:ring-offset-2 dark:focus:ring-teal-300 dark:focus:ring-offset-slate-800 ${
-                  promoEnabled ? 'bg-action' : 'bg-gray-300 dark:bg-slate-600'
+                className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-coral-700 focus:ring-offset-2 dark:focus:ring-offset-brown-950 ${
+                  promoEnabled ? 'bg-action' : 'bg-gray-300 dark:bg-brown-600'
                 }`}
                 role="switch"
                 aria-checked={promoEnabled}
@@ -195,7 +195,7 @@ export function AdminSettings() {
             
             {/* Promo End Date */}
             <div>
-              <label htmlFor="promo-end-date" className="block font-medium text-brown-800 dark:text-white mb-2">
+              <label htmlFor="promo-end-date" className="block font-medium text-brown-800 dark:text-cream-100 mb-2">
                 <span className="flex items-center gap-2">
                   <Calendar className="w-4 h-4" />
                   Promo end date
@@ -206,16 +206,16 @@ export function AdminSettings() {
                 type="date"
                 value={promoEndDate}
                 onChange={(e) => setPromoEndDate(e.target.value)}
-                className="w-full sm:w-64 px-4 py-2.5 bg-cream-50 dark:bg-slate-900 border border-cream-300 dark:border-slate-600 rounded-xl text-brown-800 dark:text-white focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 focus:border-transparent"
+                className="w-full sm:w-64 px-4 py-2.5 bg-cream-50 dark:bg-brown-950 border border-cream-300 dark:border-brown-600 rounded-xl text-brown-800 dark:text-cream-100 focus:ring-2 focus:ring-coral-500 focus:border-transparent"
               />
-              <p className="text-sm text-brown-600 dark:text-slate-300 mt-1.5">
+              <p className="text-sm text-brown-600 dark:text-brown-100 mt-1.5">
                 Promo will end at midnight Guam time (ChST) on this date
               </p>
             </div>
             
             {/* Promo Title */}
             <div>
-              <label htmlFor="promo-title" className="block font-medium text-brown-800 dark:text-white mb-2">
+              <label htmlFor="promo-title" className="block font-medium text-brown-800 dark:text-cream-100 mb-2">
                 Banner Title
               </label>
               <input
@@ -224,14 +224,14 @@ export function AdminSettings() {
                 value={promoTitle}
                 onChange={(e) => setPromoTitle(e.target.value)}
                 placeholder="Felis Påsgua! Holiday Gift: Unlimited Access!"
-                className="w-full px-4 py-2.5 bg-cream-50 dark:bg-slate-900 border border-cream-300 dark:border-slate-600 rounded-xl text-brown-800 dark:text-white placeholder:text-brown-600 dark:placeholder:text-slate-300 focus:ring-2 focus:ring-coral-500 dark:focus:ring-ocean-500 focus:border-transparent"
+                className="w-full px-4 py-2.5 bg-cream-50 dark:bg-brown-950 border border-cream-300 dark:border-brown-600 rounded-xl text-brown-800 dark:text-cream-100 placeholder:text-brown-600 dark:placeholder:text-brown-100 focus:ring-2 focus:ring-coral-500 focus:border-transparent"
               />
             </div>
             
             {/* Preview - Theme-aware */}
             {promoEnabled && (
               <div className="mt-4">
-                <h3 className="block text-sm font-medium text-brown-600 dark:text-gray-400 mb-2">
+                <h3 className="block text-sm font-medium text-brown-600 dark:text-brown-300 mb-2">
                   Banner content preview ({theme === 'default' ? 'Default' : theme === 'christmas' ? 'Christmas' : theme === 'newyear' ? 'New Year' : 'Chamorro'} theme)
                 </h3>
                 <div className="relative overflow-hidden rounded-xl bg-teal-800 p-4 text-center text-white dark:bg-teal-900">
@@ -268,24 +268,24 @@ export function AdminSettings() {
         </div>
         
         {/* Theme Settings Section */}
-        <div className="bg-white dark:bg-slate-800 rounded-2xl border border-cream-200 dark:border-slate-700  overflow-hidden">
-          <div className="px-6 py-4 border-b border-cream-200 dark:border-slate-700">
-            <h2 className="text-lg font-bold text-brown-800 dark:text-white flex items-center gap-2">
+        <div className="bg-white dark:bg-brown-900 rounded-2xl border border-cream-200 dark:border-brown-700  overflow-hidden">
+          <div className="px-6 py-4 border-b border-cream-200 dark:border-brown-700">
+            <h2 className="text-lg font-bold text-brown-800 dark:text-cream-100 flex items-center gap-2">
               <Palette className="w-5 h-5 text-teal-500" />
               Theme Settings
             </h2>
-            <p className="text-sm text-brown-600 dark:text-slate-300 mt-1">
+            <p className="text-sm text-brown-600 dark:text-brown-100 mt-1">
               Choose the app theme and independently bound seasonal effects
             </p>
           </div>
           
           <div className="p-6 space-y-6">
-            <div className="flex flex-col gap-4 rounded-xl bg-cream-50 p-4 dark:bg-slate-700/50 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-col gap-4 rounded-xl bg-cream-50 p-4 dark:bg-brown-700/50 sm:flex-row sm:items-center sm:justify-between">
               <div>
-                <label htmlFor="seasonal-theme-toggle" className="font-medium text-brown-800 dark:text-white">
+                <label htmlFor="seasonal-theme-toggle" className="font-medium text-brown-800 dark:text-cream-100">
                   Enable seasonal effects
                 </label>
-                <p className="mt-0.5 text-sm text-brown-600 dark:text-slate-300">
+                <p className="mt-0.5 text-sm text-brown-600 dark:text-brown-100">
                   Required for Christmas or New Year visuals. Promo access is controlled separately.
                 </p>
               </div>
@@ -293,8 +293,8 @@ export function AdminSettings() {
                 id="seasonal-theme-toggle"
                 type="button"
                 onClick={() => setThemeEnabled(!themeEnabled)}
-                className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-slate-800 ${
-                  themeEnabled ? 'bg-action' : 'bg-gray-300 dark:bg-slate-600'
+                className={`relative inline-flex h-11 w-16 flex-shrink-0 items-center rounded-full transition-colors focus:outline-none focus:ring-2 focus:ring-teal-500 focus:ring-offset-2 dark:focus:ring-offset-brown-950 ${
+                  themeEnabled ? 'bg-action' : 'bg-gray-300 dark:bg-brown-600'
                 }`}
                 role="switch"
                 aria-checked={themeEnabled}
@@ -308,7 +308,7 @@ export function AdminSettings() {
             </div>
 
             <div>
-              <label htmlFor="seasonal-theme-end-date" className="mb-2 block font-medium text-brown-800 dark:text-white">
+              <label htmlFor="seasonal-theme-end-date" className="mb-2 block font-medium text-brown-800 dark:text-cream-100">
                 <span className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
                   Seasonal theme end date
@@ -319,11 +319,11 @@ export function AdminSettings() {
                 type="date"
                 value={themeEndDate}
                 onChange={(event) => setThemeEndDate(event.target.value)}
-                className="min-h-11 w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-2.5 text-brown-800 focus:border-transparent focus:ring-2 focus:ring-teal-500 dark:border-slate-600 dark:bg-slate-900 dark:text-white sm:w-64"
+                className="min-h-11 w-full rounded-xl border border-cream-300 bg-cream-50 px-4 py-2.5 text-brown-800 focus:border-transparent focus:ring-2 focus:ring-teal-500 dark:border-brown-600 dark:bg-brown-950 dark:text-cream-100 sm:w-64"
                 aria-describedby={themeValidationError ? 'seasonal-theme-error' : 'seasonal-theme-help'}
                 aria-invalid={Boolean(themeValidationError)}
               />
-              <p id="seasonal-theme-help" className="mt-1.5 text-sm text-brown-600 dark:text-slate-300">
+              <p id="seasonal-theme-help" className="mt-1.5 text-sm text-brown-600 dark:text-brown-100">
                 Seasonal visuals turn off automatically after this date in Guam time.
               </p>
               {themeValidationError && (
@@ -348,20 +348,20 @@ export function AdminSettings() {
                       setThemeEnabled(false);
                     }
                   }}
-                  className={`min-h-11 p-4 rounded-xl border-2 transition-colors bg-white dark:bg-slate-700 ${
+                  className={`min-h-11 p-4 rounded-xl border-2 transition-colors bg-white dark:bg-brown-700 ${
                     theme === t.id
-                      ? 'border-coral-500 dark:border-ocean-400 ring-2 ring-coral-500/20 dark:ring-ocean-400/20'
-                      : 'border-cream-200 dark:border-slate-600 [@media(hover:hover)]:hover:border-cream-300 dark:[@media(hover:hover)]:hover:border-slate-500'
+                      ? 'border-coral-500 ring-2 ring-coral-500/20'
+                      : 'border-cream-200 dark:border-brown-600 [@media(hover:hover)]:hover:border-cream-300 dark:[@media(hover:hover)]:hover:border-brown-500'
                   }`}
                 >
-                  <div className="flex items-center justify-center gap-1.5 bg-cream-100 dark:bg-slate-800 rounded-lg py-1 px-2">
+                  <div className="flex items-center justify-center gap-1.5 bg-cream-100 dark:bg-brown-900 rounded-lg py-1 px-2">
                     <span>{t.emoji}</span>
-                    <span className="text-sm font-semibold text-brown-800 dark:text-gray-100">{t.label}</span>
+                    <span className="text-sm font-semibold text-brown-800 dark:text-cream-100">{t.label}</span>
                   </div>
                 </button>
               ))}
             </div>
-            <p className="text-xs text-brown-600 dark:text-slate-300 mt-3 text-center">
+            <p className="text-xs text-brown-600 dark:text-brown-100 mt-3 text-center">
               Theme affects snowfall, logos, and promo banner styling
             </p>
           </div>

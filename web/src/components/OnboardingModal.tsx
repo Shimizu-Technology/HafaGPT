@@ -118,26 +118,26 @@ function ChoiceCard<T extends string | number>({
       type="button"
       aria-pressed={selected}
       onClick={() => onSelect(id)}
-      className={`flex min-h-16 w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:focus-visible:ring-ocean-400 dark:focus-visible:ring-offset-slate-900 ${
+      className={`flex min-h-16 w-full items-center gap-3 rounded-2xl border-2 p-3 text-left transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:focus-visible:ring-offset-brown-950 ${
         selected
-          ? 'border-coral-500 bg-coral-50 dark:border-ocean-400 dark:bg-ocean-900/30'
-          : 'border-cream-200 bg-white hover:border-coral-300 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-ocean-600'
+          ? 'border-coral-500 bg-coral-50'
+          : 'border-cream-200 bg-white hover:border-coral-300 dark:border-brown-700 dark:bg-brown-900'
       }`}
     >
       <span className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl ${
         selected
-          ? 'bg-coral-100 text-coral-700 dark:bg-ocean-800 dark:text-ocean-200'
-          : 'bg-cream-100 text-brown-600 dark:bg-slate-700 dark:text-gray-300'
+          ? 'bg-coral-100 text-coral-700'
+          : 'bg-cream-100 text-brown-600 dark:bg-brown-700 dark:text-brown-100'
       }`}>
         <Icon className="h-5 w-5" aria-hidden="true" />
       </span>
       <span className="min-w-0 flex-1">
-        <span className="block font-semibold text-brown-900 dark:text-white">{title}</span>
-        <span className="mt-0.5 block text-sm leading-snug text-brown-600 dark:text-gray-300">
+        <span className="block font-semibold text-brown-900 dark:text-cream-100">{title}</span>
+        <span className="mt-0.5 block text-sm leading-snug text-brown-600 dark:text-brown-100">
           {description}
         </span>
       </span>
-      {selected && <Check className="h-5 w-5 flex-none text-coral-700 dark:text-ocean-300" aria-hidden="true" />}
+      {selected && <Check className="h-5 w-5 flex-none text-coral-700" aria-hidden="true" />}
     </button>
   );
 }
@@ -280,36 +280,36 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
         aria-labelledby="onboarding-title"
         aria-describedby="onboarding-subtitle"
         onKeyDown={keepFocusInDialog}
-        className="flex max-h-[94dvh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-cream-200 bg-cream-50 shadow-2xl dark:border-slate-700 dark:bg-slate-900"
+        className="flex max-h-[94dvh] w-full max-w-xl flex-col overflow-hidden rounded-3xl border border-cream-200 bg-cream-50 shadow-2xl dark:border-brown-700 dark:bg-brown-950"
       >
-        <header className="border-b border-cream-200 bg-white px-5 py-5 dark:border-slate-700 dark:bg-slate-800 sm:px-7">
+        <header className="border-b border-cream-200 bg-white px-5 py-5 dark:border-brown-700 dark:bg-brown-900 sm:px-7">
           <div className="mb-4 flex flex-wrap items-start justify-between gap-2">
             <div className="flex items-center gap-3">
-              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-ocean-900 dark:text-ocean-200">
+              <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-coral-100 text-coral-700">
                 <Sparkles className="h-5 w-5" aria-hidden="true" />
               </span>
               <div>
-                <p className="text-sm font-semibold text-coral-700 dark:text-ocean-300">Make HåfaGPT yours</p>
-                <p className="text-xs text-brown-500 dark:text-gray-400">No name, age, or school information needed</p>
+                <p className="text-sm font-semibold text-coral-700">Make HåfaGPT yours</p>
+                <p className="text-xs text-brown-500 dark:text-brown-300">No name, age, or school information needed</p>
               </div>
             </div>
             <div className="flex flex-none items-center gap-2">
-              <span className="text-sm font-medium text-brown-500 dark:text-gray-400">{step + 1} of {STEP_COPY.length}</span>
-              <button type="button" onClick={handleSkip} aria-label="Close setup" className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-gray-300"><X className="h-5 w-5" aria-hidden="true" /></button>
+              <span className="text-sm font-medium text-brown-500 dark:text-brown-300">{step + 1} of {STEP_COPY.length}</span>
+              <button type="button" onClick={handleSkip} aria-label="Close setup" className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-brown-100"><X className="h-5 w-5" aria-hidden="true" /></button>
             </div>
           </div>
           <div className="flex gap-1.5" aria-hidden="true">
             {STEP_COPY.map((_, index) => (
               <span
                 key={index}
-                className={`h-1.5 flex-1 rounded-full ${index <= step ? 'bg-coral-500 dark:bg-ocean-400' : 'bg-cream-200 dark:bg-slate-700'}`}
+                className={`h-1.5 flex-1 rounded-full ${index <= step ? 'bg-coral-500' : 'bg-cream-200 dark:bg-brown-700'}`}
               />
             ))}
           </div>
-          <h2 id="onboarding-title" className="mt-5 text-xl font-bold text-brown-950 dark:text-white sm:text-2xl">
+          <h2 id="onboarding-title" className="mt-5 text-xl font-bold text-brown-950 dark:text-cream-100 sm:text-2xl">
             {copy.title}
           </h2>
-          <p id="onboarding-subtitle" className="mt-1 text-sm text-brown-600 dark:text-gray-300">
+          <p id="onboarding-subtitle" className="mt-1 text-sm text-brown-600 dark:text-brown-100">
             {copy.subtitle}
           </p>
         </header>
@@ -339,14 +339,14 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
           )}
         </div>
 
-        <footer className="flex min-h-18 flex-wrap items-center gap-2 border-t border-cream-200 bg-white px-4 py-3 dark:border-slate-700 dark:bg-slate-800 sm:px-6">
+        <footer className="flex min-h-18 flex-wrap items-center gap-2 border-t border-cream-200 bg-white px-4 py-3 dark:border-brown-700 dark:bg-brown-900 sm:px-6">
           {step > 0 ? (
             <button
               type="button"
               onClick={() => setStep((current) => current - 1)}
               disabled={isSaving}
               aria-label="Go back"
-              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-gray-300 dark:hover:bg-slate-700"
+              className="flex min-h-11 min-w-11 items-center justify-center rounded-xl text-brown-600 hover:bg-cream-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-brown-100 dark:hover:bg-brown-700"
             >
               <ArrowLeft className="h-5 w-5" aria-hidden="true" />
             </button>
@@ -354,7 +354,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
           <button
             type="button"
             onClick={handleSkip}
-            className="min-h-11 px-2 text-sm font-medium text-brown-600 hover:text-brown-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-gray-300 dark:hover:text-white"
+            className="min-h-11 px-2 text-sm font-medium text-brown-600 hover:text-brown-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 disabled:opacity-50 dark:text-brown-100 dark:hover:text-cream-100"
           >
             Skip for now
           </button>
@@ -362,7 +362,7 @@ export function OnboardingModal({ isOpen, onClose, accountKey }: OnboardingModal
             type="button"
             onClick={handleContinue}
             disabled={isSaving}
-            className="ml-auto flex min-h-11 items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 py-2.5 font-semibold text-white hover:bg-coral-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:bg-ocean-700 dark:hover:bg-ocean-800 dark:focus-visible:ring-ocean-400 dark:focus-visible:ring-offset-slate-900"
+            className="ml-auto flex min-h-11 items-center justify-center gap-2 rounded-xl bg-action px-4 py-2.5 font-semibold text-white hover:bg-action-hover focus:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 disabled:opacity-50 dark:focus-visible:ring-offset-brown-950"
           >
             {isSaving ? 'Saving…' : step === STEP_COPY.length - 1 ? 'Start learning' : 'Continue'}
             {!isSaving && <ArrowRight className="h-4 w-4" aria-hidden="true" />}

@@ -417,8 +417,8 @@ export function FallingWords() {
       <GamePage guard={guard} startStatus={startStatus} stage={gameState}>
         <GamePageHeader title="Falling Words" subtitle={pace.challenge ? "Choose the translation before the word reaches the bottom." : "Choose a meaning at your own pace."} icon={ArrowDown} />
         <div className="mx-auto max-w-2xl px-4 py-16 text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-teal-500 dark:border-t-transparent" />
-          <p className="text-brown-600 dark:text-gray-400">Loading games...</p>
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-coral-600 border-t-transparent dark:border-t-transparent" />
+          <p className="text-brown-600 dark:text-brown-300">Loading games...</p>
         </div>
       </GamePage>
     );
@@ -433,10 +433,10 @@ export function FallingWords() {
         onBack={handleBack}
         trailing={(gameState === 'playing' || gameState === 'paused') ? (
           <>
-            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
+            <button type="button" onClick={togglePause} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-brown-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700" aria-label={gameState === 'paused' ? 'Resume game' : 'Pause game'}>
               {gameState === 'paused' ? <Play className="h-5 w-5" aria-hidden="true" /> : <Pause className="h-5 w-5" aria-hidden="true" />}
             </button>
-            <button type="button" onClick={() => { guard.requestLeave(resetGame); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-gray-300 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-700" aria-label="Change game settings">
+            <button type="button" onClick={() => { guard.requestLeave(resetGame); }} className="flex h-11 w-11 items-center justify-center rounded-xl text-brown-600 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:text-brown-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-700" aria-label="Change game settings">
               <Settings2 className="h-5 w-5" aria-hidden="true" />
             </button>
           </>
@@ -448,8 +448,8 @@ export function FallingWords() {
         {gameState === 'setup' && (
           <div className="max-w-2xl mx-auto space-y-3 sm:space-y-4">
             {/* Mode Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Mode</h3>
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-brown-700">
+              <h3 className="text-sm font-bold text-brown-800 dark:text-cream-100 mb-2">Choose Mode</h3>
               <div className="grid grid-cols-2 gap-2">
                 <button
                   onClick={() => setSettings((s) => ({
@@ -461,14 +461,14 @@ export function FallingWords() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'beginner'
-                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                      ? 'bg-action text-white'
+                      : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                     }
                   `}
                 >
                   <Sparkles className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'beginner' ? 'text-white' : 'text-amber-500'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Beginner</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Common phrases</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'beginner' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>Common phrases</span>
                 </button>
                 <button
                   onClick={() => setSettings((s) => ({ ...s, mode: 'challenge' }))}
@@ -476,21 +476,21 @@ export function FallingWords() {
                   className={`
                     p-2 sm:p-3 rounded-xl text-center transition-colors duration-200
                     ${settings.mode === 'challenge'
-                      ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                      : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                      ? 'bg-action text-white'
+                      : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                     }
                   `}
                 >
-                  <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-700 dark:text-teal-400'}`} />
+                  <BookOpen className={`w-5 h-5 mx-auto mb-1 ${settings.mode === 'challenge' ? 'text-white' : 'text-coral-700'}`} />
                   <span className="text-xs sm:text-sm font-bold block">Challenge</span>
-                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-gray-300'}`}>Full dictionary</span>
+                  <span className={`text-xs sm:text-xs ${settings.mode === 'challenge' ? 'text-white' : 'text-brown-500 dark:text-brown-100'}`}>Full dictionary</span>
                 </button>
               </div>
             </div>
 
             {/* Category Selection */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-slate-700">
-              <h3 className="text-sm font-bold text-brown-800 dark:text-white mb-2">Choose Topic</h3>
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-3 sm:p-4 border border-cream-200 dark:border-brown-700">
+              <h3 className="text-sm font-bold text-brown-800 dark:text-cream-100 mb-2">Choose Topic</h3>
               <div className="flex gap-2 overflow-x-auto pb-1" aria-label="Choose a topic">
                 {availableCategories.map((catId) => (
                   <button
@@ -500,8 +500,8 @@ export function FallingWords() {
                     className={`
                       min-w-20 flex-none p-2 rounded-xl text-center transition-colors duration-200
                       ${settings.category === catId
-                        ? 'bg-coral-700 dark:bg-teal-700 text-white'
-                        : 'bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600'
+                        ? 'bg-action text-white'
+                        : 'bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600'
                       }
                     `}
                   >
@@ -515,11 +515,11 @@ export function FallingWords() {
             </div>
 
             {/* How to Play */}
-            <details className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800">
-              <summary className="cursor-pointer text-sm font-bold text-brown-800 dark:text-white">How to play</summary>
-              <ul className="mt-3 space-y-1.5 text-xs text-brown-600 dark:text-gray-400">
+            <details className="rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900">
+              <summary className="cursor-pointer text-sm font-bold text-brown-800 dark:text-cream-100">How to play</summary>
+              <ul className="mt-3 space-y-1.5 text-xs text-brown-600 dark:text-brown-300">
                 <li className="flex items-center gap-2">
-                  <ArrowDown className="h-4 w-4 flex-none text-coral-700 dark:text-teal-400" aria-hidden="true" /> Words fall from the top
+                  <ArrowDown className="h-4 w-4 flex-none text-coral-700" aria-hidden="true" /> Words fall from the top
                 </li>
                 <li className="flex items-center gap-2">
                   <Check className="h-4 w-4 flex-none text-emerald-700 dark:text-emerald-400" aria-hidden="true" /> Tap the correct English translation
@@ -538,7 +538,7 @@ export function FallingWords() {
             <button
               onClick={startGame}
               disabled={isLoading || !hasEnoughWords}
-              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-coral-700 px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-teal-700 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800"
+              className="flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-action px-4 font-bold text-white transition-colors [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? (
                 <>
@@ -561,7 +561,7 @@ export function FallingWords() {
         {(gameState === 'playing' || gameState === 'paused') && (
           <div className="relative">
             {/* Stats Bar */}
-            <div className="flex items-center justify-between mb-3 sm:mb-4 bg-white dark:bg-slate-800 rounded-xl p-3 border border-cream-200 dark:border-slate-700">
+            <div className="flex items-center justify-between mb-3 sm:mb-4 bg-white dark:bg-brown-900 rounded-xl p-3 border border-cream-200 dark:border-brown-700">
               <div className="flex items-center gap-2">
                 {/* Lives */}
                 <div className="flex items-center gap-0.5">
@@ -569,7 +569,7 @@ export function FallingWords() {
                     <Heart
                       key={i}
                       className={`w-5 h-5 sm:w-6 sm:h-6 ${
-                        i < lives ? 'text-red-500 fill-red-500' : 'text-brown-200 dark:text-slate-600'
+                        i < lives ? 'text-red-500 fill-red-500' : 'text-brown-200 dark:text-brown-600'
                       }`}
                     />
                   ))}
@@ -577,35 +577,35 @@ export function FallingWords() {
               </div>
               <div className="flex items-center gap-3">
                 <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-coral-700 dark:text-teal-400">{score}</p>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-lg sm:text-xl font-bold text-coral-700">{score}</p>
+                  <p className="text-xs text-brown-500 dark:text-brown-300">Score</p>
                 </div>
                 <div className="text-center">
-                  <p className="inline-flex items-center gap-1 text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{streak}<Flame className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" /></p>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">Streak</p>
+                  <p className="inline-flex items-center gap-1 text-lg sm:text-xl font-bold text-brown-800 dark:text-cream-100">{streak}<Flame className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden="true" /></p>
+                  <p className="text-xs text-brown-500 dark:text-brown-300">Streak</p>
                 </div>
                 <div className="text-center">
-                  <p className="text-lg sm:text-xl font-bold text-brown-800 dark:text-white">{wordsCompleted}/{WIN_WORDS}</p>
-                  <p className="text-xs text-brown-500 dark:text-gray-400">Words</p>
+                  <p className="text-lg sm:text-xl font-bold text-brown-800 dark:text-cream-100">{wordsCompleted}/{WIN_WORDS}</p>
+                  <p className="text-xs text-brown-500 dark:text-brown-300">Words</p>
                 </div>
               </div>
             </div>
 
             {/* Progress Bar */}
             <div className="mb-3 sm:mb-4">
-              <div className="h-2 bg-cream-200 dark:bg-slate-700 rounded-full overflow-hidden">
+              <div className="h-2 bg-cream-200 dark:bg-brown-700 rounded-full overflow-hidden">
                 <div
-                  className="h-full bg-coral-700 dark:bg-teal-700 transition-colors duration-300"
+                  className="h-full bg-action transition-colors duration-300"
                   style={{ width: '100%', transformOrigin: 'left', transform: `scaleX(${((wordsCompleted / WIN_WORDS) * 100) / 100})` }}
                 />
               </div>
-              <p className="text-center text-xs text-brown-500 dark:text-gray-400 mt-1">
+              <p className="text-center text-xs text-brown-500 dark:text-brown-300 mt-1">
                 Catch {WIN_WORDS} words to win!
               </p>
             </div>
 
             {/* Game Area */}
-            <div ref={gameAreaRef} className="relative bg-cream-100 dark:bg-slate-800 rounded-2xl border border-cream-300 dark:border-slate-600 h-[50vh] sm:h-[55vh] overflow-hidden">
+            <div ref={gameAreaRef} className="relative bg-cream-100 dark:bg-brown-900 rounded-2xl border border-cream-300 dark:border-brown-600 h-[50vh] sm:h-[55vh] overflow-hidden">
               {/* Falling Word */}
               {currentWord && (
                 <div
@@ -613,7 +613,7 @@ export function FallingWords() {
                   className={`
                     absolute left-1/2 top-0 px-4 sm:px-6 py-2 sm:py-3 rounded-xl
                     font-chamorro text-lg sm:text-2xl font-semibold text-white                     transition-colors duration-200
-                    ${feedback === 'correct' ? 'bg-green-700' : feedback === 'wrong' ? 'bg-red-700' : 'bg-coral-700 dark:bg-teal-700'}
+                    ${feedback === 'correct' ? 'bg-green-700' : feedback === 'wrong' ? 'bg-red-700' : 'bg-action'}
                   `}
                   style={{
                     top: pace.challenge ? 0 : '35%',
@@ -635,7 +635,7 @@ export function FallingWords() {
                     <p className="text-2xl font-bold text-white mb-4">Paused</p>
                     <button
                       onClick={togglePause}
-                      className="px-6 py-3 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-coral-800 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-teal-800 transition-colors"
+                      className="px-6 py-3 rounded-xl bg-action text-white font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover transition-colors"
                     >
                       Resume
                     </button>
@@ -657,8 +657,8 @@ export function FallingWords() {
                     ${feedback && option === currentWord?.english
                       ? 'bg-emerald-700 text-white'
                       : feedback === 'wrong' && option !== currentWord?.english
-                        ? 'bg-cream-200 dark:bg-slate-700 text-brown-500 dark:text-gray-400'
-                        : 'bg-white dark:bg-slate-700 text-brown-800 dark:text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 border border-cream-200 dark:border-slate-600'
+                        ? 'bg-cream-200 dark:bg-brown-700 text-brown-500 dark:text-brown-300'
+                        : 'bg-white dark:bg-brown-700 text-brown-800 dark:text-cream-100 [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-100 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600 border border-cream-200 dark:border-brown-600'
                     }
                     disabled:cursor-not-allowed
                   `}
@@ -667,11 +667,11 @@ export function FallingWords() {
                 </button>
               ))}
             </div>
-            {feedback && <div role="status" className="mt-4 rounded-xl bg-white p-4 text-brown-900 dark:bg-slate-800 dark:text-white">
+            {feedback && <div role="status" className="mt-4 rounded-xl bg-white p-4 text-brown-900 dark:bg-brown-900 dark:text-cream-100">
               <p>{feedback === 'correct' ? 'That’s right!' : `The meaning is: ${currentWord?.english}`}</p>
-              <button type="button" onClick={nextWord} disabled={gameState === 'paused'} className="mt-3 min-h-12 w-full rounded-xl bg-coral-700 px-4 font-bold text-white dark:bg-teal-700">Next word</button>
+              <button type="button" onClick={nextWord} disabled={gameState === 'paused'} className="mt-3 min-h-12 w-full rounded-xl bg-action px-4 font-bold text-white">Next word</button>
             </div>}
-            {!pace.challenge && <button type="button" onClick={() => setGameState('complete')} className="mt-4 min-h-12 w-full rounded-xl border border-brown-400 px-4 font-semibold text-brown-800 dark:border-slate-500 dark:text-white">Finish round</button>}
+            {!pace.challenge && <button type="button" onClick={() => setGameState('complete')} className="mt-4 min-h-12 w-full rounded-xl border border-brown-400 px-4 font-semibold text-brown-800 dark:border-brown-500 dark:text-cream-100">Finish round</button>}
           </div>
         )}
 
@@ -686,10 +686,10 @@ export function FallingWords() {
             </div>
 
             <div>
-              <h2 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white mb-1">
+              <h2 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-cream-100 mb-1">
                 {wordsCompleted >= WIN_WORDS ? 'You won!' : wordsCompleted >= 10 ? 'Amazing!' : wordsCompleted >= 5 ? 'Great Job!' : 'Nice Try!'}
               </h2>
-              <p className="text-brown-600 dark:text-gray-400">
+              <p className="text-brown-600 dark:text-brown-300">
                 {wordsCompleted >= WIN_WORDS
                   ? `Perfect! You caught all ${WIN_WORDS} words!`
                   : `You caught ${wordsCompleted} ${wordsCompleted === 1 ? 'word' : 'words'}!`}
@@ -699,24 +699,24 @@ export function FallingWords() {
             {/* Stars */}
             <div className="flex justify-center gap-2" role="img" aria-label={`${getStars()} out of 3 stars`}>
               {Array.from({ length: 3 }).map((_, i) => (
-                <Star key={i} aria-hidden="true" className={`h-8 w-8 sm:h-10 sm:w-10 ${i < getStars() ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-slate-600"}`} />
+                <Star key={i} aria-hidden="true" className={`h-8 w-8 sm:h-10 sm:w-10 ${i < getStars() ? "fill-amber-400 text-amber-400" : "text-cream-300 dark:text-brown-600"}`} />
               ))}
             </div>
 
             {/* Stats */}
-            <div className="bg-white dark:bg-slate-800 rounded-2xl p-4 border border-cream-200 dark:border-slate-700">
+            <div className="bg-white dark:bg-brown-900 rounded-2xl p-4 border border-cream-200 dark:border-brown-700">
               <div className="grid grid-cols-3 gap-3 text-center">
                 <div>
-                  <p className="text-2xl sm:text-3xl font-bold text-coral-700 dark:text-teal-400">{score}</p>
-                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Score</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-coral-700">{score}</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-brown-300">Score</p>
                 </div>
                 <div>
-                  <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white">{wordsCompleted}</p>
-                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Words</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-cream-100">{wordsCompleted}</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-brown-300">Words</p>
                 </div>
                 <div>
-                  <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-white">Lv.{level}</p>
-                  <p className="text-xs sm:text-xs text-brown-500 dark:text-gray-400">Level</p>
+                  <p className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-cream-100">Lv.{level}</p>
+                  <p className="text-xs sm:text-xs text-brown-500 dark:text-brown-300">Level</p>
                 </div>
               </div>
             </div>
@@ -726,7 +726,7 @@ export function FallingWords() {
               <button
                 onClick={playAgain}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 px-4 rounded-xl bg-coral-700 dark:bg-teal-700 text-white font-bold transition-colors duration-200 flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-action text-white font-bold transition-colors duration-200 flex items-center justify-center gap-2"
               >
                 <RotateCcw className="w-4 h-4 sm:w-5 sm:h-5" />
                 Play Again
@@ -734,7 +734,7 @@ export function FallingWords() {
               <button
                 onClick={resetGame}
                 disabled={resultUnresolved || startStatus.pending}
-                className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-slate-700 text-brown-700 dark:text-gray-300 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-slate-600 transition-colors flex items-center justify-center gap-2"
+                className="flex-1 py-3 px-4 rounded-xl bg-cream-100 dark:bg-brown-700 text-brown-700 dark:text-brown-100 font-bold [@media(hover:hover)_and_(pointer:fine)]:hover:bg-cream-200 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:bg-brown-600 transition-colors flex items-center justify-center gap-2"
               >
                 <Settings2 className="w-4 h-4 sm:w-5 sm:h-5" />
                 Settings
@@ -743,7 +743,7 @@ export function FallingWords() {
 
             <Link
               to={gameReturn.to} replace
-              className="inline-block text-coral-700 dark:text-teal-400 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 dark:[@media(hover:hover)_and_(pointer:fine)]:hover:text-teal-300 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-sm"
+              className="inline-block text-coral-700 [@media(hover:hover)_and_(pointer:fine)]:hover:text-coral-600 [@media(hover:hover)_and_(pointer:fine)]:hover:underline font-medium text-sm"
             >
               {gameReturn.label}
             </Link>

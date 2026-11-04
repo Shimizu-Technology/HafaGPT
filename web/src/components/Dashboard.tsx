@@ -76,31 +76,31 @@ export function Dashboard() {
       label: 'Chats',
       value: initData ? totalConversations : conversationsLoading ? '…' : 'Unavailable',
       icon: MessageSquare,
-      tone: 'text-brown-600 dark:text-gray-300',
+      tone: 'text-brown-600 dark:text-brown-100',
     },
     {
       label: 'Quizzes',
       value: quizStatsData ? totalQuizzes : quizLoading ? '…' : 'Unavailable',
       icon: Brain,
-      tone: 'text-brown-600 dark:text-gray-300',
+      tone: 'text-brown-600 dark:text-brown-100',
     },
     {
       label: 'Average quiz',
       value: !quizStatsData ? (quizLoading ? '…' : 'Unavailable') : totalQuizzes > 0 ? `${averageScore}%` : '—',
       icon: Trophy,
-      tone: 'text-brown-600 dark:text-gray-300',
+      tone: 'text-brown-600 dark:text-brown-100',
     },
     {
       label: 'Games',
       value: gameStatsData ? totalGames : gamesLoading ? '…' : 'Unavailable',
       icon: Gamepad2,
-      tone: 'text-brown-600 dark:text-gray-300',
+      tone: 'text-brown-600 dark:text-brown-100',
     },
     {
       label: 'Average stars',
       value: !gameStatsData ? (gamesLoading ? '…' : 'Unavailable') : totalGames > 0 ? averageStars.toFixed(1) : '—',
       icon: Star,
-      tone: 'text-brown-600 dark:text-gray-300',
+      tone: 'text-brown-600 dark:text-brown-100',
     },
   ];
 
@@ -110,28 +110,28 @@ export function Dashboard() {
       title: 'Ask HåfaGPT',
       description: 'Get help with a word or phrase',
       icon: MessageSquare,
-      tone: 'text-brown-600 dark:text-gray-300',
+      tone: 'text-brown-600 dark:text-brown-100',
     },
     {
       to: '/quiz',
       title: 'Take a quiz',
       description: 'Check what you remember',
       icon: Brain,
-      tone: 'text-brown-600 dark:text-gray-300',
+      tone: 'text-brown-600 dark:text-brown-100',
     },
     {
       to: '/flashcards',
       title: 'Study flashcards',
       description: 'Review useful vocabulary',
       icon: BookOpen,
-      tone: 'text-brown-600 dark:text-gray-300',
+      tone: 'text-brown-600 dark:text-brown-100',
     },
     {
       to: '/games',
       title: 'Play a game',
       description: 'Practice through play',
       icon: Gamepad2,
-      tone: 'text-brown-600 dark:text-gray-300',
+      tone: 'text-brown-600 dark:text-brown-100',
     },
   ];
 
@@ -148,17 +148,17 @@ export function Dashboard() {
 
       <main className="mx-auto max-w-5xl space-y-6 px-4 py-5 sm:py-8">
         <section
-          className={`rounded-3xl border p-5 sm:p-6 ${isChristmasTheme ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30' : 'border-coral-200 bg-white dark:border-ocean-800 dark:bg-slate-800'}`}
+          className={`rounded-3xl border p-5 sm:p-6 ${isChristmasTheme ? 'border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/30' : 'border-coral-200 bg-white dark:bg-brown-900'}`}
         >
           <div className="flex items-center gap-4">
-            <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">
+            <span className="flex h-12 w-12 flex-none items-center justify-center rounded-2xl bg-coral-100 text-coral-700">
               <SeasonalIcon className="h-6 w-6" aria-hidden="true" />
             </span>
             <div className="min-w-0">
-              <h2 className="text-lg font-bold leading-snug text-brown-950 dark:text-white sm:text-xl">
+              <h2 className="text-lg font-bold leading-snug text-brown-950 dark:text-cream-100 sm:text-xl">
                 Håfa Adai, {user?.firstName || 'Learner'}!
               </h2>
-              <p className="mt-1 text-sm text-brown-500 dark:text-gray-400">Member since {memberSince}</p>
+              <p className="mt-1 text-sm text-brown-500 dark:text-brown-300">Member since {memberSince}</p>
             </div>
           </div>
         </section>
@@ -168,20 +168,20 @@ export function Dashboard() {
         <section aria-labelledby="progress-summary-title">
           <div className="mb-3 flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between sm:gap-3">
             <div>
-              <h2 id="progress-summary-title" className="text-xl font-bold text-brown-950 dark:text-white">
+              <h2 id="progress-summary-title" className="text-xl font-bold text-brown-950 dark:text-cream-100">
                 Your activity
               </h2>
             </div>
             <div className="flex flex-wrap gap-1 sm:justify-end">
               <Link
                 to="/dashboard/quiz-history"
-                className="pressable inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
+                className="pressable inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500"
               >
                 <History className="h-4 w-4" aria-hidden="true" /> Quiz history
               </Link>
               <Link
                 to={appRoutes.gameHistory}
-                className="pressable inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
+                className="pressable inline-flex min-h-11 items-center gap-1 rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500"
               >
                 <History className="h-4 w-4" aria-hidden="true" /> Game history
               </Link>
@@ -198,10 +198,10 @@ export function Dashboard() {
             {stats.map(({ label, value }) => (
               <div
                 key={label}
-                className="border-t border-cream-200 py-4 dark:border-slate-700"
+                className="border-t border-cream-200 py-4 dark:border-brown-700"
               >
-                <p className={`${value === 'Unavailable' ? 'text-base break-words' : 'text-2xl'} font-bold text-brown-950 dark:text-white`}>{value}</p>
-                <p className="mt-1 text-sm text-brown-500 dark:text-gray-400">{label}</p>
+                <p className={`${value === 'Unavailable' ? 'text-base break-words' : 'text-2xl'} font-bold text-brown-950 dark:text-cream-100`}>{value}</p>
+                <p className="mt-1 text-sm text-brown-500 dark:text-brown-300">{label}</p>
               </div>
             ))}
           </div>
@@ -209,7 +209,7 @@ export function Dashboard() {
 
         {bestCategory && bestCategoryInfo && (
           <section
-            className="flex items-center justify-between gap-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-slate-700 dark:bg-slate-800"
+            className="flex items-center justify-between gap-4 rounded-2xl border border-cream-200 bg-white p-4 dark:border-brown-700 dark:bg-brown-900"
             aria-label="Best quiz category"
           >
             <div className="flex min-w-0 items-center gap-3">
@@ -220,7 +220,7 @@ export function Dashboard() {
                 <p className="text-sm font-semibold text-amber-700 dark:text-amber-300">
                   Strongest quiz topic
                 </p>
-                <p className="truncate font-bold text-brown-950 dark:text-white">{bestCategoryInfo.title}</p>
+                <p className="truncate font-bold text-brown-950 dark:text-cream-100">{bestCategoryInfo.title}</p>
               </div>
             </div>
             <p className="text-2xl font-bold text-ink">{bestCategory.percentage}%</p>
@@ -228,7 +228,7 @@ export function Dashboard() {
         )}
 
         <section aria-labelledby="continue-learning-title">
-          <h2 id="continue-learning-title" className="mb-3 text-xl font-bold text-brown-950 dark:text-white">
+          <h2 id="continue-learning-title" className="mb-3 text-xl font-bold text-brown-950 dark:text-cream-100">
             Choose your next activity
           </h2>
           <div className="grid gap-3 sm:grid-cols-2">
@@ -236,17 +236,17 @@ export function Dashboard() {
               <Link
                 key={to}
                 to={to}
-                className="group flex min-h-20 items-center gap-3 rounded-2xl border border-cream-200 bg-white p-4 hover:border-coral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-700 dark:bg-slate-800 dark:hover:border-teal-700"
+                className="group flex min-h-20 items-center gap-3 rounded-2xl border border-cream-200 bg-white p-4 hover:border-coral-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-brown-700 dark:bg-brown-900"
               >
                 <span className={`flex h-11 w-11 flex-none items-center justify-center rounded-xl ${tone}`}>
                   <Icon className="h-5 w-5" aria-hidden="true" />
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block font-bold text-brown-950 dark:text-white">{title}</span>
-                  <span className="block text-sm text-brown-500 dark:text-gray-400">{description}</span>
+                  <span className="block font-bold text-brown-950 dark:text-cream-100">{title}</span>
+                  <span className="block text-sm text-brown-500 dark:text-brown-300">{description}</span>
                 </span>
                 <ChevronRight
-                  className="h-5 w-5 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-400 dark:group-hover:text-teal-300"
+                  className="h-5 w-5 flex-none text-brown-500 group-hover:text-coral-600 dark:text-brown-300"
                   aria-hidden="true"
                 />
               </Link>
@@ -257,17 +257,17 @@ export function Dashboard() {
         {quizStatsData && quizStatsData.recent_results.length > 0 && (
           <section aria-labelledby="recent-quizzes-title">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 id="recent-quizzes-title" className="text-xl font-bold text-brown-950 dark:text-white">
+              <h2 id="recent-quizzes-title" className="text-xl font-bold text-brown-950 dark:text-cream-100">
                 Recent quizzes
               </h2>
               <Link
                 to="/dashboard/quiz-history"
-                className="pressable inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:text-teal-300 dark:hover:bg-teal-950/30"
+                className="pressable inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500"
               >
                 View all
               </Link>
             </div>
-            <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800">
+            <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-brown-700 dark:border-brown-700 dark:bg-brown-900">
               {quizStatsData.recent_results.slice(0, 5).map((result, idx) => {
                 const percentage = Math.round(result.percentage);
                 const date = new Date(result.created_at);
@@ -277,7 +277,7 @@ export function Dashboard() {
                   <Link
                     key={idx}
                     to={`/quiz/review/${result.id}`}
-                    className="group flex min-h-20 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50"
+                    className="group flex min-h-20 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-brown-700/50"
                   >
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-teal-100 text-teal-700 dark:bg-teal-950/50 dark:text-teal-300">
@@ -285,7 +285,7 @@ export function Dashboard() {
                       </span>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-bold text-brown-950 dark:text-white">
+                          <p className="truncate text-sm font-bold text-brown-950 dark:text-cream-100">
                             {result.category_title || 'Quiz'}
                           </p>
                           {isDictionary && (
@@ -294,7 +294,7 @@ export function Dashboard() {
                             </span>
                           )}
                         </div>
-                        <time className="text-xs text-brown-500 dark:text-gray-400" dateTime={result.created_at}>
+                        <time className="text-xs text-brown-500 dark:text-brown-300" dateTime={result.created_at}>
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
                         </time>
                       </div>
@@ -312,7 +312,7 @@ export function Dashboard() {
                         {percentage}%
                       </span>
                       <ChevronRight
-                        className="h-4 w-4 text-brown-500 group-hover:text-coral-600 dark:text-gray-400 dark:group-hover:text-teal-300"
+                        className="h-4 w-4 text-brown-500 group-hover:text-coral-600 dark:text-brown-300"
                         aria-hidden="true"
                       />
                     </div>
@@ -326,29 +326,29 @@ export function Dashboard() {
         {gameStatsData && gameStatsData.recent_results.length > 0 && (
           <section aria-labelledby="recent-games-title">
             <div className="mb-3 flex items-center justify-between gap-3">
-              <h2 id="recent-games-title" className="text-xl font-bold text-brown-950 dark:text-white">Recent games</h2>
-              <Link to={appRoutes.gameHistory} className="pressable inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50 dark:text-teal-300 dark:hover:bg-teal-950/30">View all</Link>
+              <h2 id="recent-games-title" className="text-xl font-bold text-brown-950 dark:text-cream-100">Recent games</h2>
+              <Link to={appRoutes.gameHistory} className="pressable inline-flex min-h-11 items-center rounded-xl px-3 text-sm font-semibold text-coral-700 hover:bg-coral-50">View all</Link>
             </div>
-            <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-slate-700 dark:border-slate-700 dark:bg-slate-800">
+            <div className="divide-y divide-cream-100 overflow-hidden rounded-2xl border border-cream-200 bg-white dark:divide-brown-700 dark:border-brown-700 dark:bg-brown-900">
               {gameStatsData.recent_results.slice(0, 5).map((result, idx) => {
                 const date = new Date(result.created_at);
 
                 return (
-                  <Link key={result.id || idx} to={appRoutes.gameResult(result.id, { returnTo: '/dashboard' })} className="group flex min-h-20 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-slate-700/50">
+                  <Link key={result.id || idx} to={appRoutes.gameResult(result.id, { returnTo: '/dashboard' })} className="group flex min-h-20 items-center justify-between gap-3 p-4 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-coral-500 dark:hover:bg-brown-700/50">
                     <div className="flex min-w-0 items-center gap-3">
                       <span className="flex h-10 w-10 flex-none items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300">
                         <Gamepad2 className="h-5 w-5" aria-hidden="true" />
                       </span>
                       <div className="min-w-0">
                         <div className="flex items-center gap-2">
-                          <p className="truncate text-sm font-bold text-brown-950 dark:text-white">
+                          <p className="truncate text-sm font-bold text-brown-950 dark:text-cream-100">
                             {result.category_title || result.category_id}
                           </p>
-                          <span className="rounded-full bg-cream-100 px-2 py-0.5 text-xs font-semibold capitalize text-brown-600 dark:bg-slate-700 dark:text-gray-300">
+                          <span className="rounded-full bg-cream-100 px-2 py-0.5 text-xs font-semibold capitalize text-brown-600 dark:bg-brown-700 dark:text-brown-100">
                             {result.difficulty}
                           </span>
                         </div>
-                        <time className="text-xs text-brown-500 dark:text-gray-400" dateTime={result.created_at}>
+                        <time className="text-xs text-brown-500 dark:text-brown-300" dateTime={result.created_at}>
                           {date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • {result.moves} moves
                         </time>
                       </div>
@@ -358,14 +358,14 @@ export function Dashboard() {
                         {[1, 2, 3].map((star) => (
                           <Star
                             key={star}
-                            className={`h-4 w-4 ${star <= (result.stars || 0) ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-slate-600'}`}
+                            className={`h-4 w-4 ${star <= (result.stars || 0) ? 'fill-amber-400 text-amber-400' : 'text-cream-300 dark:text-brown-600'}`}
                             aria-hidden="true"
                           />
                         ))}
                       </div>
-                      <span className="text-sm font-bold text-brown-700 dark:text-gray-200">{result.score}</span>
+                      <span className="text-sm font-bold text-brown-700 dark:text-cream-200">{result.score}</span>
                     </div>
-                    <ChevronRight className="h-4 w-4 flex-none text-brown-500 group-hover:text-coral-600 dark:text-gray-400" aria-hidden="true" />
+                    <ChevronRight className="h-4 w-4 flex-none text-brown-500 group-hover:text-coral-600 dark:text-brown-300" aria-hidden="true" />
                   </Link>
                 );
               })}
@@ -374,24 +374,24 @@ export function Dashboard() {
         )}
 
         {allSectionsSucceeded && totalConversations === 0 && totalQuizzes === 0 && totalGames === 0 && (
-          <section className="rounded-3xl border border-coral-200 bg-white p-6 text-center dark:border-ocean-800 dark:bg-slate-800">
-            <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-coral-100 text-coral-700 dark:bg-teal-950/50 dark:text-teal-300">
+          <section className="rounded-3xl border border-coral-200 bg-white p-6 text-center dark:bg-brown-900">
+            <span className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-coral-100 text-coral-700">
               <Flame className="h-7 w-7" aria-hidden="true" />
             </span>
-            <h2 className="text-xl font-bold text-brown-950 dark:text-white">Start your learning record</h2>
-            <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-gray-400">
+            <h2 className="text-xl font-bold text-brown-950 dark:text-cream-100">Start your learning record</h2>
+            <p className="mx-auto mt-2 max-w-md text-brown-600 dark:text-brown-300">
               Complete any activity and your progress will appear here.
             </p>
             <div className="mt-5 flex flex-col justify-center gap-3 sm:flex-row">
               <Link
                 to="/chat"
-                className="pressable inline-flex min-h-12 items-center justify-center rounded-xl bg-coral-700 px-6 font-semibold text-white hover:bg-coral-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2 dark:bg-teal-700 dark:hover:bg-teal-800"
+                className="pressable inline-flex min-h-12 items-center justify-center rounded-xl bg-action px-6 font-semibold text-white hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
               >
                 Ask a question
               </Link>
               <Link
                 to="/quiz"
-                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-6 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-slate-600 dark:bg-slate-700 dark:text-white dark:hover:bg-slate-600"
+                className="inline-flex min-h-12 items-center justify-center rounded-xl border border-cream-300 bg-white px-6 font-semibold text-brown-800 hover:bg-cream-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 dark:border-brown-600 dark:bg-brown-700 dark:text-cream-100 dark:hover:bg-brown-600"
               >
                 Take a quiz
               </Link>
