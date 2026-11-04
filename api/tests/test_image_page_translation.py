@@ -442,3 +442,16 @@ def test_newline_terminated_items_without_a_normal_stream_finish_remain_incomple
     assert 'ended before completion could be confirmed' in text_of(events)
     assert events[-1]['translation_incomplete'] is True
     assert events[-1]['generation_complete'] is False
+
+
+@pytest.mark.parametrize('repeat', range(3))
+def test_synthetic_supported_worksheet_keeps_lines_without_uncertainty(repeat):
+    """Repeatable renderer fixture; does not establish vision/model accuracy."""
+    p = page(0, n=3)
+    stream_text, calls = streamer(tagged(p.items))
+    events = run([p], stream_text)
+    text = text_of(events)
+    assert 'unsure' not in text.lower()
+    assert 'uncertain' not in text.lower()
+    assert all(text.count(f'Translated p1\\-i{i}') == 1 for i in range(1, 4))
+    assert 'specific unsupported or unreadable word' in calls[0]['messages'][0]['content']

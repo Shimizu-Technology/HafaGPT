@@ -284,3 +284,20 @@ def test_resolved_image_translation_keeps_cards_without_verbose_school_format() 
     assert guidance == IMAGE_TRANSLATION_GUIDANCE
     assert school_match is True
     assert card_ids == ("usage.guam.school.msy_greeting",)
+
+
+def test_family_day_acronyms_use_scoped_cards_at_any_position() -> None:
+    for token in ("SYM", "MSY"):
+        for body in (f"🧡 {token}! Family Day is tomorrow.",
+                     f"Family Day is tomorrow. ({token})🧡"):
+            message = f"Hurao Academy: {body}"
+            assert is_school_announcement_context(message)
+            assert school_context_card_ids(message, school_announcement=True) == (
+                f"usage.guam.school.{'sym_signoff' if token == 'SYM' else 'msy_greeting'}",
+            )
+
+
+def test_school_acronyms_do_not_match_inside_words_or_all_caps() -> None:
+    for body in ("ASYMMETRY", "SYMPTOMS", "éSYM", "SYMé", "SYM_code", "FAMILY DAY TOMORROW"):
+        assert school_context_card_ids(body, school_announcement=True) == ()
+    assert not is_school_announcement_context("🧡 SYM! Family Day is tomorrow.")

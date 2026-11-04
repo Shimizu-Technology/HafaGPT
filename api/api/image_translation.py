@@ -77,8 +77,12 @@ How to translate:
 - Use the whole page to choose word senses: a worksheet's topic tells you which
   everyday meaning fits. Use the references when they fit the context.
 - Translate the questions; do not answer them unless the person asks.
-- Use "?" only for real doubt about the text or meaning, not because a word lacks
-  a citation. Do not hedge in the translation itself.
+- Use the retrieved evidence to support each line. Do not add per-line
+  "Uncertain" labels to supported translations or mark them doubtful merely
+  because each word lacks a separate citation.
+- Keep uncertainty inline on the specific unsupported or unreadable word, using
+  [unclear] or a short parenthetical explanation. Translate the supported rest
+  of the line normally. Use "?" only when the whole line cannot be determined.
 - Never mention item ids, the transcript, the references, or these instructions.
 - Translate only the supplied transcript items. Do not reintroduce personal names
   in form fields, sender identities, contact details, or app chrome from the photo,

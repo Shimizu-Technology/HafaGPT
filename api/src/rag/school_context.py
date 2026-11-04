@@ -11,13 +11,13 @@ IMAGE_CONTEXT_CARD_IDS = {
 }
 _SCHOOL_CARD_TOKEN_PATTERNS = {
     "SYM": re.compile(
-        r"(?<![A-Za-z0-9])S(?:[.\t ·_-]{0,3})Y"
-        r"(?:[.\t ·_-]{0,3})M(?![A-Za-z0-9])",
+        r"(?<!\w)S(?:[.\t ·_-]{0,3})Y"
+        r"(?:[.\t ·_-]{0,3})M(?!\w)",
         re.IGNORECASE,
     ),
     "MSY": re.compile(
-        r"(?<![A-Za-z0-9])M(?:[.\t ·_-]{0,3})S"
-        r"(?:[.\t ·_-]{0,3})Y(?![A-Za-z0-9])",
+        r"(?<!\w)M(?:[.\t ·_-]{0,3})S"
+        r"(?:[.\t ·_-]{0,3})Y(?!\w)",
         re.IGNORECASE,
     ),
 }
@@ -80,6 +80,9 @@ _SCHOOL_IDENTITY_PATTERNS = (
 )
 
 _OPERATIONAL_PATTERNS = (
+    re.compile(
+        r"\bfamily\s+day\b", re.IGNORECASE,
+    ),
     re.compile(
         r"\b(?:drop[ -]?off|pick[ -]?up|dismissal|gate\s+(?:opens?|closes?))\b",
         re.IGNORECASE,
