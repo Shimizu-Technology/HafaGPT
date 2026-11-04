@@ -513,8 +513,8 @@ test('public learner can open stories and protected games fail closed', async ({
   await page.goto('/games');
   await expect(page.getByRole('heading', { level: 1, name: 'Games' })).toBeVisible();
   await expect(page.getByRole('link', { name: /Sound Match/ })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Create a free account' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Sign in' })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('button', { name: 'Create a free account' })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('button', { name: 'Sign in' })).toBeVisible();
 
   await page.goto('/learning');
   await expect(page.getByRole('heading', { level: 1, name: 'Learning path' })).toBeVisible();
@@ -522,7 +522,7 @@ test('public learner can open stories and protected games fail closed', async ({
   await page.getByRole('link', { name: /Greetings & Basics/ }).click();
   await expect(page).toHaveURL(/\/learning\/greetings$/);
   await expect(page.getByRole('heading', { level: 1, name: 'Greetings & Basics' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Create a free account' })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('button', { name: 'Create a free account' })).toBeVisible();
   expect(errors).toEqual([]);
 });
 
