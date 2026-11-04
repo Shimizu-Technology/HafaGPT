@@ -104,9 +104,8 @@ _COMPOSITION_REQUEST = re.compile(
     r"\s+(?:in\s+to|into|in)\s+chamor(?:ro|u)\s*[?.!]*\s*$"
 )
 _QUOTED_SPAN = re.compile(r"[\"“](?P<payload>[^\"”\n]{1,80})[\"”]")
-_USAGE_REQUEST = re.compile(
-    r"(?i)^\s*(?:(?:please\s+)?(?:check|define|explain|look\s+up|tell\s+me|use)|is|are|can|could|may|should|would|"
-    r"do|does|did|how|what|which|why|when|where)\b"
+_QUOTED_STATEMENT = re.compile(
+    r"(?i)^\s*(?:i(?!\s+(?:want|need|wanna|would\s+like)\b)|my|we|our|he|she|they|his|her|their|the|this|that|it)\b"
 )
 _TRAILING_CHAMORRO = re.compile(r"(?is)^\s*(?P<payload>[^?\n]{1,60}?)\s+(?:in\s+to|into|in)\s+chamor(?:ro|u)\s*[?.!]*\s*$")
 _CONVERSATIONAL = re.compile(
@@ -180,10 +179,10 @@ def lexical_lookup_request(query: str) -> tuple[str, str] | None:
     if labeled:
         to_chamorro = re.search(r"(?i)\bchamor(?:ro|u)\b", text[:labeled.start("payload")])
         return labeled.group("payload"), "to_chamorro" if to_chamorro else "either"
-    # A quoted word or phrase in a usage question is the thing to check
-    # ('Is it okay to use "un rato"?').
+    # A quoted word or phrase is the thing to check ('Is it okay to use "un
+    # rato"?'), unless the message only states something about it.
     quoted = _QUOTED_SPAN.search(text)
-    if quoted and ("?" in text or _USAGE_REQUEST.match(text)) and 1 <= len(_TOKEN.findall(quoted.group("payload"))) <= 6:
+    if quoted and ("?" in text or not _QUOTED_STATEMENT.match(text)) and 1 <= len(_TOKEN.findall(quoted.group("payload"))) <= 6:
         return quoted.group("payload"), "either"
     follow_up = _FOLLOW_UP_LOOKUP.match(text)
     if follow_up and len(_TOKEN.findall(follow_up.group("payload"))) <= 4:
