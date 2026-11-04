@@ -23,7 +23,6 @@ import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { wordOfTheDayQueryOptions } from '../hooks/useVocabularyQuery';
-import { useAuthLoadTimeout } from '../hooks/useAuthLoadTimeout';
 import { buildTodayPlan } from '../lib/todayPlan';
 import { getHomepageSectionAvailability } from '../lib/homepageAvailability';
 import { DEFAULT_DAILY_SESSION_MINUTES } from '../data/learningPreferences';
@@ -309,7 +308,6 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
 
 export function HomePage() {
   const { user, isLoaded } = useUser();
-  const authLoadTimedOut = useAuthLoadTimeout(isLoaded);
   const clerk = useClerk();
   const isSignedIn = Boolean(user);
   useInitUserData(null, isLoaded && isSignedIn);
@@ -358,7 +356,7 @@ export function HomePage() {
     });
   }, [isLoading, preferences, recommended, srSummary, todayUnavailable, weakAreas, xp]);
 
-  if (!isLoaded && !authLoadTimedOut) {
+  if (!isLoaded) {
     return (
       <div className="min-h-screen bg-cream-50 dark:bg-brown-950">
         <HomeHeader signedIn={false} />

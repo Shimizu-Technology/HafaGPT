@@ -1,0 +1,17 @@
+<!-- Auth-neutral, disposable markup. createRoot replaces this; it is never hydrated. -->
+<style>
+  .first-paint{--paint-ground:{{ground}};--paint-card:{{card}};--paint-ink:{{ink}};min-height:100vh;background:var(--paint-ground);color:var(--paint-ink);font-family:ui-sans-serif,system-ui,sans-serif}
+  .dark .first-paint{--paint-ground:{{darkGround}};--paint-card:{{darkCard}};--paint-ink:{{darkInk}}}
+  body:has(.first-paint){margin:0}
+  .first-paint-bar{height:69px;box-sizing:border-box;padding:12px 16px;display:flex;align-items:center;max-width:1024px;margin:auto;font-size:18px;font-weight:700}
+  .first-paint-brand{margin-left:52px}
+  .first-paint-main{max-width:1024px;box-sizing:border-box;margin:auto;padding:32px 16px;display:grid;gap:16px}
+  .first-paint-card{height:224px;border-radius:24px;background:var(--paint-card)}
+  .first-paint-grid{display:grid;gap:16px}
+  .first-paint-grid .first-paint-card{height:144px;border-radius:16px}
+  @media(min-width:640px){.first-paint-bar{height:57px}.first-paint-brand{margin-left:42px}.first-paint-grid{grid-template-columns:1fr 1fr}}
+</style>
+<div class="first-paint" aria-busy="true" aria-label="Loading HåfaGPT">
+  <div class="first-paint-bar"><span class="first-paint-brand">HåfaGPT</span></div>
+  <div class="first-paint-main" aria-hidden="true"><div class="first-paint-card"></div><div class="first-paint-grid"><div class="first-paint-card"></div><div class="first-paint-card"></div></div></div>
+</div>
