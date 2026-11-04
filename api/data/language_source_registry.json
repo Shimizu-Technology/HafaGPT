@@ -8,7 +8,7 @@
   "sources": [
     {
       "id": "hafagpt_canonical_evaluation",
-      "name": "HåfaGPT canonical evaluation index",
+      "name": "HåfaGPT vocabulary list",
       "match": {
         "source_contains": ["internal://hafagpt_canonical_evaluation"],
         "source_types": ["hafagpt_canonical_evaluation"]

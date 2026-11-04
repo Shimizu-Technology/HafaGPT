@@ -7,6 +7,12 @@ from typing import Annotated, Literal
 
 from pydantic import BaseModel, Field, StringConstraints
 
+from .source_citations import (
+    HAFAGPT_LIST_NAME,
+    HAFAGPT_LIST_SOURCE_ID,
+    LEGACY_HAFAGPT_LIST_NAMES,
+)
+
 
 ConversationContextItem = Annotated[str, StringConstraints(max_length=300)]
 GroundingStatus = Literal["canonical_support", "source_support", "ai_only"]
@@ -50,12 +56,14 @@ def grounding_status_from_sources(sources: list[object]) -> GroundingStatus:
 
     for source in sources:
         if isinstance(source, dict):
+            if source.get("source_id") == HAFAGPT_LIST_SOURCE_ID:
+                return "canonical_support"
             name = source.get("name")
         elif isinstance(source, (tuple, list)) and source:
             name = source[0]
         else:
             name = None
-        if name == "HåfaGPT canonical vocabulary":
+        if name == HAFAGPT_LIST_NAME or name in LEGACY_HAFAGPT_LIST_NAMES:
             return "canonical_support"
     return "source_support" if sources else "ai_only"
 

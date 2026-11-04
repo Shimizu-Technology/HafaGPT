@@ -9,6 +9,7 @@ import unicodedata
 from functools import lru_cache, wraps
 from pathlib import Path
 
+from .source_citations import HAFAGPT_LIST_NAME
 from .dictionary_glosses import definition_gloss_segments as _definition_gloss_segments, is_species_entry
 from src.rag.source_policy import resolve_source
 from src.rag.source_reviews import build_registered_source_citation
@@ -597,7 +598,7 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
 
     if matches:
         lines.append(
-            "Cite canonical entries as the HåfaGPT canonical vocabulary ledger. "
+            f"Cite canonical entries inline as [{HAFAGPT_LIST_NAME}]. "
             "Do not claim native review unless the review status says so."
         )
     if dictionary_matches or english_gloss_matches or passage_dictionary_matches:
@@ -607,7 +608,7 @@ def get_canonical_tutor_context(user_input: str, *, passage_match_limit: int = M
     lines.append("=" * 60)
     sources: list[object] = []
     if matches:
-        sources.append(("HåfaGPT canonical vocabulary", None))
+        sources.append((HAFAGPT_LIST_NAME, None))
         for entry in matches:
             for citation in entry.get("source_citations") or []:
                 if not isinstance(citation, dict) or not citation.get("url"):

@@ -509,7 +509,7 @@ def test_unmatched_terms_are_reported_without_calling_them_wrong():
     guidance = verification_follow_up_guidance(
         ("asut", "zzqxv"), False, lookups.found, lookups.found_parts, lookups.missing,
     )
-    assert 'No exact dictionary or ledger entry for: ["zzqxv"].' in guidance
+    assert 'No exact dictionary or vocabulary list entry for: ["zzqxv"].' in guidance
     assert "A missing entry alone does not show a term is wrong." in guidance
 
 

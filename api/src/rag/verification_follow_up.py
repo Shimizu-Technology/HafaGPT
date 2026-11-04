@@ -485,7 +485,7 @@ Only the supplied reference entries are evidence.
 Terms looked up: {terms}{truncated}
 {results}
 - Go through those terms. For each, say whether a supplied dictionary or
-  canonical ledger entry supports it, citing that source beside the term, or
+  HåfaGPT vocabulary list entry supports it, citing that source beside the term, or
   that no supplied entry covers it.
 - Keep every supported term. Change a term only when a supplied entry
   contradicts it, and name that entry.
@@ -523,7 +523,7 @@ def verification_follow_up_guidance(
         )
     if missing:
         results.append(
-            f"No exact dictionary or ledger entry for: {_quoted(missing)}. "
+            f"No exact dictionary or vocabulary list entry for: {_quoted(missing)}. "
             "A missing entry alone does not show a term is wrong."
         )
     return VERIFICATION_FOLLOW_UP_GUIDANCE.format(

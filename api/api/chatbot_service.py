@@ -660,36 +660,54 @@ def optional_chat_completion_kwargs(model_id: str) -> dict:
 # previous DeepSeek V3 route remains registered for immediate env-only rollback.
 CHAT_MODEL = os.getenv("CHAT_MODEL", "gpt-5.6-luna")
 
+class ModelConfigurationError(RuntimeError):
+    """The tutor model is misconfigured; refuse to start rather than reroute."""
+
+
 def get_llm_client():
     """
     Get the appropriate LLM client based on CHAT_MODEL configuration.
     Returns tuple of (client, model_id)
+
+    A misconfiguration raises ModelConfigurationError. Routing tutor traffic to
+    another model would change quality and cost without anyone noticing, so an
+    unknown CHAT_MODEL or a missing provider key stops startup instead. On
+    Render a failed boot fails the deploy's health check and the previous
+    deploy keeps serving.
     """
     config = MODEL_CONFIG.get(CHAT_MODEL)
-    
+
     if not config:
-        print(f"⚠️  Unknown model '{CHAT_MODEL}', falling back to gpt-4o")
-        return OpenAI(api_key=os.getenv("OPENAI_API_KEY")), "gpt-4o"
-    
+        raise ModelConfigurationError(
+            f"CHAT_MODEL={CHAT_MODEL!r} is not a configured model. "
+            f"Set CHAT_MODEL to one of: {', '.join(sorted(MODEL_CONFIG))}."
+        )
+
     if config["provider"] == "openai":
+        if not os.getenv("OPENAI_API_KEY"):
+            raise ModelConfigurationError(
+                f"OPENAI_API_KEY is not set, but CHAT_MODEL={CHAT_MODEL!r} uses OpenAI directly."
+            )
         return OpenAI(
             api_key=os.getenv("OPENAI_API_KEY"),
             base_url=os.getenv("OPENAI_API_BASE", "https://api.openai.com/v1")
         ), config["model_id"]
-    
+
     elif config["provider"] == "openrouter":
         openrouter_key = os.getenv("OPENROUTER_API_KEY")
         if not openrouter_key:
-            print(f"⚠️  OPENROUTER_API_KEY not set, falling back to gpt-4o")
-            return OpenAI(api_key=os.getenv("OPENAI_API_KEY")), "gpt-4o"
-        
+            raise ModelConfigurationError(
+                f"OPENROUTER_API_KEY is not set, but CHAT_MODEL={CHAT_MODEL!r} is served through OpenRouter."
+            )
+
         return OpenAI(
             api_key=openrouter_key,
             base_url="https://openrouter.ai/api/v1"
         ), config["model_id"]
-    
-    # Fallback
-    return OpenAI(api_key=os.getenv("OPENAI_API_KEY")), "gpt-4o"
+
+    raise ModelConfigurationError(
+        f"CHAT_MODEL={CHAT_MODEL!r} has an unsupported provider {config['provider']!r}."
+    )
 
 # Initialize LLM client and model
 llm, LLM_MODEL_ID = get_llm_client()
@@ -751,8 +769,9 @@ ANSWER CONTRACT:
 1. Answer first, in the form the user asked for: the word, the translation, or
    the message they want to send. Keep any explanation short and after it.
 2. For a word or short phrase, give the form shown in the supplied dictionary
-   entries, canonical vocabulary ledger, or exact governed matches, and cite it
-   inline with the exact source name, for example [Chamoru.info dictionary].
+   entries, HåfaGPT vocabulary list, or exact governed matches, and cite it
+   inline with the exact source name, for example [Chamoru.info dictionary] or
+   [HåfaGPT vocabulary list].
 3. When the requested answer is a Chamorro sentence or message, write your best
    natural Chamorro draft from the supplied entries and the words already
    established in this conversation.
@@ -764,15 +783,15 @@ ANSWER CONTRACT:
    Words you composed or recalled carry no citation, even when part of them is
    cited. Never invent a citation or call anything "verified" without a
    supplied source.
-5. Stay consistent. Do not retract a form you earlier cited from the canonical
-   ledger or a dictionary unless newly supplied evidence contradicts it. If the
-   user questions it, check the references and say what they show.
+5. Stay consistent. Do not retract a form you earlier cited from the HåfaGPT
+   vocabulary list or a dictionary unless newly supplied evidence contradicts
+   it. If the user questions it, check the references and say what they show.
 6. If no supplied source has a single word the user asked about, say so in one
    sentence. Offer a supplied entry only if it is close in meaning (such as a
    broader term); otherwise suggest a related word to look up. Offer a guess
    only if the user asks, and label it a guess.
 7. Teach Guam spelling (Kumisión i Fino' CHamoru 2024 orthography) first,
-   preferring the canonical ledger's recommended term. When the references show
+   preferring the vocabulary list's recommended term. When the references show
    a CNMI or older spelling, label it as such.
 8. State pronunciation, etymology, cultural origin, regional usage, word
    frequency, or abbreviation meanings only when a supplied reference supports

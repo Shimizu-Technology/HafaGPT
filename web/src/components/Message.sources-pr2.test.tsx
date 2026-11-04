@@ -10,6 +10,6 @@ it('renders plain provenance labels and keeps the reference link and caveat', ()
   ]} />);
   fireEvent.click(screen.getByRole('button', { name: 'From references: HåfaGPT vocabulary list and Unreviewed family note' }));
   expect(screen.getByRole('link', { name: 'HåfaGPT vocabulary list (p. 4)' })).toHaveAttribute('href', 'https://example.com/reference');
-  expect(screen.getByText('entry 1 • Reviewed vocabulary • Sources from Guam and the Northern Mariana Islands • Modern usage')).toBeVisible();
+  expect(screen.getByText('entry 1 • Vocabulary reference • Sources from Guam and the Northern Mariana Islands • Modern usage')).toBeVisible();
   expect(screen.getByText('not yet verified')).toBeVisible();
 });

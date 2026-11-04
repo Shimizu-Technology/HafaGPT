@@ -13,11 +13,18 @@ def test_exact_english_phrases_prepend_governed_curriculum_context():
     assert "Manana si Yu'os" in context
     assert "not the primary beginner term" in context
     assert "exact scope of support" in context
-    assert sources[0] == ("HåfaGPT canonical vocabulary", None)
+    assert sources[0] == ("HåfaGPT vocabulary list", None)
     assert [source["source_id"] for source in sources[1:3]] == [
         "kumision_learning_tools",
         "visit_guam_greetings",
     ]
+
+
+def test_model_is_told_to_cite_the_plain_vocabulary_list_name():
+    context, _ = get_canonical_tutor_context("How would I say blue?")
+
+    assert "Cite canonical entries inline as [HåfaGPT vocabulary list]." in context
+    assert "ledger" not in context.lower()
 
 
 def test_recorded_variant_and_cited_spelling_match_inside_a_passage():
@@ -29,7 +36,7 @@ def test_recorded_variant_and_cited_spelling_match_inside_a_passage():
     assert "Manana si Yu'os" in context
     assert "Kumisión i Fino' CHamoru cultural dictionary" in context
     assert "Manana si Yu'os — Good morning" in context
-    assert sources[0] == ("HåfaGPT canonical vocabulary", None)
+    assert sources[0] == ("HåfaGPT vocabulary list", None)
     assert [source["source_id"] for source in sources[1:3]] == [
         "kumision_learning_tools",
         "visit_guam_greetings",
@@ -116,7 +123,7 @@ def test_how_would_lookup_gets_canonical_blue_and_exact_dictionary_evidence() ->
     assert "Exact English dictionary gloss: blue" in context
     assert "Chamorro headword: asút" in context
     assert "Chamorro headword: asut" in context
-    assert sources[0] == ("HåfaGPT canonical vocabulary", None)
+    assert sources[0] == ("HåfaGPT vocabulary list", None)
 
 
 def test_common_english_lookup_forms_reach_exact_dictionary_evidence() -> None:

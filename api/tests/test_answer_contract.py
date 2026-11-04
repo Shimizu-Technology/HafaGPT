@@ -65,7 +65,7 @@ def test_contract_keeps_citation_and_consistency_safety() -> None:
     assert "Never invent a citation" in contract
     assert "Words you composed or recalled carry no citation" in contract
     assert 'call anything "verified" without a supplied source' in contract
-    assert "Do not retract a form you earlier cited from the canonical ledger" in contract
+    assert "Do not retract a form you earlier cited from the HåfaGPT vocabulary list" in contract
     assert "label it a guess" in contract
 
 

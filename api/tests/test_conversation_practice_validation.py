@@ -75,7 +75,9 @@ def test_scenario_values_cannot_close_the_reference_data_boundary():
 @pytest.mark.parametrize(
     ("sources", "expected"),
     [
+        ([("HåfaGPT vocabulary list", None)], "canonical_support"),
         ([("HåfaGPT canonical vocabulary", None)], "canonical_support"),
+        ([{"source_id": "hafagpt_canonical_evaluation", "name": "HåfaGPT vocabulary list"}], "canonical_support"),
         ([("Chamoru.info dictionary", None)], "source_support"),
         ([], "ai_only"),
     ],
