@@ -14,9 +14,16 @@ const descriptions: Record<string, string> = {
   dictionary: 'Dictionary', grammar: 'Grammar reference',
   unreviewed: 'Not yet reviewed', reviewed: 'Reviewed',
 };
+const OWN_LIST_NAME = /^(?:HåfaGPT )?canonical (?:vocabulary|evaluation)(?: (?:ledger|index|list))?$/i;
+
+/** A citation name changes only when it is exactly HåfaGPT's own list; other titles stay as cited. */
+export function plainSourceName(name: string): string {
+  return OWN_LIST_NAME.test(name.trim()) ? HAFAGPT_LIST : name;
+}
+
 /**
- * Internal names for HåfaGPT's own vocabulary list ("canonical ledger", "evaluation index")
- * come from the API and model citations. Show a parent the plain name instead.
+ * For trust text the API writes about HåfaGPT's own list ("canonical ledger",
+ * "canonical entry"), not for citation names. Show a parent the plain name instead.
  */
 export function plainSourceText(text: string): string {
   return text
@@ -27,7 +34,7 @@ export function plainSourceText(text: string): string {
 const readable = (value?: string | null) => value ? descriptions[value] || value.replace(/_/g, ' ') : '';
 /** Shared with public reading: retain locators, provenance and unknown caveats. */
 export function formatSourceLabel(source: SourceInfo): { label: string; detail: string } {
-  const name = names[source.source_id || ''] || plainSourceText(readable(source.name)) || 'Reference source';
+  const name = names[source.source_id || ''] || plainSourceName(readable(source.name)) || 'Reference source';
   return {
     label: `${name}${typeof source.page === 'number' ? ` (p. ${source.page})` : ''}`,
     detail: [source.locator, readable(source.content_role), readable(source.region), readable(source.temporal_scope)]

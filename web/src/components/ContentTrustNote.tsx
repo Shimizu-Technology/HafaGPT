@@ -1,7 +1,7 @@
 import { useId, useState } from 'react';
 import { BookOpenCheck, ChevronDown, ExternalLink, FlaskConical, Sparkles } from 'lucide-react';
 import type { ContentTrust } from '../data/contentTrust';
-import { plainSourceText } from '../lib/sourceLabels';
+import { plainSourceName, plainSourceText } from '../lib/sourceLabels';
 
 interface ContentTrustNoteProps {
   trust: ContentTrust;
@@ -62,9 +62,9 @@ export function ContentTrustNote({ trust, className = '', compact = false }: Con
                   <li key={`${source.name}-${source.url ?? 'local'}`}>
                     {source.url ? (
                       <a className="inline-flex items-center gap-1 font-semibold underline decoration-current/40 underline-offset-2 hover:decoration-current" href={source.url} target="_blank" rel="noopener noreferrer">
-                        {plainSourceText(source.name)}<ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        {plainSourceName(source.name)}<ExternalLink className="h-3 w-3" aria-hidden="true" />
                       </a>
-                    ) : plainSourceText(source.name)}
+                    ) : plainSourceName(source.name)}
                   </li>
                 ))}
               </ul>

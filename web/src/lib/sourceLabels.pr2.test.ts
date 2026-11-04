@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { formatSourceLabel, plainSourceText } from './sourceLabels';
+import type { SourceInfo } from '../types/source';
+import { formatSourceLabel, plainSourceName, plainSourceText } from './sourceLabels';
 describe('plain source labels shared with public reading', () => {
   it('labels provenance in plain words while retaining the exact locator', () => {
     expect(formatSourceLabel({ name: 'raw', source_id: 'hafagpt_canonical_evaluation', page: 12,
@@ -22,5 +23,17 @@ describe('plain source labels shared with public reading', () => {
       label: 'Family manuscript (p. 0)', detail: 'not yet verified • Rota',
     });
     expect(formatSourceLabel({ name: '', page: null }).label).toBe('Reference source');
+  });
+});
+
+describe('citation names', () => {
+  it.each(['HåfaGPT canonical evaluation index', 'HåfaGPT canonical vocabulary ledger', 'canonical vocabulary ledger'])('names HåfaGPT\'s own list plainly: %s', name => {
+    expect(plainSourceName(name)).toBe('HåfaGPT vocabulary list');
+    expect(formatSourceLabel({ name } as SourceInfo).label).toBe('HåfaGPT vocabulary list');
+  });
+
+  it.each(['Archive: canonical ledger, volume 2', 'The canonical entry for Guam', 'Canonical index of Pacific texts'])('keeps another source\'s title: %s', name => {
+    expect(plainSourceName(name)).toBe(name);
+    expect(formatSourceLabel({ name } as SourceInfo).label).toBe(name);
   });
 });
