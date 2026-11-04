@@ -1099,7 +1099,9 @@ class DictionaryService:
         from pathlib import Path
         
         # Get day of year (1-365/366)
-        today = get_guam_date()
+        # One reading of the clock, so the date and server_time can't straddle Guam midnight.
+        served_at = datetime.now(timezone.utc)
+        today = get_guam_date(served_at)
         day_of_year = today.timetuple().tm_yday
         year = today.year
         
@@ -1188,7 +1190,7 @@ class DictionaryService:
                 },
                 "category": "Greetings & Basics",
                 "date": today.isoformat(),
-                "server_time": datetime.now(timezone.utc).isoformat(),
+                "server_time": served_at.isoformat(),
                 "trust": DEVELOPING_CORPUS_TRUST,
                 "audio_review_status": "unknown",
             }
@@ -1220,7 +1222,7 @@ class DictionaryService:
             "example": None,  # Manifest words don't have examples
             "category": word.get("category", "Vocabulary"),
             "date": today.isoformat(),
-            "server_time": datetime.now(timezone.utc).isoformat(),
+            "server_time": served_at.isoformat(),
             "trust": word["trust"],
             "audio_review_status": word["audio_review_status"],
         }

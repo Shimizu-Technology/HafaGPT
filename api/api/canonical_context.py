@@ -64,7 +64,9 @@ TOPIC_REQUEST = re.compile(
     r"\b(?:review|learn|teach|study|practice|quiz|drill|list|vocab(?:ulary)?|words|terms|names|describe)\b"
 )
 # "Review my essay about colors" asks about an English document, not the topic.
-ENGLISH_DOCUMENT = re.compile(r"\b(?:essay|paper|report|document|article|resume|email|letter|contract|proposal|thesis|code)s?\b")
+ENGLISH_DOCUMENT = re.compile(
+    r"\b(?:review|check|edit|proofread|read|fix)\b.*\b(?:essay|paper|report|document|article|resume|email|letter|contract|proposal|thesis|code)s?\b"
+)
 MAX_PASSAGE_DICTIONARY_MATCHES = 24
 MAX_PASSAGE_SPELLING_CANDIDATES = 2
 _PASSAGE_WORD_PATTERN = re.compile(r"[A-Za-zÀ-ÖØ-öø-ÿĀ-žÅåÑñ'’\-]+")

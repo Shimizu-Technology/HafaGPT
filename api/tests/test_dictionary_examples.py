@@ -248,3 +248,21 @@ def test_round5_a_noun_phrase_missing_its_noun_is_still_withheld(headword):
     pairs, _ = DictionaryService._parse_examples(SNAPSHOT[headword]['Other'], headword)
     assert all(pair['english'].split()[-2:] not in (['a', 'long'], ['a', 'small'], ['a', 'good'], ['a', 'nice'], ['a', 'big'], ['a', 'short'])
                for pair in pairs)
+
+
+def _english_is_complete(text):
+    from api.dictionary_example_validation import _complete_field, example_tokens
+    return _complete_field(text, example_tokens(text), english=True)
+
+
+@pytest.mark.parametrize('english', [
+    'We have a much faster car and a faster', 'He was looking for a tourists', 'This is an unfinished sentence...',
+])
+def test_cut_off_english_is_not_complete(english):
+    assert not _english_is_complete(english)
+
+
+@pytest.mark.parametrize('english', ['That guy is a troublemaker', 'Do not use bad jokes in front of the elders'])
+def test_a_sentence_ending_on_a_noun_is_complete(english):
+    assert _english_is_complete(english)
+

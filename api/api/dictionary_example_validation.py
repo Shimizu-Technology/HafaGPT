@@ -56,6 +56,10 @@ DEPENDENT_FINAL_WORDS = {
 # A bare number after "have", "has", "with" is a count whose noun was cut off.
 CUT_AFTER_NUMBER = frozenset('have has had with only about bought buy ate see saw got get need needs'.split())
 NUMBER_WORDS = frozenset('three four five six seven eight nine ten eleven twelve twenty thirty forty fifty hundred thousand'.split())
+COMPARATIVES = frozenset(
+    'faster slower greener shorter longer cleaner darker stronger weaker sweeter softer harder taller smaller '
+    'bigger older younger wider richer poorer warmer deeper higher lower louder quieter nicer easier happier'.split()
+)
 # Word endings that mark a noun, so "the committee", "a decision", "the
 # visitors" can end a sentence even when the noun is not in TERMINAL_NOUNS.
 # They count only for words outside COMMON_ENGLISH_WORDS: "the other", "a
@@ -131,7 +135,7 @@ def _complete_field(text: str, tokens: list[str], *, english: bool) -> bool:
         if len(tokens) > 1 and tokens[-2] in QUANTIFIERS and tokens[-1] in NOUN_NEEDING_ADJECTIVES:
             return False
         # A field that stops at a comma, colon, or dash has more to say.
-        if re.search(r'[,;:(\-\u2010-\u2015\u2026]\s*$', text):
+        if re.search(r'(?:[,;:(\-\u2010-\u2015\u2026]|\.\.)\s*$', text):
             return False
         if len(tokens) > 1 and tokens[-1] in DEPENDENT_FINAL_WORDS and tokens[-2] not in DEPENDENT_FINAL_WORDS[tokens[-1]]:
             return False
@@ -144,8 +148,11 @@ def _complete_field(text: str, tokens: list[str], *, english: bool) -> bool:
             return False
         if len(tokens) > 1 and tokens[-2] in {'a', 'an', 'the'}:
             original_last = WORD.findall(text)[-1]
+            # "a tourists" and "a faster" need more; "the elders" and "a joker" don't.
+            singular_plural = tokens[-2] in {'a', 'an'} and tokens[-1].endswith('s') and not tokens[-1].endswith('ss')
             if (tokens[-1] not in TERMINAL_NOUNS and not original_last[0].isupper()
-                    and not (tokens[-1] not in COMMON_ENGLISH_WORDS and NOUN_SUFFIX.search(tokens[-1]))):
+                    and (tokens[-1] in COMMON_ENGLISH_WORDS or tokens[-1] in COMPARATIVES or singular_plural
+                         or not NOUN_SUFFIX.search(tokens[-1]))):
                 return False
         # A bare auxiliary at the start needs question punctuation to establish
         # a complete clause. Missing subjects are common extraction gaps.

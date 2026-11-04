@@ -190,7 +190,9 @@ function learnServerClock(serverTime: string | undefined, sentAt: number, receiv
   if (!Number.isFinite(server)) return;
   // The reply was written about halfway through the round trip.
   const offset = server - (sentAt + receivedAt) / 2;
-  if (Math.abs(offset - serverClockOffsetMs) < SERVER_CLOCK_JITTER_MS) return;
+  // Ignore round-trip jitter, unless the difference decides which Guam day it is.
+  const changesDate = guamDateKey(Date.now() + offset) !== guamDateKey();
+  if (Math.abs(offset - serverClockOffsetMs) < SERVER_CLOCK_JITTER_MS && !changesDate) return;
   serverClockOffsetMs = offset;
   serverClockListeners.forEach((listener) => listener());
 }

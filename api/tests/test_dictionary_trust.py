@@ -303,7 +303,7 @@ def test_word_of_the_day_reports_the_api_clock_for_devices_that_are_off(monkeypa
 
     service = DictionaryService.__new__(DictionaryService)
     service._words_by_headword = {}
-    monkeypatch.setattr(dictionary_service, "get_guam_date", lambda: __import__("datetime").date(2026, 11, 4))
+    monkeypatch.setattr(dictionary_service, "get_guam_date", lambda moment=None: __import__("datetime").date(2026, 11, 4))
 
     before = datetime.now(timezone.utc)
     result = service.get_word_of_the_day()

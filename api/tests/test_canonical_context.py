@@ -418,3 +418,9 @@ def test_a_lookup_that_mentions_a_topic_does_not_get_the_whole_topic(query):
     from api.canonical_context import _normalize_for_match, _topic_entries
     assert _topic_entries(query, _normalize_for_match(query)) == []
 
+
+def test_a_study_request_that_mentions_a_document_keeps_the_topic():
+    from api.canonical_context import _normalize_for_match, _topic_entries
+    query = 'Teach me Chamorro colors so I can write an essay.'
+    assert _topic_entries(query, _normalize_for_match(query))
+

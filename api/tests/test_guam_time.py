@@ -15,7 +15,7 @@ def test_get_guam_date_rolls_over_at_guam_midnight():
 
 def test_word_of_the_day_uses_the_guam_calendar_date(monkeypatch):
     guam_today = date(2026, 8, 4)
-    monkeypatch.setattr(dictionary_service, "get_guam_date", lambda: guam_today)
+    monkeypatch.setattr(dictionary_service, "get_guam_date", lambda moment=None: guam_today)
 
     service = dictionary_service.DictionaryService.__new__(
         dictionary_service.DictionaryService
