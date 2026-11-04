@@ -368,7 +368,7 @@ export function HomePage() {
         {authLoadTimedOut ? (
           <main className="mx-auto max-w-5xl space-y-4 px-4 py-8 text-brown-950 dark:text-cream-100">
             <h1 className="text-xl font-bold">We could not check your sign-in</h1>
-            <p>Your account is still being checked. Try again or open the dictionary while you wait.</p>
+            <p>This is taking longer than usual. Try again, or open the dictionary while you wait.</p>
             <div className="flex flex-wrap gap-4">
               <button type="button" onClick={() => window.location.reload()} className="min-h-11 rounded-xl bg-action px-4 py-2 text-white hover:bg-action-hover">Try again</button>
               <Link to="/vocabulary" className="inline-flex min-h-11 items-center text-teal-700 dark:text-ocean-300">Open the dictionary</Link>
