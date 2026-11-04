@@ -18,7 +18,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.testclient import TestClient
 from starlette.concurrency import run_in_threadpool
 
-from api import conversations
+from api import conversations, provider_errors
 from api.atomic_regeneration import atomic_regeneration_events
 from api.sse import queue_sse_events
 
@@ -306,7 +306,9 @@ def deferred_stream_namespace(failure: str) -> dict[str, Any]:
         '_get_max_llm_retries': lambda: 1, 'optional_chat_completion_kwargs': lambda model: {},
         '_extract_stream_chunk_content_and_empty_choice': lambda chunk: (chunk.content or '', False),
         '_is_retryable_llm_error': lambda error: False, '_is_context_length_error': lambda error: False,
-        '_is_provider_credit_error': lambda error: False, 'log_conversation': Mock(),
+        'report_provider_failure': provider_errors.report_provider_failure, 'TurnFailed': provider_errors.TurnFailed,
+        'PROVIDER_INTERRUPTED_MESSAGE': provider_errors.PROVIDER_INTERRUPTED_MESSAGE,
+        'MalformedProviderResponse': provider_errors.MalformedProviderResponse, 'log_conversation': Mock(),
     }
 
 

@@ -97,6 +97,7 @@ from .chatbot_service import (
     is_message_cancelled, cleanup_cancelled_message, conversation_rows_to_history,
 )
 from .atomic_regeneration import atomic_regeneration_events
+from .provider_errors import TurnFailed, report_if_provider_error
 from . import chat_requests
 from . import tutor_reservations
 from . import conversations
@@ -1220,13 +1221,15 @@ async def chat(
         
     except HTTPException:
         raise
+    except TurnFailed as failure:
+        # The turn was not stored; the learner's message stays theirs to resend.
+        raise HTTPException(status_code=failure.status_code, detail=failure.message)
     except Exception as e:
-        # Log error with proper logging
-        logger.error(f"Error in chat endpoint: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
+        provider_failure = report_if_provider_error(e, source="chat_endpoint")
+        if provider_failure is not None:
+            raise HTTPException(status_code=503, detail=provider_failure.message)
+        logger.error("Error in chat endpoint: %s", type(e).__name__, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # --- Cancel Message Endpoint ---
@@ -1593,9 +1596,13 @@ async def chat_stream(
                             event_types.append("error" if event.get("saved") is False else event["type"])
                         event_queue.put(event)
                 except Exception as error:
-                    logger.error("Stream generation failed: %s", type(error).__name__, exc_info=True)
+                    provider_failure = report_if_provider_error(error, source="chat_stream_worker")
+                    if provider_failure is None:
+                        logger.error("Stream generation failed: %s", type(error).__name__, exc_info=True)
                     event_types.append("error")
-                    event_queue.put({"type": "error", "content": "HåfaGPT had a problem answering. Please try again."})
+                    event_queue.put({"type": "error", "retryable": True,
+                        "content": provider_failure.message if provider_failure
+                        else "HåfaGPT had a problem answering. Please try again."})
                 finally:
                     try:
                         if tracker is not None:
@@ -1647,8 +1654,11 @@ async def chat_stream(
                     user_id, logical_send_id, today=get_guam_date(), expected_token=dispatch_token)
             except Exception:
                 logger.warning("TUTOR_SEND pre_generation_release_failed")
-        logger.error(f"Error in stream endpoint: {str(e)}", exc_info=True)
-        raise HTTPException(status_code=500, detail=f"Internal server error: {str(e)}")
+        provider_failure = report_if_provider_error(e, source="chat_stream_endpoint")
+        if provider_failure is not None:
+            raise HTTPException(status_code=503, detail=provider_failure.message)
+        logger.error("Error in stream endpoint: %s", type(e).__name__, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 # --- Evaluation Endpoint (For Testing Only) ---
@@ -1751,12 +1761,11 @@ async def eval_chat(
         
     except HTTPException:
         raise
+    except TurnFailed as failure:
+        raise HTTPException(status_code=failure.status_code, detail=failure.message)
     except Exception as e:
-        logger.error(f"Error in eval chat endpoint: {str(e)}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Internal server error: {str(e)}"
-        )
+        logger.error("Error in eval chat endpoint: %s", type(e).__name__, exc_info=True)
+        raise HTTPException(status_code=500, detail="Internal server error")
 
 
 @app.post("/api/eval/conversations", response_model=ConversationResponse, tags=["Evaluation"])
@@ -3121,10 +3130,13 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
             detail="Failed to generate flashcards: Invalid response format"
         )
     except Exception as e:
-        logger.error(f"❌ Flashcard generation failed: {e}")
+        provider_failure = report_if_provider_error(e, source="flashcards")
+        if provider_failure is not None:
+            raise HTTPException(status_code=503, detail=provider_failure.message)
+        logger.error("❌ Flashcard generation failed: %s", type(e).__name__, exc_info=True)
         raise HTTPException(
             status_code=500,
-            detail=f"Flashcard generation failed: {str(e)}"
+            detail="Flashcard generation failed. Please try again."
         )
 
 
@@ -6569,9 +6581,14 @@ async def conversation_practice(request: ConversationPracticeRequest):
             grounding_status=grounding_status,
         )
         
+    except HTTPException:
+        raise
     except Exception as e:
-        logger.error(f"❌ [CONVERSATION PRACTICE] Error: {e}")
-        raise HTTPException(status_code=500, detail=str(e))
+        provider_failure = report_if_provider_error(e, source="conversation_practice")
+        if provider_failure is not None:
+            raise HTTPException(status_code=503, detail=provider_failure.message)
+        logger.error("❌ [CONVERSATION PRACTICE] Error: %s", type(e).__name__, exc_info=True)
+        raise HTTPException(status_code=500, detail="Conversation practice failed. Please try again.")
 
 
 # =============================================================================

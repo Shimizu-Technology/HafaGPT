@@ -4,6 +4,7 @@ import json
 from pathlib import Path
 from urllib.parse import urlsplit
 
+from api.provider_errors import is_stored_failure_marker
 from src.rag.conversation_retrieval import ConversationHistory
 
 
@@ -24,6 +25,7 @@ def _load_get_conversation_history():
         "urlsplit": urlsplit,
         "json": json,
         "ConversationHistory": ConversationHistory,
+        "is_stored_failure_marker": is_stored_failure_marker,
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
     return namespace["get_conversation_history"]
@@ -193,3 +195,19 @@ def test_history_replays_image_classified_by_metadata_without_filename_extension
     history = get_conversation_history("extensionless-photo")
 
     assert history[0]["content"][1]["image_url"]["url"] == image_url
+
+
+def test_failed_turns_saved_by_earlier_versions_are_not_fed_back_to_the_model():
+    get_conversation_history = _load_get_conversation_history()
+    rows = [
+        ("Asked during the outage", "[Error: Error code: 402 - Insufficient credits]", None, None, None),
+        ("Asked about a long thread", "[Token limit exceeded: 99999 tokens]", None, None, None),
+        ("Real question", "Real answer", None, None, None),
+    ]
+    fake_connection = FakeConnection(rows)
+
+    get_conversation_history.__globals__["_get_db_connection_with_retry"] = lambda: fake_connection
+    history = get_conversation_history("conv-123", max_messages=10)
+
+    assert [message["role"] for message in history] == ["user", "user", "user", "assistant"]
+    assert "Insufficient" not in str(history) and "Token limit" not in str(history)

@@ -22,6 +22,7 @@ from .models import (
     MessageResponse,
     SourceInfo
 )
+from .provider_errors import STORED_FAILURE_PLACEHOLDER, is_stored_failure_marker
 from .source_citations import format_source_citations
 from .upload_storage import delete_private_upload_references, resolve_private_upload_reference
 
@@ -499,7 +500,8 @@ def get_conversation_messages(conversation_id: str, user_id: Optional[str] = Non
                     id=row[0],
                     role="assistant",
                     pending_id=row[12] if user_id is not None else None,
-                    content=row[3],
+                    # Raw provider text saved by earlier versions never leaves the API.
+                    content=STORED_FAILURE_PLACEHOLDER if is_stored_failure_marker(row[3]) else row[3],
                     timestamp=row[4],
                     sources=sources,
                     used_rag=row[6],
