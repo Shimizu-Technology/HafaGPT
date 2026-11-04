@@ -20,6 +20,8 @@ it('never substitutes guest Home while a returning account takes longer than thr
   const tree = <QueryClientProvider client={new QueryClient()}><MemoryRouter><HomePage /></MemoryRouter></QueryClientProvider>;
   const view = render(tree);
   act(() => { vi.advanceTimersByTime(5000); });
+  expect(screen.getByRole('heading', { name: 'We could not check your sign-in' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   expect(screen.queryByText('Start learning free')).not.toBeInTheDocument();
   expect(screen.queryByText('Today\'s word')).not.toBeInTheDocument();
   auth.isLoaded = true;

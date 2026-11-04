@@ -420,7 +420,10 @@ test('returning profile still starts when persistent browser storage is unavaila
 
   await page.goto('/');
 
-  await expect(page.getByRole('heading', { name: 'Learn a little Chamorro every day.' })).toBeVisible({ timeout: 6_000 });
+  await expect(page.getByRole('heading', { name: 'We could not check your sign-in' })).toBeVisible({ timeout: 6_000 });
+  await expect(page.getByText('Start learning free')).toHaveCount(0);
+  await expect(page.getByRole('link', { name: 'Open the dictionary', exact: true })).toBeVisible();
+  await expect(page.getByRole('button', { name: 'Try again', exact: true })).toBeVisible();
   await expect(page.locator('[data-hafagpt-startup-status]')).toHaveCount(0);
   await expect(page.locator('html')).toHaveAttribute('data-hafagpt-booted', 'true');
 
