@@ -822,10 +822,13 @@ def upload_file_to_s3_background(
 # Rate limiting storage (in-memory - use Redis in production for multiple workers/servers)
 rate_limit_storage = defaultdict(list)
 tts_rate_limit_storage = defaultdict(list)
+practice_rate_limit_storage = defaultdict(list)
 RATE_LIMIT_REQUESTS = int(os.getenv("RATE_LIMIT_REQUESTS", "60"))  # requests
 RATE_LIMIT_WINDOW = int(os.getenv("RATE_LIMIT_WINDOW", "60"))  # seconds
 TTS_RATE_LIMIT_REQUESTS = int(os.getenv("TTS_RATE_LIMIT_REQUESTS", "20"))
 TTS_RATE_LIMIT_WINDOW = int(os.getenv("TTS_RATE_LIMIT_WINDOW", "60"))
+PRACTICE_RATE_LIMIT_REQUESTS = int(os.getenv("PRACTICE_RATE_LIMIT_REQUESTS", "12"))
+PRACTICE_RATE_LIMIT_WINDOW = int(os.getenv("PRACTICE_RATE_LIMIT_WINDOW", "60"))
 
 def _check_window_rate_limit(storage, client_key: str, max_requests: int, window_seconds: int) -> bool:
     now = datetime.now()
@@ -849,6 +852,16 @@ def check_rate_limit(client_ip: str) -> bool:
         client_ip,
         RATE_LIMIT_REQUESTS,
         RATE_LIMIT_WINDOW,
+    )
+
+
+def check_practice_rate_limit(user_id: str) -> bool:
+    """Per-account limit on practice turns, which spend shared provider credit."""
+    return _check_window_rate_limit(
+        practice_rate_limit_storage,
+        user_id,
+        PRACTICE_RATE_LIMIT_REQUESTS,
+        PRACTICE_RATE_LIMIT_WINDOW,
     )
 
 
@@ -3000,7 +3013,7 @@ Generate exactly {count} flashcards. Return only the JSON array, no other text."
                 back=card_data.get("back", ""),
                 pronunciation=card_data.get("pronunciation"),
                 example=card_data.get("example"),
-                category=card_data.get("category", topic)
+                category=card_data.get("category") or topic
             )
             flashcards.append(flashcard)
         
@@ -6400,13 +6413,20 @@ class ConversationPracticeResponse(BaseModel):
     practice_notice: str = "AI-generated practice; suggestions and scores are not authoritative language review."
 
 @app.post("/api/conversation-practice", response_model=ConversationPracticeResponse, tags=["Learning"])
-async def conversation_practice(request: ConversationPracticeRequest):
+async def conversation_practice(
+    request: ConversationPracticeRequest,
+    authorization: Optional[str] = Header(None),
+):
     """
     AI-powered conversation practice endpoint.
     
     The AI plays a character in a scenario and responds to user input in Chamorro,
     providing gentle feedback on the user's Chamorro usage.
     """
+    # Each turn spends shared provider credit, so it needs an account and a per-account limit.
+    user_id = await verify_user(authorization)
+    if not check_practice_rate_limit(user_id):
+        raise HTTPException(status_code=429, detail="You're sending messages quickly. Please wait a moment and try again.")
     try:
         from api.canonical_context import get_canonical_tutor_context
         from api.conversation_practice_models import validated_objective_evidence

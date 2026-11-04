@@ -3,7 +3,7 @@ import { MemoryRouter, Route, Routes } from 'react-router-dom';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { ConversationPractice } from './ConversationPractice';
 
-vi.mock('@clerk/clerk-react', () => ({ useUser: () => ({ isSignedIn: true, user: { id: 'practice-learner' } }) }));
+vi.mock('@clerk/clerk-react', () => ({ useAuth: () => ({ getToken: async () => 'practice-token' }), useUser: () => ({ isSignedIn: true, user: { id: 'practice-learner' } }) }));
 vi.mock('./PronunciationButton', () => ({ PronunciationButton: () => null }));
 vi.mock('./ContentTrustNote', () => ({ ContentTrustNote: () => <p>AI practice is not a proficiency grade.</p> }));
 vi.mock('./TTSDisclaimer', () => ({ TTSDisclaimer: () => null }));
@@ -34,6 +34,7 @@ describe('guided conversation continuity', () => {
     expect(screen.getByText(/AI-observed response/)).toBeInTheDocument();
     expect(screen.getAllByText('Try this goal next time')).toHaveLength(3);
     const secondRequest = JSON.parse(fetchMock.mock.calls[1][1]!.body as string);
+    expect(fetchMock.mock.calls[1][1]!.headers).toMatchObject({ Authorization: 'Bearer practice-token' });
     expect(secondRequest.conversation_history.filter((message: { role: string }) => message.role === 'user')).toHaveLength(0);
     await waitFor(() => expect(localStorage.getItem('hafagpt:practice:practice-learner:meeting-someone')).toContain('objectiveEvidence'));
     first.unmount();

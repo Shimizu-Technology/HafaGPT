@@ -3,7 +3,7 @@
 HåfaGPT serves Chamorro learners through a React web app and a FastAPI RAG tutor.
 This change replaces retiring generation routes while preserving tutor/photo
 behavior, embeddings, language content and published audio. The branch starts at
-c44b539 (PR #119). The implementation worker leaves review and merge to the lead.
+c44b539 (PR #119).
 No Render or other production setting is changed.
 
 Sources: repository AGENTS.md and README, actual endpoint implementations,
@@ -22,7 +22,7 @@ a Leon/Jerry product; the repository and Round 3 record supply current details.
 | 4. Env aliases | Independent optional feature settings resolve at import/startup. Invalid/empty aliases or missing OpenRouter credentials raise ModelConfigurationError. No production env change required. |
 | 5. Registry/rollback | Keep only gpt-5.6-luna, gpt-6-luna, gpt-6.1-terra. Established 5.6 Luna is the feature rollback. Remove DeepSeek, Gemini, GPT-4, Claude, Llama and Qwen runtime aliases. README updated. |
 | 6. Vision | Text-only chat configurations route images explicitly to 5.6 Luna or fail clearly. Vision-capable models keep their existing path. No Gemini/direct OpenAI fallback. |
-| 7. Summary | The helper condenses old conversation history and long documents. Old Gemini route is absent from OpenRouter catalog and returned HTTP 404 on a bounded English probe. Use openai/gpt-6-luna, reasoning none, no temperature; retain truncation on missing key/provider/empty response. Run blocking call off the event loop. |
+| 7. Summary | The `summarize_text` helper has no live caller; chat compacts history by truncating. Old Gemini route is absent from OpenRouter catalog and returned HTTP 404 on a bounded English probe. Use openai/gpt-6-luna, reasoning none, no temperature; retain truncation on missing key/provider/empty response. Run blocking call off the event loop. |
 | 8. Audit/defaults | Fix stale main.py CHAT_MODEL default and old comments. Leave gpt-4o tokenizer defaults: local tiktoken only, no model API call. Changing them could change budgets/retained evidence. Full model inventory linked below. |
 | 9. Speech | Remove OpenAI live fallback and new admin/batch generation. Keep historical candidates/static MP3s. ElevenLabs failure returns safe 503 for existing device fallback. No Realtime integration. |
 | Shared failures | Both features use shared friendly retry/alert handling, including SDK, billing, timeout and malformed/empty/truncated JSON failures. Model/source appear in alerts; provider text does not. Timeout 45 seconds, zero SDK retries, accommodating the observed 22-second outlier. |
@@ -98,7 +98,7 @@ remain historical.
 | Active name | Purpose |
 | --- | --- |
 | gpt-5.6-luna / openai/gpt-5.6-luna | Tutor/photos, explicit vision fallback and feature rollback. |
-| gpt-6-luna / openai/gpt-6-luna | Flashcards and fixed summarization; optional feature alias. |
+| gpt-6-luna / openai/gpt-6-luna | Flashcards and the `summarize_text` helper; optional feature alias. |
 | gpt-6.1-terra / openai/gpt-6.1-terra | Practice default; optional feature alias. |
 | text-embedding-3-small | Unchanged RAG embedding contract, corpus scripts and evaluator. |
 | gpt-4o | Local tokenizer defaults only; historical benchmark/test fixtures. |
@@ -117,5 +117,4 @@ alias/provider ID and file. Benchmark headers now explicitly mark this history.
 Rollback either feature by setting its own alias to gpt-5.6-luna and restarting.
 Leave CHAT_MODEL=gpt-5.6-luna to preserve photo routing. No environment change is
 needed for deployment. A code rollback would restore retiring routes, so is not
-the ongoing rollback strategy. The lead reviews/merges; the worker retains the
-PR/worktree and cleans owned runtime resources.
+the ongoing rollback strategy.

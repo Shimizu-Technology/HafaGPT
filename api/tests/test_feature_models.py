@@ -155,7 +155,11 @@ def test_flashcard_endpoint_provider_failure(monkeypatch):
     assert raised.value.detail == provider_errors.PROVIDER_RETRY_MESSAGE
 
 
-def practice_endpoint(monkeypatch, c):
+async def _signed_in(_authorization):
+    return 'practice-learner'
+
+
+def practice_endpoint(monkeypatch, c, verify_user=None, rate_limit=None):
     import sys
     from pydantic import BaseModel, Field
     from typing import Any, Dict, List
@@ -175,7 +179,8 @@ def practice_endpoint(monkeypatch, c):
               practice_llm=c, PRACTICE_MODEL_ID='openai/gpt-6.1-terra', feature_json=feature_json,
               HTTPException=HTTPException, logger=logging.getLogger(__name__),
               report_if_provider_error=provider_errors.report_if_provider_error,
-              asyncio=asyncio, os=os, json=json)
+              asyncio=asyncio, os=os, json=json, Header=lambda default=None: default,
+              verify_user=verify_user or _signed_in, check_practice_rate_limit=rate_limit or (lambda _: True))
     tree = ast.parse((ROOT / 'api/main.py').read_text())
     response = next(n for n in tree.body if isinstance(n, ast.ClassDef) and n.name == 'ConversationPracticeResponse')
     exec(compile(ast.Module(body=[response], type_ignores=[]), 'main.py', 'exec'), ns)
@@ -255,3 +260,33 @@ def test_summary_uses_luna_and_keeps_truncation_fallback(monkeypatch, failure):
     kw = c.chat.completions.create.call_args.kwargs
     assert kw['model'] == 'openai/gpt-6-luna'
     assert kw['extra_body'] == {'reasoning': {'effort': 'none'}} and 'temperature' not in kw
+
+
+def test_practice_needs_an_account(monkeypatch):
+    from api.conversation_practice_models import ConversationPracticeRequest
+    from test_conversation_practice_validation import valid_payload
+
+    async def rejected(_authorization):
+        raise HTTPException(status_code=401, detail='Authentication required')
+
+    c = client('{}')
+    with pytest.raises(HTTPException) as caught:
+        asyncio.run(practice_endpoint(monkeypatch, c, verify_user=rejected)(ConversationPracticeRequest(**valid_payload())))
+    assert caught.value.status_code == 401
+    c.chat.completions.create.assert_not_called()
+
+
+def test_practice_stops_a_fast_account_before_spending(monkeypatch):
+    from api.conversation_practice_models import ConversationPracticeRequest
+    from test_conversation_practice_validation import valid_payload
+
+    c = client('{}')
+    with pytest.raises(HTTPException) as caught:
+        asyncio.run(practice_endpoint(monkeypatch, c, rate_limit=lambda _: False)(ConversationPracticeRequest(**valid_payload())))
+    assert caught.value.status_code == 429
+    c.chat.completions.create.assert_not_called()
+
+
+def test_a_null_category_falls_back_to_the_topic():
+    source = (ROOT / 'api/main.py').read_text()
+    assert 'category=card_data.get("category") or topic' in source

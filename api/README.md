@@ -144,8 +144,8 @@ established tutor/photo route. The old DeepSeek rollback is removed. A text-only
 chat model routes images explicitly to `gpt-5.6-luna`, or fails clearly if that
 route is unavailable; vision-capable chat models keep their existing image path.
 
-History/document summaries use `openai/gpt-6-luna` with reasoning `none` and keep
-the existing truncation fallback. `gpt-4o` in token-manager defaults selects only
+The `summarize_text` helper uses `openai/gpt-6-luna` with reasoning `none` and keeps
+its truncation fallback. Live chat doesn't call it; it compacts history by truncating. `gpt-4o` in token-manager defaults selects only
 a local tiktoken encoding; it makes no provider call.
 
 Live and newly generated admin speech use ElevenLabs only. If it is unavailable,
