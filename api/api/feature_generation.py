@@ -29,6 +29,15 @@ async def feature_json(client, model: str, messages: list, *, max_tokens: int,
         data = json.loads(text.strip())
         if not isinstance(data, dict if json_object else list):
             raise MalformedProviderResponse('Unexpected feature JSON shape')
+        if json_object:
+            # Keep malformed provider fields out of Pydantic's error text in the
+            # endpoint logs. Empty strings remain valid practice replies.
+            for field, expected in (('chamorro_response', str), ('english_translation', str),
+                                    ('is_complete', bool)):
+                if field in data and not isinstance(data[field], expected):
+                    raise MalformedProviderResponse('Unexpected practice fields')
+            if data.get('feedback') is not None and not isinstance(data['feedback'], dict):
+                raise MalformedProviderResponse('Unexpected practice feedback')
         if not json_object and any(not isinstance(card, dict) or any(
                 value is not None and not isinstance(value, str) for value in card.values()
         ) for card in data):

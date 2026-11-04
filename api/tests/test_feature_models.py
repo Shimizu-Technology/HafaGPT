@@ -209,6 +209,21 @@ def test_practice_endpoint_provider_failure(monkeypatch):
     assert raised.value.detail == provider_errors.PROVIDER_RETRY_MESSAGE
 
 
+@pytest.mark.parametrize('fields', [
+    {'chamorro_response': None}, {'english_translation': ['private provider text']},
+    {'feedback': 'private provider text'}, {'is_complete': None},
+])
+def test_practice_malformed_fields_are_provider_failures(monkeypatch, fields, caplog):
+    from api.conversation_practice_models import ConversationPracticeRequest
+    from test_conversation_practice_validation import valid_payload
+    c = client(json.dumps(fields))
+    with pytest.raises(HTTPException) as raised:
+        asyncio.run(practice_endpoint(monkeypatch, c)(ConversationPracticeRequest(**valid_payload())))
+    assert raised.value.status_code == 503
+    assert raised.value.detail == provider_errors.PROVIDER_RETRY_MESSAGE
+    assert 'private provider text' not in caplog.text
+
+
 def test_vision_capable_chat_path_is_unchanged_and_text_only_fallback_is_explicit(monkeypatch):
     ns = runtime(monkeypatch)
     tree = ast.parse((ROOT / 'api/chatbot_service.py').read_text())

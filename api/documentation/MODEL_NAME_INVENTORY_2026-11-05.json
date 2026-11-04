@@ -127,7 +127,6 @@
       "api/documentation/FRONTIER_MODEL_RESEARCH_2026-08-08.md"
     ],
     "deepseek-v3": [
-      "api/.env.example",
       "api/documentation/MODEL_SWITCHING_GUIDE.md",
       "api/documentation/RELEASE_READINESS_2026-08-15.md",
       "api/documentation/SETUP_GUIDE.md",
@@ -336,11 +335,13 @@
       "api/evaluation/model_routing_recommendation_2026-08-08.json"
     ],
     "gpt-6-luna": [
+      "api/.env.example",
       "api/README.md",
       "api/api/chatbot_service.py",
       "api/tests/test_feature_models.py"
     ],
     "gpt-6.1-terra": [
+      "api/.env.example",
       "api/README.md",
       "api/api/chatbot_service.py",
       "api/tests/test_feature_models.py"

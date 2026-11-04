@@ -64,13 +64,13 @@ disabled. No user/conversation records or production database are used.
 | Selection/startup | Unit tests pass for defaults, independent overrides, empty/typo/whitespace aliases and missing provider keys. |
 | Citations/cards | Source names, page suffixes, empty required fields, apostrophes/å copied from existing fixtures, and legitimate brackets are covered. |
 | Practice | JSON parsing, empty Chamorro, rejected invented objective evidence and suppressed final scores pass. |
-| Failures | Both endpoints and shared boundary tested for safe retry text and alerts; 402, timeout, generic SDK errors, malformed/empty/wrong-shape responses covered. |
-| Regression sensitivity | New feature suite against pre-change runtime/main/token-manager sources: 15 fail/20 pass. Implemented suite: 35 pass. |
+| Failures | Both endpoints and shared boundary tested for safe retry text and alerts; 402, timeout, generic SDK errors, malformed/empty/wrong-shape responses and invalid practice field types covered. |
+| Regression sensitivity | New feature suite against pre-change runtime/main/token-manager sources: 15 fail/20 pass. Implemented suite: 39 pass, including four malformed-field regressions that fail against the initial PR implementation. |
 | Real calls | Three flashcard endpoint calls (greetings, food, numbers), three practice calls (meeting, food, directions), one synthetic English summary. Terra accepts JSON object output with reasoning none. No returned language was edited or graded. |
 | Timing | Practice calls: 12.709, 3.369, 3.416 seconds; summary 2.093 seconds. All calls complete inside 45 seconds. |
 | Retrieval | 172/172, zero errors, recall 122/131. No new embeddings/paid tutor calls. All 172 evidence, retained-evidence, query hashes and headwords/concepts match model-compare/r3/retrieval-only. |
 | Browser | One incognito synthetic-fixture session at 390×844 and 1440×900. Admin offers only ElevenLabs v4/Multilingual v2; changing models preserves valid input choices. Live 503 recovers through device speech to idle; no horizontal overflow. Unsupported device speech is also unit-tested. |
-| Repository gate | Serial scripts/check.sh passes: 1834 backend passes/40 environment skips; 140 web files/935 tests; lint, typecheck, canonical/content/routing checks, audio integrity and build budgets pass. Final-source rerun is recorded with the PR. |
+| Repository gate | Serial scripts/check.sh passes: 1838 backend passes/40 environment skips; 140 web files/935 tests; lint, typecheck, canonical/content/routing checks, audio integrity and build budgets pass. Final-source rerun is recorded with the PR. |
 | Content integrity | Audio manifests stay byte-identical and unchanged from base. No generated audio or Chamorro source content is modified. |
 
 Paid checks reconcile from $15.935321919 to $15.927691919: **$0.007630**,
