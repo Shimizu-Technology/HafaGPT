@@ -1,3 +1,5 @@
+import pytest
+
 from src.rag.school_context import (
     GENERAL_DOCUMENT_ANALYSIS_GUIDANCE,
     IMAGE_TRANSLATION_GUIDANCE,
@@ -320,8 +322,42 @@ def test_a_pasted_notice_without_school_framing_resolves_its_acronym() -> None:
     )
 
 
-def test_a_school_message_can_sign_off_at_the_end_of_a_line() -> None:
-    assert is_school_announcement_context("Please remind parents about Friday. Esta, SYM!")
+@pytest.mark.parametrize("message", [
+    "Please remind parents about Friday. Esta, SYM!",
+    "Students should bring chairs.\nsym🧡",
+    "Students should bring chairs.\nSyM",
+    "Students should bring chairs.\nS.Y.M.",
+    "Students should bring chairs.\r\nSYM🧡\r\n",
+    "MSY! Students should bring chairs.",
+    "msy para i famagu'on",
+])
+def test_a_school_message_can_open_or_sign_off_with_its_acronym(message: str) -> None:
+    assert is_school_announcement_context(message)
+
+
+@pytest.mark.parametrize("message", [
+    "SYM: symptom abbreviation for a parent",
+    "SYM stock rose; my parent owns shares.",
+    "My class code:\nSYM = 42",
+    "My class word list:\nSYM\nMSY",
+    "My class word list:\nMSY\nSYM",
+    "Vocabulary for my students:\n- MSY\n- SYM",
+    "My class word list:\nSYM",
+])
+def test_other_uses_of_the_letters_are_not_school_messages(message: str) -> None:
+    assert not is_school_announcement_context(message)
+    assert school_context_card_ids(message, school_announcement=False) == ()
+
+
+def test_a_mention_of_a_student_keeps_a_chat_exchange_in_dialogue_handling() -> None:
+    exchange = (
+        "This exchange mentions a student.\n"
+        "MSY! Kao modan isla pat kulot kåhet na polo på'go?\n"
+        "MSY! Trabiha. Kada uttimo na Betnes. Kulot kåhet på'go.\n"
+        "Esta, SYM!"
+    )
+    assert contextual_school_exchange_card_ids(exchange)
+    assert not is_school_announcement_context(exchange)
 
 
 def test_talking_about_an_acronym_is_not_a_school_message() -> None:

@@ -42,13 +42,16 @@ _CHAMORRO_EXCHANGE_MARKER_PATTERN = re.compile(
 # A compact acronym used as a message's own greeting or sign-off, rather than a
 # word being asked or talked about: "SYM para i ...", "SYM🧡", "Esta, SYM!".
 _ACRONYM = r"(?:S[.\t ·_-]{0,3}Y[.\t ·_-]{0,3}M|M[.\t ·_-]{0,3}S[.\t ·_-]{0,3}Y)"
-_ACRONYM_IN_MESSAGE_POSITION_PATTERNS = (
-    re.compile(
-        rf"^[^\w\n]*{_ACRONYM}(?!\w)(?!\s+(?:is|are|was|means?|stands?|does)\b)[^\n?]*$",
-        re.MULTILINE,
-    ),
-    re.compile(rf"(?<![\w?])(?:^|\s){_ACRONYM}[^\w\n?]*$", re.MULTILINE),
+_ACRONYM_GREETING_LINE = re.compile(
+    rf"^[^\w\n]*{_ACRONYM}(?:\s*!|\s+(?:para|familia)\b)",
+    re.IGNORECASE | re.MULTILINE,
 )
+_SYM = r"S[.\t ·_-]{0,3}Y[.\t ·_-]{0,3}M"
+_SYM_SIGN_OFF_LINE = re.compile(
+    rf"^[^\w]*(?:.*[.!]\s+)?(?:esta\s*,?\s*)?{_SYM}[^\w?]*$",
+    re.IGNORECASE,
+)
+_BARE_ACRONYM_LINE = re.compile(rf"^[^\w]*{_ACRONYM}[^\w]*$", re.IGNORECASE)
 
 
 _EXPLICIT_SCHOOL_MESSAGE_PATTERNS = (
@@ -117,6 +120,25 @@ _OPERATIONAL_PATTERNS = (
 )
 
 
+def _uses_acronym_as_greeting_or_sign_off(text: str) -> bool:
+    """True for "SYM para i ...", "MSY!", or a closing "SYM" that ends the message.
+
+    A closing acronym after a colon or another bare acronym is a list, not a
+    sign-off. A structured chat exchange keeps its own dialogue handling.
+    """
+
+    if contextual_school_exchange_card_ids(text):
+        return False
+    if _ACRONYM_GREETING_LINE.search(text):
+        return True
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
+    if not lines or not _SYM_SIGN_OFF_LINE.match(lines[-1]):
+        return False
+    return len(lines) == 1 or not (
+        lines[-2].endswith(":") or _BARE_ACRONYM_LINE.match(lines[-2])
+    )
+
+
 def is_school_announcement_context(
     message: str,
     *,
@@ -141,9 +163,7 @@ def is_school_announcement_context(
     if has_school_identity and has_operational_content:
         return True
 
-    return has_school_identity and any(
-        pattern.search(text) for pattern in _ACRONYM_IN_MESSAGE_POSITION_PATTERNS
-    )
+    return has_school_identity and _uses_acronym_as_greeting_or_sign_off(text)
 
 
 def school_context_card_ids(
