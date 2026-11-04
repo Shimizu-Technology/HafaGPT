@@ -55,7 +55,7 @@ def audit(snapshot):
         validation.ENGLISH_MIN_SHARE, validation.CHAMORRO_MAX_ENGLISH_SHARE, validation.REQUIRE_HEADWORD = chosen
     parsed = parse_snapshot(snapshot)
     report = {
-        'review_round': 4,
+        'review_round': 5,
         'scope': 'Revised snapshot; displayed pairs capped at 3 per entry; first rejected pair stops the block',
         'entries': len(snapshot),
         'snapshot_sha256': hashlib.sha256(SNAPSHOT_PATH.read_bytes()).hexdigest(),
