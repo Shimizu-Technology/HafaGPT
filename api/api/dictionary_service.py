@@ -14,6 +14,7 @@ from functools import lru_cache
 from typing import Optional
 from pathlib import Path
 
+from .source_citations import HAFAGPT_LIST_NAME
 from .time_utils import get_guam_date
 from .dictionary_glosses import definition_gloss_segments, format_definition
 from .dictionary_example_validation import supported_example_pair
@@ -147,20 +148,20 @@ def _canonical_trust(entry: dict) -> dict:
         "level": "source_backed" if is_source_backed else "developing",
         "label": "Source-backed" if is_source_backed else "Developing material",
         "summary": (
-            "This word matches a HåfaGPT canonical entry supported by named references."
+            "This word matches an entry in the HåfaGPT vocabulary list, supported by named references."
             if is_source_backed
-            else "This word is recorded in HåfaGPT's canonical layer with a concern that still needs resolution."
+            else "This word is recorded in the HåfaGPT vocabulary list with a concern that still needs resolution."
         ),
         "sources": [{"name": name} for name in source_names[:3]]
-        or [{"name": "HåfaGPT canonical vocabulary"}],
+        or [{"name": HAFAGPT_LIST_NAME}],
         "region": "Guåhan and CNMI source lineage",
         "orthography": "Entry-specific",
         # Canonical/source verification is not the same thing as an independent
         # educator or native-speaker review of the learner-facing material.
         "independentlyReviewed": False,
         "notes": [
-            f"Canonical confidence: {entry.get('confidence', 'unknown')}.",
-            "The canonical entry is source-verified; independent educator or native-speaker review has not been completed."
+            f"Vocabulary list confidence: {entry.get('confidence', 'unknown')}.",
+            "The vocabulary list entry is source-verified; independent educator or native-speaker review has not been completed."
             if review_status == "verified"
             else "Independent educator or native-speaker review has not been completed.",
         ],

@@ -1,6 +1,12 @@
 import pytest
 
-from api.source_citations import format_source_citations
+from api.source_citations import (
+    HAFAGPT_LIST_NAME,
+    HAFAGPT_LIST_SOURCE_ID,
+    LEGACY_HAFAGPT_LIST_NAMES,
+    format_source_citations,
+)
+from src.rag.source_policy import get_registered_source
 from api.models import SourceInfo
 
 
@@ -90,3 +96,16 @@ def test_unavailable_lessons_keep_attribution_without_a_broken_link() -> None:
                                          'url': 'http://www.chamoru.info/language-lessons/'}])[0]
     assert citation['name'] == 'Chamoru.info language lessons'
     assert citation['url'] is None
+
+
+def test_registry_names_hafagpts_own_list_plainly() -> None:
+    assert get_registered_source(HAFAGPT_LIST_SOURCE_ID)["name"] == HAFAGPT_LIST_NAME == "HåfaGPT vocabulary list"
+
+
+@pytest.mark.parametrize("name", [HAFAGPT_LIST_NAME, *sorted(LEGACY_HAFAGPT_LIST_NAMES)])
+def test_current_and_saved_list_names_resolve_to_the_governed_source(name: str) -> None:
+    citation = format_source_citations([(name, None)])[0]
+
+    assert citation["source_id"] == HAFAGPT_LIST_SOURCE_ID
+    assert citation["name"] == HAFAGPT_LIST_NAME
+    assert citation["usage_mode"] == "evaluation_only"

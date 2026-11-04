@@ -98,6 +98,18 @@ def test_source_verification_does_not_claim_independent_human_review():
     assert "source-verified" in trust["notes"][1]
 
 
+def test_trust_text_names_the_list_plainly_without_internal_terms():
+    """A parent should read 'vocabulary list', not 'canonical entry' or 'ledger'."""
+
+    for status in ("verified", "needs_review"):
+        trust = _canonical_trust({"review_status": status, "confidence": "high", "source_citations": []})
+        text = " ".join([trust["summary"], *trust["notes"], *(source["name"] for source in trust["sources"])])
+
+        assert "HåfaGPT vocabulary list" in text
+        assert "canonical" not in text.lower()
+        assert "ledger" not in text.lower()
+
+
 def test_dictionary_learning_surfaces_include_honest_trust_metadata():
     """Expose trust and audio review status throughout dictionary activities."""
 

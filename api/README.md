@@ -126,6 +126,11 @@ AWS_S3_BUCKET=...
 CHAT_MODEL=gpt-5.6-luna         # Main tutor; deepseek-v3 is the rollback control
 ```
 
+The API refuses to start when `CHAT_MODEL` is not a configured alias or the key
+for its provider is missing (`OPENROUTER_API_KEY` for `gpt-5.6-luna`). It never
+reroutes tutor traffic to another model. On Render a failed start fails the
+deploy's health check, so the previous deploy keeps serving.
+
 ---
 
 ## 🧪 API Endpoints

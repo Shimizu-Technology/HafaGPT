@@ -20,7 +20,7 @@ PASSAGE_TRANSLATION_GUIDANCE = """
 TRANSLATION REQUEST (phrase, sentence, or passage):
 - Put the complete natural translation first. References corroborate it; they do
   not need to contain every inflected word or connective.
-- Where a supplied dictionary or canonical entry covers a concept, use that word
+- Where a supplied dictionary or HåfaGPT vocabulary list entry covers a concept, use that word
   (or the form the grammar requires) rather than a different word from memory,
   and cite it. A match for some words does not verify the whole translation.
 - Mark only a materially uncertain word or construction, inline where it occurs,

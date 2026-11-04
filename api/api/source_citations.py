@@ -9,8 +9,21 @@ from src.rag.source_reviews import build_registered_source_citation
 from src.rag.source_policy import get_registered_source
 
 
+HAFAGPT_LIST_SOURCE_ID = "hafagpt_canonical_evaluation"
+# The learner-facing name of HåfaGPT's own vocabulary list. It must equal the
+# registry name; tests pin that. Older names stay readable because saved
+# conversations and tuples already stored with them still resolve here.
+HAFAGPT_LIST_NAME = "HåfaGPT vocabulary list"
+LEGACY_HAFAGPT_LIST_NAMES = frozenset(
+    {
+        "HåfaGPT canonical vocabulary",
+        "HåfaGPT canonical vocabulary ledger",
+        "HåfaGPT canonical evaluation index",
+    }
+)
 LEGACY_SOURCE_IDS = {
-    "HåfaGPT canonical vocabulary": "hafagpt_canonical_evaluation",
+    HAFAGPT_LIST_NAME: HAFAGPT_LIST_SOURCE_ID,
+    **{name: HAFAGPT_LIST_SOURCE_ID for name in LEGACY_HAFAGPT_LIST_NAMES},
     "Chamoru.info dictionary": "chamoru_info_dictionary",
     "Topping, Ogo, and Dungca dictionary": "topping_ogo_dungca_1975",
     "Revised and updated Chamorro dictionary": "local_revised_dictionary_snapshot",

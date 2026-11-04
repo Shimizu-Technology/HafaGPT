@@ -103,3 +103,82 @@ def test_photo_streaming_requires_explicit_server_opt_in(monkeypatch, configured
         monkeypatch.setenv('HAFAGPT_PHOTO_TRANSLATION_STREAMING_ENABLED', configured)
     helpers = _load_request_helpers(('photo_translation_streaming_enabled',))
     assert helpers['photo_translation_streaming_enabled']() is enabled
+
+
+class _FakeOpenAI:
+    def __init__(self, **kwargs) -> None:
+        self.kwargs = kwargs
+
+
+def _llm_client_loader(monkeypatch, chat_model: str, **env: str | None):
+    for name in ("OPENAI_API_KEY", "OPENROUTER_API_KEY", "OPENAI_API_BASE"):
+        monkeypatch.delenv(name, raising=False)
+    for name, value in env.items():
+        if value is not None:
+            monkeypatch.setenv(name, value)
+    module = ast.parse(CHATBOT_SOURCE)
+    nodes = [
+        node
+        for node in module.body
+        if (isinstance(node, ast.FunctionDef) and node.name == "get_llm_client")
+        or (isinstance(node, ast.ClassDef) and node.name == "ModelConfigurationError")
+    ]
+    namespace = {
+        "MODEL_CONFIG": {
+            "gpt-4o": {"provider": "openai", "model_id": "gpt-4o"},
+            "gpt-5.6-luna": {"provider": "openrouter", "model_id": "openai/gpt-5.6-luna"},
+            "odd": {"provider": "carrier-pigeon", "model_id": "odd"},
+        },
+        "CHAT_MODEL": chat_model,
+        "OpenAI": _FakeOpenAI,
+        "os": os,
+    }
+    exec(compile(ast.Module(body=nodes, type_ignores=[]), "chatbot_service.py", "exec"), namespace)
+    return namespace
+
+
+def test_configured_openrouter_model_keeps_its_route(monkeypatch) -> None:
+    namespace = _llm_client_loader(monkeypatch, "gpt-5.6-luna", OPENROUTER_API_KEY="or-key")
+
+    client, model_id = namespace["get_llm_client"]()
+
+    assert model_id == "openai/gpt-5.6-luna"
+    assert client.kwargs == {"api_key": "or-key", "base_url": "https://openrouter.ai/api/v1"}
+
+
+def test_configured_openai_model_keeps_its_route(monkeypatch) -> None:
+    namespace = _llm_client_loader(monkeypatch, "gpt-4o", OPENAI_API_KEY="oa-key")
+
+    client, model_id = namespace["get_llm_client"]()
+
+    assert model_id == "gpt-4o"
+    assert client.kwargs["api_key"] == "oa-key"
+
+
+@pytest.mark.parametrize("typo", ["gpt-5.6-lunna", "", "gpt-5.6-luna "])
+def test_unknown_chat_model_stops_startup_instead_of_routing_to_gpt_4o(monkeypatch, typo) -> None:
+    # Even with both keys present the old code returned gpt-4o for a typo.
+    namespace = _llm_client_loader(
+        monkeypatch, typo, OPENAI_API_KEY="oa-key", OPENROUTER_API_KEY="or-key"
+    )
+
+    with pytest.raises(namespace["ModelConfigurationError"]) as error:
+        namespace["get_llm_client"]()
+
+    assert repr(typo) in str(error.value)
+    assert "gpt-5.6-luna" in str(error.value)
+    assert "oa-key" not in str(error.value) and "or-key" not in str(error.value)
+
+
+def test_missing_openrouter_key_stops_startup_instead_of_routing_to_gpt_4o(monkeypatch) -> None:
+    namespace = _llm_client_loader(monkeypatch, "gpt-5.6-luna", OPENAI_API_KEY="oa-key")
+
+    with pytest.raises(namespace["ModelConfigurationError"], match="OPENROUTER_API_KEY"):
+        namespace["get_llm_client"]()
+
+
+def test_missing_openai_key_and_unknown_provider_are_named(monkeypatch) -> None:
+    with pytest.raises(Exception, match="OPENAI_API_KEY"):
+        _llm_client_loader(monkeypatch, "gpt-4o")["get_llm_client"]()
+    with pytest.raises(Exception, match="unsupported provider"):
+        _llm_client_loader(monkeypatch, "odd", OPENAI_API_KEY="oa-key")["get_llm_client"]()
