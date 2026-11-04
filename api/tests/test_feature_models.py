@@ -345,3 +345,15 @@ def test_a_practice_reply_shows_no_source_labels(monkeypatch):
     assert 'vocabulary list' not in json.dumps(result.feedback, ensure_ascii=False)
     assert result.feedback['corrections'] == ['Try [a phrase]']
 
+
+@pytest.mark.parametrize('source', [{'name': 'Lesson Notes'}, ('Lesson Notes', None), ['Lesson Notes', 4]])
+def test_a_label_from_this_turns_sources_is_removed(source):
+    assert strip_reply_citations({'tip': 'Say it slowly [Lesson Notes].'}, [source]) == {'tip': 'Say it slowly.'}
+
+
+def test_the_practice_prompt_keeps_objectives_exact():
+    from api.conversation_practice_models import build_conversation_system_prompt
+    source = (ROOT / 'api/conversation_practice_models.py').read_text()
+    assert 'Copy each objective exactly' in source
+    assert callable(build_conversation_system_prompt)
+

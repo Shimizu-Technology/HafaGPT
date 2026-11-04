@@ -58,11 +58,18 @@ async def feature_json(client: Any, model: str, messages: list, *, max_tokens: i
         raise HTTPException(status_code=503, detail=failure.message) from None
 
 
-def strip_card_citations(text: str | None, sources: list[dict]) -> str | None:
+def _source_name(source: Any) -> str | None:
+    """Name from a citation dictionary or the (name, page) tuple that grounding returns."""
+    if isinstance(source, dict):
+        return source.get('name')
+    return source[0] if isinstance(source, (tuple, list)) and source else None
+
+
+def strip_card_citations(text: str | None, sources: list[Any]) -> str | None:
     """Remove labels that name a known source; preserve other brackets and language bytes."""
     if text is None:
         return None
-    names = KNOWN_SOURCE_NAMES | {source['name'].casefold() for source in sources if source.get('name')}
+    names = KNOWN_SOURCE_NAMES | {name.casefold() for name in map(_source_name, sources) if name}
 
     def citation(match: re.Match[str]) -> str:
         labels = [
@@ -76,7 +83,7 @@ def strip_card_citations(text: str | None, sources: list[dict]) -> str | None:
     return re.sub(r'[ \t]*[\[(]([^\[\]()\n]+)[\])]', citation, text).strip()
 
 
-def strip_reply_citations(value: Any, sources: list[dict]) -> Any:
+def strip_reply_citations(value: Any, sources: list[Any]) -> Any:
     """Remove source labels from every string in a practice reply field."""
     if isinstance(value, str):
         return strip_card_citations(value, sources)

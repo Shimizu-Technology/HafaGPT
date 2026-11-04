@@ -6470,9 +6470,9 @@ async def conversation_practice(
 
         evidence = validated_objective_evidence(response_data, request)
         return ConversationPracticeResponse(
-            chamorro_response=strip_reply_citations(response_data.get("chamorro_response", ""), []),
-            english_translation=strip_reply_citations(response_data.get("english_translation", ""), []),
-            feedback=strip_reply_citations(response_data.get("feedback"), []),
+            chamorro_response=strip_reply_citations(response_data.get("chamorro_response", ""), canonical_sources),
+            english_translation=strip_reply_citations(response_data.get("english_translation", ""), canonical_sources),
+            feedback=strip_reply_citations(response_data.get("feedback"), canonical_sources),
             objectives_completed=[item["objective"] for item in evidence],
             objective_evidence=evidence,
             is_complete=response_data.get("is_complete", False),
