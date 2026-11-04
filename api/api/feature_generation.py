@@ -74,3 +74,15 @@ def strip_card_citations(text: str | None, sources: list[dict]) -> str | None:
     # Consume only horizontal whitespace immediately before a removed citation.
     # Do not normalize spelling, punctuation, apostrophes, or interior whitespace.
     return re.sub(r'[ \t]*[\[(]([^\[\]()\n]+)[\])]', citation, text).strip()
+
+
+def strip_reply_citations(value: Any, sources: list[dict]) -> Any:
+    """Remove source labels from every string in a practice reply field."""
+    if isinstance(value, str):
+        return strip_card_citations(value, sources)
+    if isinstance(value, dict):
+        return {key: strip_reply_citations(item, sources) for key, item in value.items()}
+    if isinstance(value, list):
+        return [strip_reply_citations(item, sources) for item in value]
+    return value
+

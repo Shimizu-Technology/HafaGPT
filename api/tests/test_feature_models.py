@@ -14,7 +14,7 @@ import pytest
 from fastapi import HTTPException
 
 from api import provider_errors
-from api.feature_generation import feature_json, strip_card_citations
+from api.feature_generation import feature_json, strip_card_citations, strip_reply_citations
 
 ROOT = Path(__file__).parents[1]
 
@@ -182,6 +182,7 @@ def practice_endpoint(monkeypatch, c, verify_user=None, rate_limit=None):
               grounding_status_from_sources=grounding_status_from_sources,
               build_conversation_system_prompt=build_conversation_system_prompt,
               practice_llm=c, PRACTICE_MODEL_ID='openai/gpt-6.1-terra', feature_json=feature_json,
+              strip_reply_citations=strip_reply_citations,
               HTTPException=HTTPException, logger=logging.getLogger(__name__),
               report_if_provider_error=provider_errors.report_if_provider_error,
               asyncio=asyncio, os=os, json=json, Header=lambda default=None: default,
@@ -327,4 +328,20 @@ def test_a_practice_reply_missing_a_text_field_is_a_failed_turn(monkeypatch, bod
 
 def test_an_empty_chamorro_practice_reply_stays_valid():
     assert _run_feature('{"chamorro_response": "", "english_translation": "Hi"}', json_object=True)['chamorro_response'] == ''
+
+
+def test_a_practice_reply_shows_no_source_labels(monkeypatch):
+    from api.conversation_practice_models import ConversationPracticeRequest
+    from test_conversation_practice_validation import valid_payload
+
+    c = client(json.dumps({
+        'chamorro_response': "Si Yu'os Ma'åse' [HåfaGPT vocabulary list]",
+        'english_translation': 'Hello! How are you? [HåfaGPT vocabulary list]',
+        'feedback': {'message': 'You greeted me with Håfa Adai [HåfaGPT vocabulary list].', 'corrections': ['Try [a phrase] (Chamoru.info dictionary)']},
+    }))
+    result = asyncio.run(practice_endpoint(monkeypatch, c)(ConversationPracticeRequest(**valid_payload())))
+    assert result.chamorro_response == "Si Yu'os Ma'åse'"
+    assert result.english_translation == 'Hello! How are you?'
+    assert 'vocabulary list' not in json.dumps(result.feedback, ensure_ascii=False)
+    assert result.feedback['corrections'] == ['Try [a phrase]']
 
