@@ -511,9 +511,18 @@ test('public learner can open stories and protected games fail closed', async ({
   await expect(page.getByRole('button', { name: /Curated/ })).toHaveAttribute('aria-pressed', 'true');
 
   await page.goto('/games');
-  await expect(page.getByRole('heading', { name: 'Learning Games' })).toBeVisible();
-  await expect(page.getByRole('button', { name: 'Create Free Account' })).toBeVisible();
-  await expect(page.getByText('Sign in to access Learning Games')).toBeVisible();
+  await expect(page.getByRole('heading', { level: 1, name: 'Games' })).toBeVisible();
+  await expect(page.getByRole('link', { name: /Sound Match/ })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('button', { name: 'Create a free account' })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('button', { name: 'Sign in' })).toBeVisible();
+
+  await page.goto('/learning');
+  await expect(page.getByRole('heading', { level: 1, name: 'Learning path' })).toBeVisible();
+  await expect(page.locator('main ol > li')).toHaveCount(21);
+  await page.getByRole('link', { name: /Greetings & Basics/ }).click();
+  await expect(page).toHaveURL(/\/learning\/greetings$/);
+  await expect(page.getByRole('heading', { level: 1, name: 'Greetings & Basics' })).toBeVisible();
+  await expect(page.getByRole('main').getByRole('button', { name: 'Create a free account' })).toBeVisible();
   expect(errors).toEqual([]);
 });
 

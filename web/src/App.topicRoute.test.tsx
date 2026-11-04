@@ -48,9 +48,8 @@ describe('App topic workspace route', () => {
     auth.isSignedIn = false;
     render(<App />);
 
-    expect(await screen.findByRole('heading', { name: 'Learning Path' })).toBeInTheDocument();
-    expect(screen.getByText('Follow guided Chamorro lessons and save your progress'))
-      .toBeInTheDocument();
+    expect(await screen.findByRole('heading', { name: 'Greetings & Basics' })).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'Create a free account' })).toBeInTheDocument();
     expect(screen.queryByRole('heading', { name: 'Connected topic workspace' }))
       .not.toBeInTheDocument();
   });

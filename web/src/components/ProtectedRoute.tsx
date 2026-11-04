@@ -1,122 +1,23 @@
-import { useUser, SignInButton, SignUpButton } from '@clerk/clerk-react';
-import { useLocation, Link } from 'react-router-dom';
-import { 
-  MessageSquare, 
-  Brain, 
-  BookOpen, 
-  MessagesSquare, 
-  Gamepad2,
-  BarChart3,
-  ArrowLeft,
-  Sparkles,
-  Check,
-  LogIn,
-  UserPlus,
-  RefreshCw,
-} from 'lucide-react';
-import { usePromoStatus } from '../hooks/useSubscription';
+import { useUser } from '@clerk/clerk-react';
+import { Link } from 'react-router-dom';
+import { RefreshCw } from 'lucide-react';
 import { useAuthLoadTimeout } from '../hooks/useAuthLoadTimeout';
+import { lazyNamed } from '../lib/lazyNamed';
+
+// Only a signed-out visitor needs the gate, so its copy and previews stay out of the entry bundle.
+const SignInGate = lazyNamed(() => import('./SignInGate'), 'SignInGate');
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
-// Feature info based on the current route
-const getFeatureInfo = (pathname: string) => {
-  if (pathname.startsWith('/chat')) {
-    return {
-      icon: MessageSquare,
-      title: 'AI Chat',
-      description: 'Have conversations with our Chamorro AI tutor',
-      color: 'coral',
-      benefits: ['Ask questions in English or Chamorro', 'Get instant translations', 'Learn grammar & pronunciation']
-    };
-  }
-  if (pathname.startsWith('/learning') || pathname.startsWith('/learn/')) {
-    return {
-      icon: BookOpen,
-      title: 'Learning Path',
-      description: 'Follow guided Chamorro lessons and save your progress',
-      color: 'teal',
-      benefits: ['21 guided lessons', 'Learn at your own pace', 'Save your progress']
-    };
-  }
-  if (pathname.startsWith('/quiz')) {
-    return {
-      icon: Brain,
-      title: 'Quizzes',
-      description: 'Test your Chamorro knowledge',
-      color: 'purple',
-      benefits: ['Multiple quiz categories', 'Track your scores', 'Review your answers']
-    };
-  }
-  if (pathname.startsWith('/flashcards')) {
-    return {
-      icon: BookOpen,
-      title: 'Flashcards',
-      description: 'Study vocabulary with flashcards',
-      color: 'teal',
-      benefits: ['Curated word categories', 'Create custom decks', 'Track progress']
-    };
-  }
-  if (pathname.startsWith('/practice')) {
-    return {
-      icon: MessagesSquare,
-      title: 'Conversation Practice',
-      description: 'Practice real Chamorro conversations',
-      color: 'rose',
-      benefits: ['Role-play scenarios', 'AI conversation partner', 'Get feedback on your responses']
-    };
-  }
-  if (pathname.startsWith('/games')) {
-    return {
-      icon: Gamepad2,
-      title: 'Learning Games',
-      description: 'Learn Chamorro through fun games',
-      color: 'emerald',
-      benefits: ['Action games like Falling Words', 'Memory match & word puzzles', 'Track high scores & compete']
-    };
-  }
-  if (pathname.startsWith('/dashboard')) {
-    return {
-      icon: BarChart3,
-      title: 'Your Progress',
-      description: 'Track your learning journey',
-      color: 'amber',
-      benefits: ['View your stats', 'See quiz history', 'Track improvement over time']
-    };
-  }
-  if (pathname.startsWith('/settings')) {
-    return {
-      icon: Sparkles,
-      title: 'Settings',
-      description: 'Personalize your HåfaGPT learning experience',
-      color: 'coral',
-      benefits: ['Choose your learning level', 'Set language preferences', 'Manage your account']
-    };
-  }
-  return {
-    icon: Sparkles,
-    title: 'Account Feature',
-    description: 'Sign in to save your progress and preferences',
-    color: 'coral',
-    benefits: ['Full access to all features', 'Save your progress', 'Track your learning']
-  };
-};
-
 /**
  * Protected route wrapper that requires authentication.
- * Shows a compelling sign-up page if user is not authenticated.
+ * A signed-out visitor sees the sign-in gate, which previews Learn and Games read-only.
  */
 export function ProtectedRoute({ children }: ProtectedRouteProps) {
   const { isLoaded, isSignedIn } = useUser();
   const authLoadTimedOut = useAuthLoadTimeout(isLoaded);
-  const location = useLocation();
-  const featureInfo = getFeatureInfo(location.pathname);
-  const FeatureIcon = featureInfo.icon;
-  const { data: promo } = usePromoStatus();
-  const isChristmasTheme = promo?.theme === 'christmas';
-  const isNewYearTheme = promo?.theme === 'newyear';
 
   // Show loading state while Clerk is initializing
   if (!isLoaded && !authLoadTimedOut) {
@@ -142,7 +43,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
             <button
               type="button"
               onClick={() => void window.__hafagptRecoverStaleBuild?.()}
-              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-action focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
+              className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-action px-4 py-2.5 text-sm font-semibold text-white hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2"
             >
               <RefreshCw className="h-4 w-4" aria-hidden="true" /> Repair and reload
             </button>
@@ -158,103 +59,7 @@ export function ProtectedRoute({ children }: ProtectedRouteProps) {
     );
   }
 
-  // Show sign-in page if not authenticated
-  if (!isSignedIn) {
-    return (
-      <div className="min-h-screen bg-cream-50 dark:bg-brown-950">
-        {/* Back button */}
-        <div className="sticky top-0 z-10 bg-white/80 dark:bg-brown-900/80 backdrop-blur-sm border-b border-cream-200 dark:border-brown-700">
-          <div className="max-w-4xl mx-auto px-4 py-3 safe-area-top">
-            <Link 
-              to="/" 
-              className="inline-flex items-center gap-2 text-brown-600 dark:text-brown-100 hover:text-brown-800 dark:hover:text-cream-100 transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" />
-              <span className="text-sm font-medium">Back to Home</span>
-            </Link>
-          </div>
-        </div>
-
-        <div className="max-w-2xl mx-auto px-4 py-8 sm:py-12">
-          {/* Feature Card */}
-          <div className="bg-white dark:bg-brown-900 rounded-2xl p-6 sm:p-8 border border-cream-200 dark:border-brown-700">
-            {/* Logo & Title */}
-            <div className="text-center mb-6">
-              <div className="inline-flex items-center gap-2 mb-3">
-                <span className="text-3xl">{isChristmasTheme ? '🎄' : isNewYearTheme ? '🎆' : '🌺'}</span>
-                <span className="text-2xl font-bold text-brown-800 dark:text-cream-100">HåfaGPT</span>
-              </div>
-            </div>
-
-            {/* Feature Info */}
-            <div className="text-center mb-6">
-              <div className={`w-16 h-16 mx-auto rounded-2xl bg-coral-100 flex items-center justify-center mb-4`}>
-                <FeatureIcon className="w-8 h-8 text-coral-700" />
-                </div>
-                <h1 className="text-2xl sm:text-3xl font-bold text-brown-800 dark:text-cream-100 mb-2">
-                  {featureInfo.title}
-                </h1>
-                <p className="text-brown-600 dark:text-brown-300">
-                  {featureInfo.description}
-                </p>
-              </div>
-
-              {/* Benefits */}
-            <div className="bg-cream-50 dark:bg-brown-700/50 rounded-xl p-4 mb-6">
-              <ul className="space-y-2">
-                  {featureInfo.benefits.map((benefit, index) => (
-                  <li key={index} className="flex items-center gap-3">
-                    <div className="w-5 h-5 rounded-full bg-emerald-100 dark:bg-emerald-900/50 flex items-center justify-center flex-shrink-0">
-                        <Check className="w-3 h-3 text-emerald-700 dark:text-emerald-400" />
-                      </div>
-                    <span className="text-sm text-brown-700 dark:text-brown-100">{benefit}</span>
-                    </li>
-                  ))}
-                </ul>
-            </div>
-
-            {/* CTA Section */}
-            <div className="space-y-3">
-              <p className="text-center text-sm text-brown-600 dark:text-brown-300 mb-4">
-                Sign in to access <span className="font-semibold">{featureInfo.title}</span>
-              </p>
-
-              {/* Primary CTA - Sign Up */}
-              <SignUpButton mode="modal">
-                <button className="w-full py-3.5 bg-action hover:bg-action-hover text-white rounded-xl font-bold text-lg transition-colors flex items-center justify-center gap-2">
-                  <UserPlus className="w-5 h-5" />
-                  Create Free Account
-                </button>
-              </SignUpButton>
-
-              {/* Secondary CTA - Sign In */}
-              <SignInButton mode="modal">
-                <button className="w-full py-3 border-2 border-coral-300 text-coral-700 hover:bg-coral-50 rounded-xl font-semibold transition-colors flex items-center justify-center gap-2">
-                  <LogIn className="w-5 h-5" />
-                  Already have an account? Sign In
-                </button>
-              </SignInButton>
-
-              {/* Free Account Note */}
-              <p className="text-center text-xs text-brown-500 dark:text-brown-300 pt-2">
-                100% free • No credit card required
-                  </p>
-                </div>
-              </div>
-
-              {/* Explore Free Content */}
-          <div className="mt-6 text-center">
-                <p className="text-sm text-brown-500 dark:text-brown-300">
-                  Just browsing?{' '}
-                  <Link to="/vocabulary" className="inline-flex min-h-11 items-center rounded-lg px-2 text-coral-700 hover:underline font-medium">
-                    Explore free content →
-                  </Link>
-                </p>
-          </div>
-        </div>
-      </div>
-    );
-  }
+  if (!isSignedIn) return <SignInGate />;
 
   // User is authenticated, render the protected content
   return <>{children}</>;
