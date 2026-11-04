@@ -23,6 +23,13 @@ from openai import OpenAI
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from .prompt_budget import assemble_system_prompt, fit_references
+from .provider_errors import (
+    MalformedProviderResponse,
+    PROVIDER_INTERRUPTED_MESSAGE,
+    TurnFailed,
+    is_stored_failure_marker,
+    report_provider_failure,
+)
 from .image_translation import translate_image_pages
 from .image_translation_legacy import translate_image_pages as translate_image_pages_legacy
 from .canonical_context import get_canonical_tutor_context
@@ -196,6 +203,7 @@ def detect_image_context(
     normalized_image_inputs: list[dict] | None,
     cancelled: "Callable[[], bool] | None" = None,
     on_provider_start: "Callable[[], None] | None" = None,
+    on_provider_error: "Callable[[Exception], None] | None" = None,
 ) -> ImageTranslationContext:
     """Extract privacy-safe language text and trusted image routing signals.
 
@@ -213,6 +221,9 @@ def detect_image_context(
         detector_client, detector_model = get_client_for_request(has_image=True)
     except Exception as error:
         logger.warning("Image context detector unavailable; failing closed: %s", type(error).__name__)
+        if on_provider_error is not None:
+            for _ in images:
+                on_provider_error(error)
         return ImageTranslationContext(pages=tuple(
             ImagePageContext(image_index=i, items=(), text_confidence="low", complete=False, issues=("extraction_failed",))
             for i in range(len(images))
@@ -305,6 +316,8 @@ def detect_image_context(
                 image_index,
                 type(error).__name__,
             )
+            if on_provider_error is not None:
+                on_provider_error(error)
             image_contexts.append(ImageTranslationContext(pages=(ImagePageContext(
                 image_index=image_index, items=(), text_confidence="low", complete=False,
                 issues=("extraction_failed",),
@@ -396,14 +409,6 @@ CONTEXT_LENGTH_ERROR_PATTERNS = (
     "too many input tokens",
 )
 
-PROVIDER_CREDIT_ERROR_PATTERNS = (
-    "payment required",
-    "insufficient credits",
-    "more credits",
-    "openrouter_credits",
-    "payment_required",
-)
-
 
 def _get_max_llm_retries() -> int:
     """Read retry count from env safely (supports values loaded via .env)."""
@@ -443,15 +448,6 @@ def _is_context_length_error(error: Exception) -> bool:
     """Return True only for genuine prompt/context-window overflows."""
     error_str = str(error).lower()
     return any(pattern in error_str for pattern in CONTEXT_LENGTH_ERROR_PATTERNS)
-
-
-def _is_provider_credit_error(error: Exception) -> bool:
-    """Return True when an upstream provider rejects a request for billing."""
-    if getattr(error, "status_code", None) == 402:
-        return True
-
-    error_str = str(error).lower()
-    return any(pattern in error_str for pattern in PROVIDER_CREDIT_ERROR_PATTERNS)
 
 
 def _retry_sleep_seconds(attempt_index: int) -> float:
@@ -1031,7 +1027,8 @@ def conversation_rows_to_history(rows: list[tuple]) -> list[dict]:
 
         # Skip blank assistant messages. Some historical rows can contain
         # NULL/empty bot responses, which OpenAI-compatible APIs reject.
-        if bot_msg and bot_msg.strip():
+        # Failed turns saved by earlier versions are not answers to build on.
+        if bot_msg and bot_msg.strip() and not is_stored_failure_marker(bot_msg):
             history.append({"role": "assistant", "content": bot_msg})
 
     history.user_turn_intents = tuple(turn_intents)
@@ -1421,25 +1418,46 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
     incomplete = False
     generation_complete = False
     was_cancelled = False
+    provider_calls_ok = 0
+    provider_failure = None
+
+    def note_provider_failure(error: Exception) -> None:
+        # The pipelines absorb per-item failures into visible gaps. Only a
+        # turn in which every provider call failed is a failed turn.
+        nonlocal provider_failure
+        provider_failure = report_provider_failure(error, source="photo_translation", model=model)
 
     def complete(**kwargs: Any) -> Any:
+        nonlocal provider_calls_ok
         request_kwargs = dict(model=model, **kwargs, **optional_chat_completion_kwargs(model))
         if on_provider_start is not None:
             on_provider_start()
-        return client.chat.completions.create(**request_kwargs)
+        try:
+            response = client.chat.completions.create(**request_kwargs)
+        except Exception as error:
+            note_provider_failure(error)
+            raise
+        provider_calls_ok += 1
+        return response
 
     def stream_text(**kwargs: Any) -> Iterator[tuple[str, str | None]]:
+        nonlocal provider_calls_ok
         request_kwargs = dict(model=model, stream=True, **kwargs, **optional_chat_completion_kwargs(model))
         if on_provider_start is not None:
             on_provider_start()
-        stream = client.chat.completions.create(**request_kwargs)
+        stream = None
         try:
+            stream = client.chat.completions.create(**request_kwargs)
             for chunk in stream:
                 choices = getattr(chunk, "choices", None) or []
                 finish = getattr(choices[0], "finish_reason", None) if choices else None
                 content, _ = _extract_stream_chunk_content_and_empty_choice(chunk)
                 if content or finish:
                     yield content, finish
+            provider_calls_ok += 1
+        except Exception as error:
+            note_provider_failure(error)
+            raise
         finally:
             close = getattr(stream, "close", None)
             if callable(close):
@@ -1472,6 +1490,13 @@ def _image_translation_events(*, image_context: ImageTranslationContext, images:
             was_cancelled = True
             continue
         yield event
+    if provider_failure is not None and provider_calls_ok == 0 and not was_cancelled:
+        # No part of this reply came from the provider; do not store the gap
+        # notices the pipeline wrote in its place.
+        yield {"type": "error", "content": provider_failure.message, "code": "provider_unavailable", "retryable": True}
+        if persist:
+            cleanup_cancelled_message(pending_id)
+        return
     response_time = time.time() - start_time
     saved = None
     if persist:
@@ -1600,9 +1625,21 @@ def get_chatbot_response(
         if conversation_id
         else []
     )
-    image_context = detect_image_context(normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id))
+    vision_failures: list[Any] = []
+
+    def note_vision_failure(error: Exception) -> None:
+        vision_failures.append(report_provider_failure(error, source="vision_detect"))
+
+    image_context = detect_image_context(
+        normalized_image_inputs, cancelled=lambda: is_message_cancelled(pending_id),
+        on_provider_error=note_vision_failure,
+    )
     if is_message_cancelled(pending_id):
         return early_cancelled_response()
+    if normalized_image_inputs and len(vision_failures) >= len(normalized_image_inputs):
+        # Every photo failed at the provider: nothing was read, nothing is saved.
+        cleanup_cancelled_message(pending_id)
+        raise TurnFailed(vision_failures[-1].message)
     # Mixed document/image requests need the general document-analysis path;
     # page item translation alone cannot cover a separate extracted document.
     if normalized_image_inputs and is_full_image_translation_request(message_for_logging, full_message=message):
@@ -1615,6 +1652,9 @@ def get_chatbot_response(
             past_messages=past_messages, skill_level=skill_level, intent=intent,
         )
         events = list(image_events)
+        failed = next((event for event in events if event["type"] == "error"), None)
+        if failed:
+            raise TurnFailed(failed["content"])
         metadata = next((event for event in reversed(events) if event["type"] == "metadata"), {})
         was_cancelled = any(event["type"] == "cancelled" for event in events)
         terminal = next((event for event in reversed(events) if event["type"] in ("done", "cancelled")), {})
@@ -1806,15 +1846,11 @@ def get_chatbot_response(
     # Check if we're within reasonable limits
     if total_input_tokens > token_manager.budget.total:
         logger.error(f"⚠️ Total tokens ({total_input_tokens}) exceeds budget ({token_manager.budget.total})!")
-        response_time = time.time() - start_time
-        return {
-            "response": "I apologize, but this conversation has become too long. Please start a new conversation to continue.",
-            "sources": [],
-            "used_rag": False,
-            "used_web_search": False,
-            "response_time": response_time,
-            "cancelled": False,
-        }
+        cleanup_cancelled_message(pending_id)
+        raise TurnFailed(
+            "This conversation has become too long. Please start a new conversation to continue.",
+            code="conversation_too_long", status_code=422,
+        )
     
     # Get LLM response
     # Use vision-capable model if image is present and current model doesn't support vision
@@ -1835,7 +1871,7 @@ def get_chatbot_response(
                 )
                 response_text = _extract_non_stream_response_text(response)
                 if not response_text:
-                    raise RuntimeError("LLM response had no text content")
+                    raise MalformedProviderResponse("LLM response had no text content")
                 finish_reason = getattr(response.choices[0], "finish_reason", None)
                 logger.info("CHAT_COMPLETION model=%s finish=%s", request_model, finish_reason)
                 if finish_reason == "length":
@@ -1855,19 +1891,25 @@ def get_chatbot_response(
                 raise
 
         if response_text is None:
-            raise RuntimeError("LLM response text was not generated")
+            raise MalformedProviderResponse("LLM response text was not generated")
 
     except Exception as e:
+        # A failed turn is never an answer: it is not stored and the provider's
+        # own text never reaches the learner. A Stop that raced the failure
+        # still records its cancellation below.
         if _is_context_length_error(e):
-            logger.error(f"Token overflow error: {e}")
-            response_text = "I apologize, but this conversation has become too long for me to process. Please start a new conversation to continue. Si Yu'os Ma'åse! 🙏"
-        elif _is_provider_credit_error(e):
-            logger.error(f"LLM provider credit error: {e}")
-            response_text = "HåfaGPT's AI service is temporarily unavailable. Please try again shortly."
+            logger.warning("Token overflow error: %s", type(e).__name__)
+            failure = TurnFailed(
+                "This conversation has become too long for me to process. Please start a new conversation to continue.",
+                code="conversation_too_long", status_code=422,
+            )
         else:
-            logger.error(f"LLM error: {e}")
-            response_text = "Error: I encountered an issue processing your message. Please try again."
-        
+            provider_failure = report_provider_failure(e, source="chat", model=request_model)
+            failure = TurnFailed(provider_failure.message)
+        if not is_message_cancelled(pending_id):
+            cleanup_cancelled_message(pending_id)
+            raise failure from None
+        response_text = ""
         sources = []
         used_rag = False
         web_results_used = False
@@ -2040,10 +2082,23 @@ def get_chatbot_response_stream(
         # Status events are progress for an empty reply, never saved reply text.
         yield {"type": "status", "content": "Reading your photo…" if len(normalized_image_inputs) == 1
                else f"Reading your {len(normalized_image_inputs)} photos…"}
+    vision_failures: list[Any] = []
+
+    def note_vision_failure(error: Exception) -> None:
+        vision_failures.append(report_provider_failure(error, source="vision_detect"))
+
     image_context = detect_image_context(normalized_image_inputs,
-        cancelled=lambda: is_message_cancelled(pending_id), **provider_kwargs)
+        cancelled=lambda: is_message_cancelled(pending_id),
+        on_provider_error=note_vision_failure, **provider_kwargs)
     if is_message_cancelled(pending_id):
         yield cancelled_event()
+        return
+    if normalized_image_inputs and len(vision_failures) >= len(normalized_image_inputs):
+        # Every photo failed at the provider: nothing was read, nothing is saved.
+        yield {"type": "error", "content": vision_failures[-1].message,
+               "code": "provider_unavailable", "retryable": True}
+        if persist:
+            cleanup_cancelled_message(pending_id)
         return
     # Mixed document/image requests need the general document-analysis path;
     # page item translation alone cannot cover a separate extracted document.
@@ -2252,29 +2307,11 @@ def get_chatbot_response_stream(
     # Check if we're within reasonable limits
     if total_input_tokens > token_manager.budget.total:
         logger.error(f"⚠️ Total tokens ({total_input_tokens}) exceeds budget ({token_manager.budget.total})!")
-        error_message = "I apologize, but this conversation has become too long. Please start a new conversation to continue."
+        error_message = "This conversation has become too long. Please start a new conversation to continue."
         
-        # Refunded sends retain their draft, not a failed transcript row that
-        # could be mistaken for a completed reply on the same logical-ID retry.
-        if persist and (on_provider_start is None or provider_started):
-            log_conversation(
-                user_message=message_for_logging,
-                bot_response=f"[Token limit exceeded: {total_input_tokens} tokens]",
-                mode=mode,
-                sources=[],
-                used_rag=used_rag,
-                used_web_search=web_results_used,
-                response_time=time.time() - start_time,
-                session_id=session_id,
-                user_id=user_id,
-                conversation_id=conversation_id,
-                image_url=image_url,
-                file_urls=file_urls,
-                pending_id=pending_id,
-                tutor_intent=intent,
-            )
-        
-        yield {"type": "error", "content": error_message}
+        yield {"type": "error", "content": error_message, "code": "conversation_too_long", "retryable": False}
+        if persist:
+            cleanup_cancelled_message(pending_id)
         return
     
     full_response = ""
@@ -2355,44 +2392,29 @@ def get_chatbot_response_stream(
                 )
 
         if not stream_completed:
-            raise RuntimeError("Streaming response did not complete")
+            raise MalformedProviderResponse("Streaming response did not complete")
 
     except Exception as e:
+        # A failed turn is never an answer: nothing is stored, so history, edit
+        # revisions, and regeneration are untouched, and the provider's own text
+        # never reaches the learner. The client keeps the message to resend.
         if _is_context_length_error(e):
-            logger.error(f"Token overflow error: {e}")
-            error_message = "I apologize, but this conversation has become too long for me to process. Please start a new conversation to continue chatting. Si Yu'os Ma'åse for your patience! 🙏"
-            logger.error(f"Full token error details: input_tokens={total_input_tokens}, model={request_model}, error={e}")
-        elif _is_provider_credit_error(e):
-            logger.error(f"LLM provider credit error: {e}")
-            error_message = "HåfaGPT's AI service is temporarily unavailable. Please try again shortly."
-        else:
-            logger.error(f"LLM error: {e}")
-            if streamed_any_content:
-                error_message = "Connection interrupted while streaming. Please try again."
-            else:
-                error_message = "Error: I encountered an issue processing your message. Please try again."
-        
-        # A failed request is chargeable only after the chat/vision boundary.
-        # Do not save a pre-request failure under a refundable logical send ID.
-        if persist and (on_provider_start is None or provider_started):
-            log_conversation(
-                user_message=message_for_logging,
-                bot_response=f"[Error: {str(e)[:200]}]",  # Truncate error for DB
-                mode=mode,
-                sources=[],
-                used_rag=used_rag,
-                used_web_search=web_results_used,
-                response_time=time.time() - start_time,
-                session_id=session_id,
-                user_id=user_id,
-                conversation_id=conversation_id,
-                image_url=image_url,
-                file_urls=file_urls,
-                pending_id=pending_id,
-                tutor_intent=intent,
+            logger.warning(
+                "Token overflow error: input_tokens=%s model=%s error_type=%s",
+                total_input_tokens, request_model, type(e).__name__,
             )
-        
-        yield {"type": "error", "content": error_message}
+            error_message = "This conversation has become too long for me to process. Please start a new conversation to continue chatting."
+            error_code = "conversation_too_long"
+        else:
+            failure = report_provider_failure(e, source="chat_stream", model=request_model)
+            error_message = (
+                PROVIDER_INTERRUPTED_MESSAGE
+                if streamed_any_content and failure.kind != "rate_limit" else failure.message
+            )
+            error_code = "provider_unavailable"
+
+        yield {"type": "error", "content": error_message, "code": error_code,
+               "retryable": error_code == "provider_unavailable"}
         if persist:
             cleanup_cancelled_message(pending_id)
         return

@@ -2,6 +2,8 @@ import ast
 from pathlib import Path
 from typing import Optional
 
+from api.provider_errors import STORED_FAILURE_PLACEHOLDER, is_stored_failure_marker
+
 
 def _load_get_conversation_messages():
     source_path = Path(__file__).resolve().parents[1] / "api" / "conversations.py"
@@ -40,6 +42,8 @@ def _load_get_conversation_messages():
         "SourceInfo": FakeSourceInfo,
         "logger": FakeLogger(),
         "resolve_private_upload_reference": lambda value: value,
+        "is_stored_failure_marker": is_stored_failure_marker,
+        "STORED_FAILURE_PLACEHOLDER": STORED_FAILURE_PLACEHOLDER,
     }
     exec(compile(isolated_module, str(source_path), "exec"), namespace)
     return namespace["get_conversation_messages"]

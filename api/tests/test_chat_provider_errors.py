@@ -1,6 +1,8 @@
 import ast
 from pathlib import Path
 
+from api.provider_errors import is_credit_error
+
 
 SOURCE_PATH = Path(__file__).resolve().parents[1] / "api" / "chatbot_service.py"
 SOURCE = SOURCE_PATH.read_text(encoding="utf-8")
@@ -23,15 +25,13 @@ def _load_error_classifiers():
     isolated_module = ast.Module(
         body=[
             _assignment_node("CONTEXT_LENGTH_ERROR_PATTERNS"),
-            _assignment_node("PROVIDER_CREDIT_ERROR_PATTERNS"),
             _function_node("_is_context_length_error"),
-            _function_node("_is_provider_credit_error"),
         ],
         type_ignores=[],
     )
     namespace = {}
     exec(compile(isolated_module, str(SOURCE_PATH), "exec"), namespace)
-    return namespace["_is_context_length_error"], namespace["_is_provider_credit_error"]
+    return namespace["_is_context_length_error"], is_credit_error
 
 
 def _function_node(name: str):

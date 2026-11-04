@@ -16,8 +16,19 @@ from sentry_sdk.integrations.fastapi import FastApiIntegration
 from sentry_sdk.integrations.starlette import StarletteIntegration
 from sentry_sdk.integrations.logging import LoggingIntegration
 from sentry_sdk.integrations.httpx import HttpxIntegration
+from sentry_sdk.utils import Dsn
 
 logger = logging.getLogger(__name__)
+
+
+def _traces_sample_rate() -> float:
+    """Read SENTRY_TRACES_SAMPLE_RATE; a bad value falls back to 0.1, never a startup crash."""
+    raw = os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1")
+    try:
+        return min(1.0, max(0.0, float(raw)))
+    except ValueError:
+        logger.warning("SENTRY_TRACES_SAMPLE_RATE=%r is not a number - using 0.1", raw)
+        return 0.1
 
 
 def init_sentry():
@@ -32,14 +43,27 @@ def init_sentry():
     Returns:
         bool: True if Sentry was initialized, False otherwise
     """
-    dsn = os.getenv("SENTRY_DSN")
-    
+    dsn = (os.getenv("SENTRY_DSN") or "").strip()
+
     if not dsn:
         logger.info("SENTRY_DSN not set - Sentry error tracking disabled")
         return False
-    
+
+    try:
+        Dsn(dsn)
+    except Exception as error:
+        # sentry_sdk would raise BadDsn ("Missing public key", ...) from init().
+        # Never log the DSN itself.
+        logger.warning(
+            "SENTRY_DSN is invalid (%s) - Sentry error tracking disabled. "
+            "Expected https://<public_key>@<host>/<project_id> from Sentry > "
+            "Project Settings > Client Keys (DSN).",
+            error,
+        )
+        return False
+
     environment = os.getenv("SENTRY_ENVIRONMENT", "production")
-    traces_sample_rate = float(os.getenv("SENTRY_TRACES_SAMPLE_RATE", "0.1"))
+    traces_sample_rate = _traces_sample_rate()
     
     try:
         sentry_sdk.init(
@@ -91,7 +115,7 @@ def init_sentry():
         return True
         
     except Exception as e:
-        logger.error(f"Failed to initialize Sentry: {e}")
+        logger.warning("Sentry initialization failed (%s) - Sentry error tracking disabled", type(e).__name__)
         return False
 
 
