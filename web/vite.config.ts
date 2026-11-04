@@ -1,6 +1,7 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { publicFirstPaint } from './scripts/public-first-paint.mjs';
 
 // https://vitejs.dev/config/
 export default defineConfig({
@@ -32,6 +33,7 @@ export default defineConfig({
   },
   plugins: [
     react(),
+    publicFirstPaint(),
     VitePWA({
       // Native registration owns updates. Activate migration workers immediately,
       // but never let the plugin's autoUpdate client reload an active session.

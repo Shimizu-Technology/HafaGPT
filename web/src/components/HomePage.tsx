@@ -21,9 +21,10 @@ import { useInitUserData } from '../hooks/useConversationsQuery';
 import { useHomepageData } from '../hooks/useHomepageData';
 import { useSubscription } from '../hooks/useSubscription';
 import { useTheme } from '../hooks/useTheme';
+import { useAuthLoadTimeout } from '../hooks/useAuthLoadTimeout';
 import { useUserPreferences } from '../hooks/useUserPreferences';
 import { wordOfTheDayQueryOptions } from '../hooks/useVocabularyQuery';
-import { useAuthLoadTimeout } from '../hooks/useAuthLoadTimeout';
+import { RETURNING_ACCOUNT_TIMEOUT_MS, mayHaveClerkSession } from '../lib/clerkSessionHint';
 import { buildTodayPlan } from '../lib/todayPlan';
 import { getHomepageSectionAvailability } from '../lib/homepageAvailability';
 import { DEFAULT_DAILY_SESSION_MINUTES } from '../data/learningPreferences';
@@ -309,7 +310,7 @@ function SignedOutHome({ onStart }: { onStart: () => void }) {
 
 export function HomePage() {
   const { user, isLoaded } = useUser();
-  const authLoadTimedOut = useAuthLoadTimeout(isLoaded);
+  const authLoadTimedOut = useAuthLoadTimeout(isLoaded, RETURNING_ACCOUNT_TIMEOUT_MS);
   const clerk = useClerk();
   const isSignedIn = Boolean(user);
   useInitUserData(null, isLoaded && isSignedIn);
@@ -358,14 +359,28 @@ export function HomePage() {
     });
   }, [isLoading, preferences, recommended, srSummary, todayUnavailable, weakAreas, xp]);
 
-  if (!isLoaded && !authLoadTimedOut) {
+  // A guest sees real Home right away. Only a possible returning account waits
+  // for Clerk, so it never sees guest Home first.
+  if (!isLoaded && mayHaveClerkSession()) {
     return (
       <div className="min-h-screen bg-cream-50 dark:bg-brown-950">
         <HomeHeader signedIn={false} />
+        {authLoadTimedOut ? (
+          <main className="mx-auto max-w-5xl space-y-4 px-4 py-8 text-brown-950 dark:text-cream-100">
+            <h1 className="text-xl font-bold">We could not check your sign-in</h1>
+            <p>This is taking longer than usual. Try again, or open the dictionary while you wait.</p>
+            <div className="flex flex-wrap gap-4">
+              <button type="button" onClick={() => window.location.reload()} className="min-h-11 rounded-xl bg-action px-4 py-2 text-white hover:bg-action-hover">Try again</button>
+              <Link to="/vocabulary" className="inline-flex min-h-11 items-center text-teal-700 dark:text-ocean-300">Open the dictionary</Link>
+            </div>
+          </main>
+        ) : (
         <main className="mx-auto max-w-5xl animate-pulse space-y-4 px-4 py-8 motion-reduce:animate-none">
+          <span role="status" className="sr-only">Loading your home page</span>
           <div className="h-56 rounded-3xl bg-white dark:bg-brown-900" />
           <div className="grid gap-4 sm:grid-cols-2"><div className="h-36 rounded-2xl bg-white dark:bg-brown-900" /><div className="h-36 rounded-2xl bg-white dark:bg-brown-900" /></div>
         </main>
+        )}
       </div>
     );
   }

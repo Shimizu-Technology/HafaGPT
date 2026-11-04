@@ -78,6 +78,16 @@ const SupportPage = lazy(() => loadRoute(() => import('./components/SupportPage'
 const NotFoundPage = lazyNamed(() => import('./components/NotFoundPage'), 'NotFoundPage');
 
 function RouteLoadingFallback() {
+  // Home keeps the layout of the first paint, so its chunk arriving doesn't jump.
+  if (window.location.pathname === '/') {
+    return (
+      <main className="mx-auto max-w-5xl animate-pulse space-y-4 px-4 py-8 motion-reduce:animate-none">
+        <span role="status" className="sr-only">Loading your home page</span>
+        <div className="h-56 rounded-3xl bg-white dark:bg-brown-900" />
+        <div className="grid gap-4 sm:grid-cols-2"><div className="h-36 rounded-2xl bg-white dark:bg-brown-900" /><div className="h-36 rounded-2xl bg-white dark:bg-brown-900" /></div>
+      </main>
+    );
+  }
   return (
     <main
       className="flex min-h-[60vh] items-center justify-center px-4 pb-24"
