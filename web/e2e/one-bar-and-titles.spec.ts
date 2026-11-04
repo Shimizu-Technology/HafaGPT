@@ -9,7 +9,7 @@ test.beforeEach(async ({ page }) => {
 const publicRoutes: Array<[string, string]> = [
   ['/', 'Learn a little Chamorro every day.'],
   ['/library', 'Library'],
-  ['/pricing', 'Unlock Unlimited Learning'],
+  ['/pricing', 'Plans and prices'],
   ['/about', 'Why I built HåfaGPT'],
   ['/support', 'How can we help?'],
   ['/privacy', 'Privacy policy'],

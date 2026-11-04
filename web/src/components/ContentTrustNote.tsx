@@ -1,6 +1,7 @@
 import { useId, useState } from 'react';
 import { BookOpenCheck, ChevronDown, ExternalLink, FlaskConical, Sparkles } from 'lucide-react';
 import type { ContentTrust } from '../data/contentTrust';
+import { plainSourceText } from '../lib/sourceLabels';
 
 interface ContentTrustNoteProps {
   trust: ContentTrust;
@@ -12,7 +13,7 @@ const levelStyles: Record<ContentTrust['level'], string> = {
   current_source: 'text-teal-900 dark:text-teal-100',
   source_backed: 'text-teal-900 dark:text-teal-100',
   developing: 'text-amber-950 dark:text-amber-100',
-  ai_practice: 'text-teal-950 dark:text-teal-100',
+  ai_practice: 'text-brown-800 dark:text-cream-100',
 };
 
 /** Select the visual marker associated with a content-trust level. */
@@ -47,7 +48,7 @@ export function ContentTrustNote({ trust, className = '', compact = false }: Con
 
       {expanded && (
         <div id={detailId} className="border-l border-current/25 pl-4 py-2 text-sm">
-          <p className="leading-relaxed">{trust.summary}</p>
+          <p className="leading-relaxed">{plainSourceText(trust.summary)}</p>
           <dl className="mt-3 grid gap-2 text-xs sm:grid-cols-2">
             {trust.region && <div><dt className="font-bold">Region</dt><dd className="mt-0.5 opacity-80">{trust.region}</dd></div>}
             {trust.orthography && <div><dt className="font-bold">Spelling system</dt><dd className="mt-0.5 opacity-80">{trust.orthography}</dd></div>}
@@ -61,9 +62,9 @@ export function ContentTrustNote({ trust, className = '', compact = false }: Con
                   <li key={`${source.name}-${source.url ?? 'local'}`}>
                     {source.url ? (
                       <a className="inline-flex items-center gap-1 font-semibold underline decoration-current/40 underline-offset-2 hover:decoration-current" href={source.url} target="_blank" rel="noopener noreferrer">
-                        {source.name}<ExternalLink className="h-3 w-3" aria-hidden="true" />
+                        {plainSourceText(source.name)}<ExternalLink className="h-3 w-3" aria-hidden="true" />
                       </a>
-                    ) : source.name}
+                    ) : plainSourceText(source.name)}
                   </li>
                 ))}
               </ul>
@@ -71,7 +72,7 @@ export function ContentTrustNote({ trust, className = '', compact = false }: Con
           )}
           {trust.notes && trust.notes.length > 0 && (
             <ul className="mt-3 list-disc space-y-1 pl-4 text-xs opacity-85">
-              {trust.notes.map((note) => <li key={note}>{note}</li>)}
+              {trust.notes.map((note) => <li key={note}>{plainSourceText(note)}</li>)}
             </ul>
           )}
         </div>

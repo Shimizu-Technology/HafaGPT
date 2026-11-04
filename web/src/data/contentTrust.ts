@@ -22,9 +22,9 @@ export interface ContentTrust {
 
 export const TRUST_LEVEL_SURFACE_CLASSES: Record<ContentTrustLevel, string> = {
   current_source: 'border-teal-200 bg-teal-50 dark:border-teal-800 dark:bg-teal-950/30',
-  source_backed: 'border-sky-200 bg-sky-50 dark:border-sky-800 dark:bg-sky-950/30',
+  source_backed: 'border-teal-200 bg-white dark:border-teal-800 dark:bg-brown-900',
   developing: 'border-amber-200 bg-amber-50 dark:border-amber-800 dark:bg-amber-950/30',
-  ai_practice: 'border-violet-200 bg-violet-50 dark:border-violet-800 dark:bg-violet-950/30',
+  ai_practice: 'border-cream-300 bg-cream-100 dark:border-brown-600 dark:bg-brown-900',
 };
 
 const KUMISION_WORD_LISTS: ContentTrustSource = {
@@ -33,7 +33,7 @@ const KUMISION_WORD_LISTS: ContentTrustSource = {
 };
 
 const HAFAGPT_CANONICAL: ContentTrustSource = {
-  name: 'HåfaGPT canonical vocabulary',
+  name: 'HåfaGPT vocabulary list',
 };
 
 const LOCAL_DICTIONARIES: ContentTrustSource = {
@@ -72,7 +72,7 @@ export const TRUST_LABELS: Record<ContentTrustLevel, { label: string; descriptio
 const SOURCE_BACKED_LESSON: ContentTrust = {
   level: 'source_backed',
   label: TRUST_LABELS.source_backed.label,
-  summary: 'Core terms are tied to HåfaGPT canonical entries and named dictionary references. Regional variants may appear.',
+  summary: 'Core terms are tied to entries in the HåfaGPT vocabulary list and named dictionary references. Regional variants may appear.',
   sources: [HAFAGPT_CANONICAL, LOCAL_DICTIONARIES],
   region: 'Guåhan and CNMI source lineage',
   orthography: 'Entry-specific',

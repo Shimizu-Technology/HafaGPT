@@ -66,3 +66,20 @@ describe('share recovery contracts', () => {
     expect(screen.getByRole('button', { name: 'Try again' })).toBeInTheDocument();
   });
 });
+describe('plain plans page', () => {
+  it('names the page in one sentence-case heading with no eyebrow or uppercase badge', () => {
+    render(<MemoryRouter><PricingPage /></MemoryRouter>);
+    expect(screen.getByRole('heading', { level: 1, name: 'Plans and prices' })).toBeInTheDocument();
+    expect(screen.queryByText(/start learning chamorro today/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/unlock unlimited/i)).not.toBeInTheDocument();
+    expect(screen.queryByText('EARLY ADOPTER PRICING')).not.toBeInTheDocument();
+    expect(screen.getByText(/early-adopter pricing during the beta/i)).toHaveTextContent('saves 33% over paying monthly');
+  });
+  it('states each included item once instead of repeating the plan cards', () => {
+    render(<MemoryRouter><PricingPage /></MemoryRouter>);
+    expect(screen.getAllByText('Unlimited vocabulary browsing')).toHaveLength(1);
+    expect(screen.getAllByText('Daily word & stories')).toHaveLength(1);
+    expect(screen.getAllByText('Unlimited quizzes')).toHaveLength(1);
+    expect(screen.getByText(/priority support/i)).toBeInTheDocument();
+  });
+});

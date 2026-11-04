@@ -532,7 +532,7 @@ test('dictionary category and story reader keep detail interactions accessible',
   await page.goto('/vocabulary/greetings');
   await expect(page.getByRole('heading', { name: 'Greetings & Basics' })).toBeVisible();
   await expect(page.getByLabel('Search in Greetings & Basics')).toHaveCSS('font-size', '16px');
-  await page.getByRole('button', { name: 'Show examples for håfa adai' }).click();
+  await page.getByRole('button', { name: /håfa adai phrase hello/ }).click();
   await expect(page.getByText('Håfa adai, Maria!')).toBeVisible();
 
   await page.goto('/stories/hafa-adai-maria');
@@ -617,7 +617,7 @@ test('public information and shared-link recovery stay clear without authenticat
   await expect(page.getByRole('heading', { name: "Children's Privacy" })).toBeVisible();
 
   await page.goto('/pricing');
-  await expect(page.getByRole('heading', { name: 'Unlock Unlimited Learning' })).toBeVisible();
+  await expect(page.getByRole('heading', { name: 'Plans and prices' })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Free', exact: true })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Premium', exact: true })).toBeVisible();
 
