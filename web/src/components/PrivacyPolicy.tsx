@@ -49,9 +49,11 @@ export default function PrivacyPolicy() {
                 <h3 className="font-medium text-brown-800 dark:text-cream-200 mb-1">Usage Information</h3>
                 <p className="leading-relaxed">
                   We collect limited product analytics, such as page visits and explicitly allowlisted
-                  learning events, through PostHog. Session replay and automatic click capture are
-                  disabled. We do not intentionally send chat text, answers, translations, uploaded
-                  document contents, source passages, or form inputs as analytics events.
+                  learning events, along with privacy-masked session replay through PostHog. Automatic
+                  click capture is disabled, form inputs and chat message content are masked or
+                  excluded from session recordings, and URL query strings and fragments are stripped.
+                  We do not intentionally send chat text, answers, translations, uploaded document
+                  contents, source passages, or form inputs as analytics events.
                 </p>
               </div>
             </div>
@@ -123,7 +125,7 @@ export default function PrivacyPolicy() {
               <li><strong>AWS S3</strong> - File storage (for uploaded images/documents)</li>
               <li><strong>Neon</strong> - Application database hosting</li>
               <li><strong>Render and Netlify</strong> - Backend and website hosting</li>
-              <li><strong>PostHog</strong> - Limited product analytics; session replay is disabled</li>
+              <li><strong>PostHog</strong> - Limited product analytics and privacy-masked session replay (inputs and chat messages masked/excluded)</li>
               <li><strong>Sentry</strong> - Error and reliability monitoring</li>
             </ul>
           </section>
