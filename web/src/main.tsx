@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import App from './App.tsx';
 import { ChristmasThemeWrapper } from './components/ChristmasThemeWrapper';
 import { StartupErrorBoundary } from './components/StartupErrorBoundary';
-import { sanitizeAnalyticsEvent } from './lib/analyticsPrivacy';
+import { maskReplayNetworkRequest, sanitizeAnalyticsEvent } from './lib/analyticsPrivacy';
 import './index.css';
 import { registerServiceWorker } from './lib/registerServiceWorker';
 
@@ -30,9 +30,15 @@ if (POSTHOG_KEY) {
         person_profiles: 'identified_only', // Only create profiles for logged-in users
         capture_pageview: true, // Automatically capture page views
         capture_pageleave: true, // Track when users leave
-        // Chat, learning progress, and family account pages contain sensitive text.
-        // Keep replay off entirely; aggregate product events are sufficient here.
-        disable_session_recording: true,
+        // Enable privacy-masked session replay (form inputs masked, chat message
+        // bodies blocked via ph-no-capture, replay URLs sanitized) while keeping
+        // explicit allowlisted learning events and URL/property sanitization.
+        disable_session_recording: false,
+        session_recording: {
+          maskAllInputs: true,
+          blockClass: 'ph-no-capture',
+          maskNetworkRequestFn: maskReplayNetworkRequest,
+        },
         // Avoid collecting clicked text or arbitrary DOM attributes. Learning events
         // are emitted explicitly through a property allowlist.
         autocapture: false,

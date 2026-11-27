@@ -535,8 +535,8 @@ export const Message = memo(function Message({ role, content, imageUrl, file_url
         {/* Message body */}
         <div
           className={isUser
-            ? 'rounded-2xl rounded-tr-md bg-action px-3 py-2.5 text-white sm:px-4 sm:py-3'
-            : 'px-1 text-brown-800 dark:text-cream-100'}
+            ? 'ph-no-capture rounded-2xl rounded-tr-md bg-action px-3 py-2.5 text-white sm:px-4 sm:py-3'
+            : 'ph-no-capture px-1 text-brown-800 dark:text-cream-100'}
         >
           {isUser ? (
             <div className="space-y-2">
