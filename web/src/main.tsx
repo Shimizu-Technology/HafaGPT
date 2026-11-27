@@ -30,9 +30,12 @@ if (POSTHOG_KEY) {
         person_profiles: 'identified_only', // Only create profiles for logged-in users
         capture_pageview: true, // Automatically capture page views
         capture_pageleave: true, // Track when users leave
-        // Chat, learning progress, and family account pages contain sensitive text.
-        // Keep replay off entirely; aggregate product events are sufficient here.
-        disable_session_recording: true,
+        // Enable privacy-masked session replay (all user inputs masked) while keeping
+        // explicit allowlisted learning events and URL/property sanitization.
+        disable_session_recording: false,
+        session_recording: {
+          maskAllInputs: true,
+        },
         // Avoid collecting clicked text or arbitrary DOM attributes. Learning events
         // are emitted explicitly through a property allowlist.
         autocapture: false,
