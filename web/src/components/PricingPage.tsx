@@ -123,10 +123,10 @@ export function PricingPage() {
           <p className="text-brown-600 dark:text-brown-100 text-base mb-4">
             Questions? Contact us at{' '}
             <a 
-              href="mailto:support@shimizutechnology.com"
+              href="mailto:support@shimizu-technology.com"
               className="break-all text-coral-700 [@media(hover:hover)_and_(pointer:fine)]:hover:underline"
             >
-              support@shimizutechnology.com
+              support@shimizu-technology.com
             </a>
           </p>
         </div>

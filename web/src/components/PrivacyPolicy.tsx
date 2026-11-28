@@ -176,10 +176,10 @@ export default function PrivacyPolicy() {
               If you have any questions about this Privacy Policy or your data, please contact us at:
             </p>
             <a 
-              href="mailto:support@shimizutechnology.com" 
+              href="mailto:support@shimizu-technology.com"
               className="inline-block mt-2 text-coral-700 hover:underline font-medium"
             >
-              support@shimizutechnology.com
+              support@shimizu-technology.com
             </a>
           </section>
 

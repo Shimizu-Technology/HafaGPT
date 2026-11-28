@@ -17,7 +17,7 @@ const faqs = [
   },
   {
     question: 'How do I request account deletion?',
-    answer: 'Email support@shimizutechnology.com from the address connected to your account. We will confirm the request and explain the next steps.',
+    answer: 'Email support@shimizu-technology.com from the address connected to your account. We will confirm the request and explain the next steps.',
   },
 ];
 
@@ -31,11 +31,11 @@ export default function SupportPage() {
         <p className="mt-3 max-w-2xl leading-relaxed text-brown-600 dark:text-brown-100">
           A real person reads every message. Ask about a school message, report something that did not work, suggest a feature, or request help with your account.
         </p>
-        <a href="mailto:support@shimizutechnology.com" className="pressable mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-action px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2">
+        <a href="mailto:support@shimizu-technology.com" className="pressable mt-6 inline-flex min-h-12 items-center gap-2 rounded-xl bg-action px-5 font-semibold text-white [@media(hover:hover)_and_(pointer:fine)]:hover:bg-action-hover focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-coral-500 focus-visible:ring-offset-2">
           <Mail className="h-5 w-5" aria-hidden="true" />
           Email support
         </a>
-        <p className="mt-3 break-all text-sm text-brown-500 dark:text-brown-300">support@shimizutechnology.com</p>
+        <p className="mt-3 break-all text-sm text-brown-500 dark:text-brown-300">support@shimizu-technology.com</p>
       </section>
 
       <section className="mt-6 rounded-3xl border border-cream-200 bg-white p-5 dark:border-brown-700 dark:bg-brown-900 sm:p-7">

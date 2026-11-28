@@ -69,7 +69,7 @@ describe('public information pages', () => {
 
     rerender(<MemoryRouter><SupportPage /></MemoryRouter>);
     expect(screen.getByRole('heading', { name: /how can we help/i })).toBeInTheDocument();
-    expect(screen.getByRole('link', { name: /email support/i })).toHaveAttribute('href', 'mailto:support@shimizutechnology.com');
+    expect(screen.getByRole('link', { name: /email support/i })).toHaveAttribute('href', 'mailto:support@shimizu-technology.com');
 
     rerender(<MemoryRouter><PrivacyPolicy /></MemoryRouter>);
     expect(screen.getByText(/last updated: august 18, 2026/i)).toBeInTheDocument();
